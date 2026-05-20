@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+// ADD THESE IMPORTS:
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,11 +12,23 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase only once (prevents errors during Next.js hot-reloads)
+// 1. Initialize core Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-// Initialize services
 const db = getFirestore(app);
-const auth = getAuth(app);
 
-export { app, db, auth };
+// 2. Initialize App Check (ONLY on the client side!)
+if (typeof window !== "undefined") {
+  
+  // This allows you to test on localhost without Firebase blocking you
+  if (process.env.NODE_ENV === 'development') {
+    (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+
+  // Activate the shield
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string),
+    isTokenAutoRefreshEnabled: true // Refreshes the security token silently in the background
+  });
+}
+
+export { app, db };

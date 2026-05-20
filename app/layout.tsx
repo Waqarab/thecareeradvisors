@@ -18,18 +18,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
+return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        {/* Pre-connect to your most heavily used external servers for instant loading */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://firestore.googleapis.com" />
+        <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+      </head>
       <body className="antialiased min-h-screen flex flex-col bg-background">
         <AuthProvider>
           <ConditionalLayout>
             <NotificationManager />
             <LiveChat />
             {children}
-            
-            {/* ADD THE TOASTER HERE SO THE PUBLIC SITE CAN RENDER ALERTS */}
             <Toaster position="bottom-left" richColors theme="light" />
-            
           </ConditionalLayout>
         </AuthProvider>
       </body>

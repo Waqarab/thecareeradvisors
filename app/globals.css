@@ -1,26 +1,66 @@
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700,900&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* YOUR PREMIUM BRAND PALETTE */
+  --color-glaucous: #6082B6;
+  --color-spicy-paprika: #D85C34;
+  --color-porcelain: #EFF2F3;
+  --color-ivory: #FFFFF0;
+  --color-dusk-blue: #4A648B;
+  --color-pale-sky: #A6B5C0;
+
+  /* SHADCN CORE VARIABLES */
+  --color-background: var(--color-porcelain);
+  --color-foreground: #1c1c1c;
+
+  --color-card: var(--color-ivory);
+  --color-card-foreground: #1c1c1c;
+
+  --color-popover: var(--color-ivory);
+  --color-popover-foreground: #1c1c1c;
+
+  --color-primary: var(--color-glaucous);
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: var(--color-pale-sky);
+  --color-secondary-foreground: #1c1c1c;
+
+  --color-destructive: var(--color-spicy-paprika);
+  --color-destructive-foreground: #ffffff;
+
+  --color-muted: #e4e4e7;
+  --color-muted-foreground: #71717a;
+
+  --color-accent: var(--color-dusk-blue);
+  --color-accent-foreground: #ffffff;
+
+  --color-border: #e4e4e7;
+  --color-input: #e4e4e7;
+  --color-ring: var(--color-glaucous);
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(var(--radius-lg) - 2px);
+  --radius-sm: calc(var(--radius-md) - 1px);
+
+  /* NEW PREMIUM FONTS */
+  --font-sans: 'Satoshi', sans-serif;
+  --font-heading: 'Clash Display', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
 }

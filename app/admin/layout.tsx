@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { LayoutDashboard, Users, School, Settings, LogOut, Bell, CheckCircle2, Clock } from "lucide-react";
 import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { getAuth, signOut } from "firebase/auth";
+import { db, app } from "@/firebase/config";
+import { useAuth } from "@/context/AuthContext";
 
 // Toast Imports
 import { Toaster } from "@/components/ui/sonner";
@@ -14,14 +16,27 @@ import { toast } from "sonner";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  
+  // Security Context
+  const { user, loading } = useAuth();
+
+  // Notification State
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  
-  // Ref to track if it's the first time the page loads
   const isInitialLoad = useRef(true);
 
-  // Live listener for NEW inquiries + Live Toasts
+  // Security Guard: Redirect if not logged in
   useEffect(() => {
+    if (!loading && !user && pathname !== "/admin/login") {
+      router.push("/admin/login");
+    }
+  }, [user, loading, pathname, router]);
+
+  // Live listener for NEW inquiries + Live Toasts (Only runs if user is logged in)
+  useEffect(() => {
+    if (!user) return;
+
     const q = query(
       collection(db, "inquiries"), 
       where("status", "==", "New"), 
@@ -30,7 +45,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      // 1. Handle Initial Page Load (Don't spam toasts)
       if (isInitialLoad.current) {
         const initialLeads: any[] = [];
         snapshot.forEach((doc) => initialLeads.push({ id: doc.id, ...doc.data() }));
@@ -39,11 +53,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      // 2. Handle Live Changes (Trigger Toasts only for "added" documents)
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const data = change.doc.data();
-          // Trigger the bottom-left notification
           toast.success(`1 New Inquiry: ${data.name}`, {
             description: `Prefers ${data.countries?.[0] || 'Unknown'} • NEET Score: ${data.neetScore}`,
             duration: 5000,
@@ -55,22 +67,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       });
 
-      // 3. Update the dropdown bell state
       const currentLeads: any[] = [];
       snapshot.forEach((doc) => currentLeads.push({ id: doc.id, ...doc.data() }));
       setNotifications(currentLeads);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
+
+  const handleLogout = async () => {
+    const auth = getAuth(app);
+    await signOut(auth);
+    router.push("/admin/login");
+  };
+
+  // 1. Show loading spinner while checking auth state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="font-heading font-bold text-foreground/60 animate-pulse">Verifying Credentials...</p>
+      </div>
+    );
+  }
+
+  // 2. If on the login page, render just the login page (No sidebar)
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  // 3. If not authenticated and not on login page, render nothing while router pushes them away
+  if (!user) return null;
 
   const navLinks = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Inquiries", href: "/admin/inquiries", icon: Users },
     { name: "Colleges", href: "/admin/colleges", icon: School },
-    { name: "Settings", href: "#", icon: Settings },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
+  // 4. Render the full authenticated dashboard
   return (
     <div className="flex h-screen bg-background font-sans overflow-hidden">
       
@@ -104,9 +140,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className="p-4 border-t border-primary-foreground/10">
-          <Link href="/" className="flex items-center gap-3 px-4 py-3 bg-destructive/10 text-destructive-foreground hover:bg-destructive hover:shadow-md rounded-xl font-medium transition-all duration-200">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-destructive/10 text-destructive-foreground hover:bg-destructive hover:shadow-md rounded-xl font-medium transition-all duration-200"
+          >
             <LogOut className="w-5 h-5" /> Logout
-          </Link>
+          </button>
         </div>
       </aside>
 
@@ -152,7 +191,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       notifications.map((notif) => (
                         <Link key={notif.id} href="/admin/inquiries" onClick={() => setShowNotifications(false)} className="block p-4 border-b border-border/40 hover:bg-background transition-colors">
                           <p className="text-sm font-bold text-foreground mb-1">{notif.name} applied!</p>
-                          <p className="text-xs text-foreground/60 mb-2">Prefers {notif.countries[0]} • Score: {notif.neetScore}</p>
+                          <p className="text-xs text-foreground/60 mb-2">Prefers {notif.countries?.[0]} • Score: {notif.neetScore}</p>
                           <p className="text-[10px] text-primary flex items-center gap-1 font-semibold uppercase">
                             <Clock className="w-3 h-3" /> Just now
                           </p>
@@ -161,7 +200,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     )}
                   </div>
                   <div className="p-3 bg-background/50 text-center border-t border-border/40">
-                    <Link href="/admin/inquiries" className="text-xs font-bold text-primary hover:underline">View all inquiries</Link>
+                    <Link href="/admin/inquiries" onClick={() => setShowNotifications(false)} className="text-xs font-bold text-primary hover:underline">View all inquiries</Link>
                   </div>
                 </div>
               )}
@@ -170,18 +209,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* ADMIN PROFILE */}
             <div className="flex items-center gap-3 pl-6 border-l border-border/50">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shadow-sm border border-primary/20">
-                AD
+                {user.email?.charAt(0).toUpperCase() || "A"}
               </div>
               <div className="hidden sm:block">
                 <p className="text-sm font-bold text-foreground leading-tight">Admin User</p>
-                <p className="text-xs text-foreground/60 font-medium">admin@thecareeradvisors.com</p>
+                <p className="text-xs text-foreground/60 font-medium">{user.email}</p>
               </div>
             </div>
           </div>
         </header>
 
         {/* SCROLLABLE PAGE CONTENT */}
-        <div className="flex-1 overflow-auto p-6 md:p-8">
+        <div className="flex-1 overflow-auto p-6 md:p-8 bg-muted/20">
           {children}
         </div>
       </main>

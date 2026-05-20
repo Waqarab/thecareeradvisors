@@ -2,26 +2,26 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
-  // 1. Get the Authorization header from the request
+  // 1. THE BYPASS: If you are running this locally (npm run dev), skip the lock completely!
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
+
+  // 2. THE LOCK: This will ONLY run when deployed to Vercel
   const basicAuth = req.headers.get('authorization');
 
-  // 2. If the header exists, decode the base64 string
   if (basicAuth) {
     const authValue = basicAuth.split(' ')[1];
     const [user, pwd] = atob(authValue).split(':');
 
-    // 3. Check against your secure environment variables
     if (
       user === process.env.STAGING_USER && 
       pwd === process.env.STAGING_PASSWORD
     ) {
-      // If correct, let them into the site
       return NextResponse.next();
     }
   }
 
-  // 4. If no header exists, or password is wrong, block them
-  // This triggers the browser's native login popup
   return new NextResponse('Unauthorized Access - Site Under Construction', {
     status: 401,
     headers: {
@@ -30,7 +30,6 @@ export function middleware(req: NextRequest) {
   });
 }
 
-// 5. Apply this lock to EVERY single page and asset
 export const config = {
   matcher: '/:path*', 
 };

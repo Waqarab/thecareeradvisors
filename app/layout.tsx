@@ -3,6 +3,10 @@ import "./globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import NotificationManager from "@/components/NotificationManager";
 import LiveChat from "@/components/LiveChat";
+import { AuthProvider } from "@/context/AuthContext";
+
+// ADD THIS IMPORT
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "TheCareerAdvisors | Premium MBBS & Career Counselling",
@@ -17,12 +21,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className="antialiased min-h-screen flex flex-col bg-background">
-        <ConditionalLayout>
-          {/* Smart Notification Engine runs silently in the background */}
-          <NotificationManager />
-          <LiveChat />
-          {children}
-        </ConditionalLayout>
+        <AuthProvider>
+          <ConditionalLayout>
+            <NotificationManager />
+            <LiveChat />
+            {children}
+            
+            {/* ADD THE TOASTER HERE SO THE PUBLIC SITE CAN RENDER ALERTS */}
+            <Toaster position="bottom-left" richColors theme="light" />
+            
+          </ConditionalLayout>
+        </AuthProvider>
       </body>
     </html>
   );

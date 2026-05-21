@@ -28,8 +28,103 @@ export default function CollegesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // --- TEMPORARY BULK UPLOAD SCRIPT ---
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
+
+  const BULK_UNIVERSITIES = [
+    // BANGLADESH
+    { name: "Bangladesh Medical College", country: "Bangladesh", location: "Dhaka", fees: "$49,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Bangladesh Medical College (Women's)", country: "Bangladesh", location: "Uttara, Dhaka", fees: "$47,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Kumudini Women's Medical College", country: "Bangladesh", location: "Tangail", fees: "$45,300 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "East West Medical College", country: "Bangladesh", location: "Dhaka", fees: "$45,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Anwer Khan Modern Medical College", country: "Bangladesh", location: "Dhaka", fees: "$45,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Shahabuddin Medical College", country: "Bangladesh", location: "Dhaka", fees: "$45,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "International Medical College", country: "Bangladesh", location: "Gazipur", fees: "$44,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Ad-din Women's Medical College", country: "Bangladesh", location: "Dhaka", fees: "$43,500 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Prime Medical College", country: "Bangladesh", location: "Rangpur", fees: "$42,500 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Tairunnessa Memorial Medical College", country: "Bangladesh", location: "Gazipur", fees: "$42,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "IAHS (Institute of Applied Health Sciences)", country: "Bangladesh", location: "Chittagong", fees: "$42,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Diabetic Association Medical College", country: "Bangladesh", location: "Faridpur", fees: "$42,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Popular Medical College", country: "Bangladesh", location: "Dhaka", fees: "$42,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Jahurul Islam Medical College", country: "Bangladesh", location: "Kishoreganj", fees: "$42,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Z.H. Sikder Women's Medical College", country: "Bangladesh", location: "Dhaka", fees: "$42,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Central Medical College", country: "Bangladesh", location: "Comilla", fees: "$41,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Barind Medical College", country: "Bangladesh", location: "Rajshahi", fees: "$40,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "City Medical College", country: "Bangladesh", location: "Gazipur", fees: "$40,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Brahmanbaria Medical College", country: "Bangladesh", location: "Ghatura", fees: "$38,000 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Ad-din Mumin Medical College", country: "Bangladesh", location: "Jessore", fees: "$35,500 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Ad-din Akij Medical College", country: "Bangladesh", location: "Khulna", fees: "$33,500 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Ad-din Sakina Women's Medical College", country: "Bangladesh", location: "Jessore", fees: "$33,500 (Total)", placed: "TBA", image: "", isHidden: true },
+    { name: "Dhaka National Medical College", country: "Bangladesh", location: "Dhaka", fees: "$30,000 + $300/mo", placed: "TBA", image: "", isHidden: true },
+
+    // EGYPT
+    { name: "Cairo University (Kasr Al-Ainy)", country: "Egypt", location: "Cairo", fees: "$8,000 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Ain Shams University", country: "Egypt", location: "Cairo", fees: "$8,000 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Alexandria University", country: "Egypt", location: "Alexandria", fees: "$8,000 / Year", placed: "TBA", image: "", isHidden: true },
+
+    // UZBEKISTAN
+    { name: "Samarkand State Medical University", country: "Uzbekistan", location: "Samarkand", fees: "$3,850 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Tashkent State Dental / Medical Univ.", country: "Uzbekistan", location: "Tashkent", fees: "$3,500 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Tashkent Pharmaceutical Institute", country: "Uzbekistan", location: "Tashkent", fees: "$3,500 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Andijan State Medical Institute", country: "Uzbekistan", location: "Andijan", fees: "$3,500 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Namangan State University", country: "Uzbekistan", location: "Namangan", fees: "$3,390 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Bukhara State Medical Institute", country: "Uzbekistan", location: "Bukhara", fees: "$3,200 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Gulistan State University", country: "Uzbekistan", location: "Gulistan", fees: "$2,500 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Angren State University", country: "Uzbekistan", location: "Angren", fees: "$2,500 / Year", placed: "TBA", image: "", isHidden: true },
+
+    // KYRGYZSTAN
+    { name: "International School of Medicine (IUK ISM)", country: "Kyrgyzstan", location: "Bishkek", fees: "$5,000 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Osh State University", country: "Kyrgyzstan", location: "Osh", fees: "$4,000 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Jalal-Abad International University", country: "Kyrgyzstan", location: "Jalal-Abad", fees: "$3,600 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Asian International University", country: "Kyrgyzstan", location: "Kyrgyzstan", fees: "$3,500 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Kyrgyz-Uzbek International Medical Univ.", country: "Kyrgyzstan", location: "Osh", fees: "$3,000 / Year", placed: "TBA", image: "", isHidden: true },
+
+    // KAZAKHSTAN
+    { name: "Kazakh National Medical University", country: "Kazakhstan", location: "Almaty", fees: "₹5.20 Lakhs / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Al-Farabi Kazakh National University", country: "Kazakhstan", location: "Almaty", fees: "₹4.50 Lakhs / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "South Kazakhstan Medical Academy", country: "Kazakhstan", location: "Shymkent", fees: "$4,500 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "West Kazakhstan Marat Ospanov Univ.", country: "Kazakhstan", location: "Aktobe", fees: "$4,000 / Year", placed: "TBA", image: "", isHidden: true },
+
+    // TAJIKISTAN
+    { name: "Avicenna Tajik State Medical University", country: "Tajikistan", location: "Dushanbe", fees: "$4,000 / Year", placed: "TBA", image: "", isHidden: true },
+    { name: "Khatlon State Medical University", country: "Tajikistan", location: "Danghara", fees: "$4,000 / Year", placed: "TBA", image: "", isHidden: true },
+
+    // RUSSIA
+    { name: "Volgograd State Medical University", country: "Russia", location: "Volgograd", fees: "505,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Kuban State Medical University", country: "Russia", location: "Krasnodar", fees: "498,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Bashkir State Medical University", country: "Russia", location: "Ufa", fees: "405,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Omsk State Medical University", country: "Russia", location: "Omsk", fees: "370,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Yaroslavl State Medical University", country: "Russia", location: "Yaroslavl", fees: "350,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Kemerovo State Medical University", country: "Russia", location: "Kemerovo", fees: "335,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Chechen State Medical University", country: "Russia", location: "Grozny", fees: "335,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Kabardino-Balkarian State University", country: "Russia", location: "Nalchik", fees: "334,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Orel State Medical University", country: "Russia", location: "Orel", fees: "325,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "North Ossetian State Medical Academy", country: "Russia", location: "Vladikavkaz", fees: "310,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+    { name: "Sevastopol State Medical University", country: "Russia", location: "Sevastopol", fees: "294,000 Rubles / Yr", placed: "TBA", image: "", isHidden: true },
+  ];
+
+  const triggerBulkUpload = async () => {
+    if (!window.confirm(`Are you sure you want to upload ${BULK_UNIVERSITIES.length} universities to Firestore?`)) return;
+    
+    setIsBulkUploading(true);
+    let successCount = 0;
+
+    try {
+      for (const uni of BULK_UNIVERSITIES) {
+        await addDoc(collection(db, "universities"), uni);
+        successCount++;
+      }
+      toast.success(`Successfully uploaded ${successCount} universities!`);
+      fetchColleges(); 
+    } catch (error) {
+      console.error("Bulk upload error:", error);
+      toast.error(`Failed during upload. Only ${successCount} uploaded.`);
+    } finally {
+      setIsBulkUploading(false);
+    }
+  };
+
   // --- THE TRIPWIRE FUNCTION ---
-  // Silently tells Vercel to clear the public cache for universities
   const clearPublicCache = async () => {
     try {
       await fetch(`/api/revalidate?tag=universities&secret=${process.env.NEXT_PUBLIC_REVALIDATION_TOKEN}`, { method: 'POST' });
@@ -61,7 +156,6 @@ export default function CollegesPage() {
 
     setUploadingImage(true);
 
-    // 1. Compress Image to WebP format (<50kb usually, max width 800px)
     const compressedBase64 = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -75,12 +169,11 @@ export default function CollegesPage() {
           canvas.width = img.width * scale;
           canvas.height = img.height * scale;
           ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL("image/webp", 0.6)); // 0.6 quality for aggressive size reduction
+          resolve(canvas.toDataURL("image/webp", 0.6));
         };
       };
     });
 
-    // 2. Upload to Cloudinary using your specific credentials
     const data = new FormData();
     data.append("file", compressedBase64);
     data.append("upload_preset", "ml_default"); 
@@ -112,7 +205,7 @@ export default function CollegesPage() {
         await addDoc(collection(db, "universities"), formData);
       }
       
-      await clearPublicCache(); // Ping Vercel!
+      await clearPublicCache(); 
       
       setIsModalOpen(false);
       setFormData({ name: "", country: "", location: "", fees: "", placed: "", image: "", isHidden: false });
@@ -129,7 +222,7 @@ export default function CollegesPage() {
     if (!window.confirm("Are you sure you want to delete this university?")) return;
     try {
       await deleteDoc(doc(db, "universities", id));
-      await clearPublicCache(); // Ping Vercel!
+      await clearPublicCache(); 
       setColleges(colleges.filter(c => c.id !== id));
       toast.success("University Deleted!");
     } catch (error) {
@@ -140,7 +233,7 @@ export default function CollegesPage() {
   async function toggleVisibility(college: College) {
     try {
       await updateDoc(doc(db, "universities", college.id), { isHidden: !college.isHidden });
-      await clearPublicCache(); // Ping Vercel!
+      await clearPublicCache(); 
       setColleges(colleges.map(c => c.id === college.id ? { ...c, isHidden: !college.isHidden } : c));
       toast.success(college.isHidden ? "University is now Live" : "University is now Hidden");
     } catch (error) {
@@ -168,78 +261,90 @@ export default function CollegesPage() {
           <p className="text-sm text-foreground/60">Add, edit, or hide colleges from the main website.</p>
         </div>
         
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openAdd} className="bg-primary text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" /> Add University
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Edit University" : "Add New University"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSave} className="space-y-4 mt-4">
-              <Input placeholder="University Name (e.g. Kazan Federal)" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
-              
-              <div className="grid grid-cols-2 gap-3">
-                <Input placeholder="Country (e.g. Russia)" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} required />
-                <Input placeholder="Location (e.g. Kazan)" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} required />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <Input placeholder="Avg Fees (e.g. ₹ 4.5 Lakhs)" value={formData.fees} onChange={e => setFormData({...formData, fees: e.target.value})} required />
-                <Input placeholder="Students Placed (e.g. 200+)" value={formData.placed} onChange={e => setFormData({...formData, placed: e.target.value})} required />
-              </div>
+        <div className="flex items-center gap-3">
+          {/* TEMPORARY BULK UPLOAD BUTTON */}
+          <Button 
+            onClick={triggerBulkUpload} 
+            disabled={isBulkUploading} 
+            variant="destructive"
+            className="font-bold shadow-md"
+          >
+            {isBulkUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "⚠️ Run Bulk Import (44 items)"}
+          </Button>
 
-              {/* DUAL IMAGE INPUT */}
-              <div className="p-4 border border-border/50 rounded-xl bg-muted/10 space-y-3">
-                <label className="text-xs font-bold uppercase text-foreground/60 tracking-wider">Cover Image</label>
-                
-                {/* Option 1: File Upload */}
-                <div className="flex items-center gap-3">
-                  <Input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleImageUpload} 
-                    disabled={uploadingImage}
-                    className="text-xs file:bg-primary/10 file:text-primary file:rounded-md file:border-0 file:px-3 file:py-1 file:font-bold h-10 cursor-pointer" 
-                  />
-                  {uploadingImage && <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />}
-                </div>
-                
-                <div className="flex items-center text-[10px] font-bold text-foreground/40 uppercase">
-                  <span className="flex-1 border-t border-border/50"></span>
-                  <span className="px-3">OR Paste Link</span>
-                  <span className="flex-1 border-t border-border/50"></span>
-                </div>
-                
-                {/* Option 2: Direct URL */}
-                <div className="flex relative">
-                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
-                  <Input 
-                    placeholder="https://..." 
-                    value={formData.image} 
-                    onChange={e => setFormData({...formData, image: e.target.value})} 
-                    className="pl-9" 
-                    required 
-                  />
-                </div>
-                
-                {/* Live Preview */}
-                {formData.image && (
-                  <div className="h-28 w-full rounded-lg border border-border/50 bg-muted overflow-hidden relative mt-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
-
-              <Button type="submit" disabled={uploadingImage} className="w-full bg-primary mt-2">
-                {editingId ? "Save Changes" : "Add University"}
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openAdd} className="bg-primary text-primary-foreground">
+                <Plus className="w-4 h-4 mr-2" /> Add University
               </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[90vh]">
+              <DialogHeader>
+                <DialogTitle>{editingId ? "Edit University" : "Add New University"}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSave} className="space-y-4 mt-4">
+                <Input placeholder="University Name (e.g. Kazan Federal)" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Input placeholder="Country (e.g. Russia)" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} required />
+                  <Input placeholder="Location (e.g. Kazan)" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} required />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Input placeholder="Avg Fees (e.g. ₹ 4.5 Lakhs)" value={formData.fees} onChange={e => setFormData({...formData, fees: e.target.value})} required />
+                  <Input placeholder="Students Placed (e.g. 200+)" value={formData.placed} onChange={e => setFormData({...formData, placed: e.target.value})} required />
+                </div>
+
+                {/* DUAL IMAGE INPUT */}
+                <div className="p-4 border border-border/50 rounded-xl bg-muted/10 space-y-3">
+                  <label className="text-xs font-bold uppercase text-foreground/60 tracking-wider">Cover Image</label>
+                  
+                  {/* Option 1: File Upload */}
+                  <div className="flex items-center gap-3">
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageUpload} 
+                      disabled={uploadingImage}
+                      className="text-xs file:bg-primary/10 file:text-primary file:rounded-md file:border-0 file:px-3 file:py-1 file:font-bold h-10 cursor-pointer" 
+                    />
+                    {uploadingImage && <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />}
+                  </div>
+                  
+                  <div className="flex items-center text-[10px] font-bold text-foreground/40 uppercase">
+                    <span className="flex-1 border-t border-border/50"></span>
+                    <span className="px-3">OR Paste Link</span>
+                    <span className="flex-1 border-t border-border/50"></span>
+                  </div>
+                  
+                  {/* Option 2: Direct URL */}
+                  <div className="flex relative">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
+                    <Input 
+                      placeholder="https://..." 
+                      value={formData.image} 
+                      onChange={e => setFormData({...formData, image: e.target.value})} 
+                      className="pl-9" 
+                      required 
+                    />
+                  </div>
+                  
+                  {/* Live Preview */}
+                  {formData.image && (
+                    <div className="h-28 w-full rounded-lg border border-border/50 bg-muted overflow-hidden relative mt-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+
+                <Button type="submit" disabled={uploadingImage} className="w-full bg-primary mt-2">
+                  {editingId ? "Save Changes" : "Add University"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

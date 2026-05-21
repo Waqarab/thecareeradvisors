@@ -3,64 +3,65 @@
 
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
-  /* YOUR PREMIUM BRAND PALETTE */
-  --color-glaucous: #6082B6;
-  --color-spicy-paprika: #D85C34;
-  --color-porcelain: #EFF2F3;
-  --color-ivory: #FFFFF0;
-  --color-dusk-blue: #4A648B;
-  --color-pale-sky: #A6B5C0;
+  /* BRAND PALETTE */
+  --color-glaucous: #6082B6;    /* Primary Action */
+  --color-spicy-paprika: #D85C34; /* Destructive/Urgent */
+  --color-porcelain: #F4F7F8;   /* Main Background (Cooler/Crisper) */
+  --color-ivory: #FFFFFF;       /* Card Background (Pure White for Contrast) */
+  --color-dusk-blue: #2F4A70;   /* Accent */
+  --color-slate-cool: #3F4652;  /* Text Main */
 
-  /* SHADCN CORE VARIABLES */
+  /* SHADCN CORE VARIABLES (Fixed Contrast) */
   --color-background: var(--color-porcelain);
-  --color-foreground: #1c1c1c;
+  --color-foreground: var(--color-slate-cool);
 
-  --color-card: var(--color-ivory);
-  --color-card-foreground: #1c1c1c;
+  --color-card: var(--color-ivory); /* Cards are now Pure White */
+  --color-card-foreground: var(--color-slate-cool);
 
   --color-popover: var(--color-ivory);
-  --color-popover-foreground: #1c1c1c;
+  --color-popover-foreground: var(--color-slate-cool);
 
   --color-primary: var(--color-glaucous);
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: var(--color-pale-sky);
-  --color-secondary-foreground: #1c1c1c;
+  --color-secondary: #e2e8f0;
+  --color-secondary-foreground: var(--color-slate-cool);
 
   --color-destructive: var(--color-spicy-paprika);
   --color-destructive-foreground: #ffffff;
 
-  --color-muted: #e4e4e7;
-  --color-muted-foreground: #71717a;
+  --color-muted: #e2e8f0;
+  --color-muted-foreground: #64748b;
 
   --color-accent: var(--color-dusk-blue);
   --color-accent-foreground: #ffffff;
 
-  --color-border: #e4e4e7;
-  --color-input: #e4e4e7;
+  --color-border: #cbd5e1;
+  --color-input: #cbd5e1;
   --color-ring: var(--color-glaucous);
 
-  --radius-lg: 0.5rem;
-  --radius-md: calc(var(--radius-lg) - 2px);
-  --radius-sm: calc(var(--radius-md) - 1px);
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
 
-  /* NEW PREMIUM FONTS */
   --font-sans: 'Satoshi', sans-serif;
   --font-heading: 'Clash Display', sans-serif;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
+  /* Ensure Headings are dark enough for high contrast */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+    @apply font-heading text-[#121212];
+  }
+  /* Force dark text for readability */
+  p {
+    @apply text-slate-700;
   }
 }

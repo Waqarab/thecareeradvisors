@@ -38,6 +38,9 @@ function DarkHighlightReveal({ text }: { text: string }) {
   );
 }
 
+// Fallback image in case the database image field is empty
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop";
+
 export default function UniversitiesClient({ initialUniversities }: { initialUniversities: University[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCountry, setActiveCountry] = useState("All");
@@ -46,8 +49,10 @@ export default function UniversitiesClient({ initialUniversities }: { initialUni
     window.scrollTo(0, 0);
   }, []);
 
-  const countries = ["All", ...Array.from(new Set(initialUniversities.map(u => u.country)))];
+  // Extract unique countries dynamically from the database
+  const countries = ["All", ...Array.from(new Set(initialUniversities.map(u => u.country)))].sort();
 
+  // Mega-filter logic
   const filteredUniversities = initialUniversities.filter(uni => {
     const matchesCountry = activeCountry === "All" || uni.country === activeCountry;
     const searchString = `${uni.name} ${uni.location} ${uni.country}`.toLowerCase();
@@ -106,66 +111,72 @@ export default function UniversitiesClient({ initialUniversities }: { initialUni
         {filteredUniversities.length === 0 ? (
           <div className="text-center py-20 text-foreground/60">
             <h3 className="text-2xl font-bold font-heading mb-2">No Universities Found</h3>
-            <p>Try adjusting your search or filters.</p>
+            <p>Try adjusting your search or filters. Or check back later for updates.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <AnimatePresence mode="popLayout">
-              {filteredUniversities.map((uni) => (
-                <motion.div
-                  key={uni.id} 
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-card rounded-2xl overflow-hidden border border-border/50 shadow-sm hover:shadow-xl transition-all group flex flex-col"
-                >
-                  <div className="relative h-52 overflow-hidden bg-muted">
-                    <div className="absolute inset-0 bg-black/40 z-10 group-hover:bg-black/20 transition-colors"></div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={uni.image} 
-                      alt={uni.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    />
-                    <div className="absolute top-4 left-4 z-20">
-                      <span className="bg-background/90 backdrop-blur text-foreground px-3 py-1 rounded-full text-xs font-bold shadow-sm">{uni.country}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold font-heading mb-3 text-foreground leading-tight group-hover:text-primary transition-colors">{uni.name}</h3>
-                    <p className="flex items-center gap-2 text-sm text-foreground/70 mb-5 font-medium">
-                      <MapPin className="w-4 h-4 text-primary" /> {uni.location}
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-4 mb-6 mt-auto bg-muted/40 p-4 rounded-xl border border-border/50">
-                      <div>
-                        <p className="text-[10px] text-foreground/50 uppercase tracking-wider font-bold mb-1">Avg Fees</p>
-                        <p className="font-bold text-sm flex items-center gap-1.5"><Banknote className="w-4 h-4 text-primary" />{uni.fees}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-foreground/50 uppercase tracking-wider font-bold mb-1">Our Students</p>
-                        <p className="font-bold text-sm flex items-center gap-1.5"><Users className="w-4 h-4 text-accent" />{uni.placed}</p>
+              {filteredUniversities.map((uni) => {
+                // Check if image exists, otherwise use fallback
+                const imgSrc = uni.image && uni.image.trim() !== "" ? uni.image : FALLBACK_IMAGE;
+
+                return (
+                  <motion.div
+                    key={uni.id} 
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-card rounded-2xl overflow-hidden border border-border/50 shadow-sm hover:shadow-xl transition-all group flex flex-col"
+                  >
+                    <div className="relative h-52 overflow-hidden bg-muted">
+                      <div className="absolute inset-0 bg-black/40 z-10 group-hover:bg-black/20 transition-colors"></div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={imgSrc} 
+                        alt={uni.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      />
+                      <div className="absolute top-4 left-4 z-20">
+                        <span className="bg-background/90 backdrop-blur text-foreground px-3 py-1 rounded-full text-xs font-bold shadow-sm">{uni.country}</span>
                       </div>
                     </div>
                     
-                    <div className="flex flex-col gap-3">
-                      <Link href={`/universities/${uni.id}`} className="w-full">
-                        <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/5 font-bold active:scale-95 transition-all">
-                          <BookOpen className="w-4 h-4 mr-2" /> Explore University
-                        </Button>
-                      </Link>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <h3 className="text-xl font-bold font-heading mb-3 text-foreground leading-tight group-hover:text-primary transition-colors">{uni.name}</h3>
+                      <p className="flex items-center gap-2 text-sm text-foreground/70 mb-5 font-medium">
+                        <MapPin className="w-4 h-4 text-primary" /> {uni.location}
+                      </p>
                       
-                      <InquiryModal>
-                        <Button className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold cursor-pointer active:scale-95 transition-all">
-                          Get Admission Details <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </InquiryModal>
+                      <div className="grid grid-cols-2 gap-4 mb-6 mt-auto bg-muted/40 p-4 rounded-xl border border-border/50">
+                        <div>
+                          <p className="text-[10px] text-foreground/50 uppercase tracking-wider font-bold mb-1">Avg Fees</p>
+                          <p className="font-bold text-sm flex items-center gap-1.5"><Banknote className="w-4 h-4 text-primary" />{uni.fees}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-foreground/50 uppercase tracking-wider font-bold mb-1">Our Students</p>
+                          <p className="font-bold text-sm flex items-center gap-1.5"><Users className="w-4 h-4 text-accent" />{uni.placed}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-3">
+                        {/* Ensure dynamic routing works by linking to the university ID */}
+                        <Link href={`/universities/${uni.id}`} className="w-full">
+                          <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/5 font-bold active:scale-95 transition-all">
+                            <BookOpen className="w-4 h-4 mr-2" /> Explore University
+                          </Button>
+                        </Link>
+                        
+                        <InquiryModal>
+                          <Button className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold cursor-pointer active:scale-95 transition-all">
+                            Get Admission Details <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        </InquiryModal>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         )}

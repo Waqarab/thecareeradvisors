@@ -39,7 +39,6 @@ export default function Home() {
       <Preloader onLoadingComplete={() => setIsLoaded(true)} />
 
       {/* 2. THE MAIN PAGE */}
-      {/* This renders instantly behind the preloader */}
       <div className="flex flex-col min-h-screen font-sans">
         
         {/* PREMIUM HERO SECTION */}
@@ -51,14 +50,24 @@ export default function Home() {
 
               {/* LEFT COLUMN: Hook & CTA */}
               <div className="max-w-2xl z-10">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                
+                {/* Notice how 'animate' now waits for 'isLoaded' to be true */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
+                  transition={{ duration: 0.5 }}
+                >
                   <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-6 border border-primary/20 shadow-sm">
                     <ShieldCheck className="w-4 h-4" />
                     Government Approved Consultancy
                   </span>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
                   <h1 className="text-4xl md:text-5xl xl:text-6xl font-extrabold tracking-tight text-foreground mb-4 leading-[1.1] font-heading">
                     Your Dream MBBS <br /> Journey Starts Here.
                   </h1>
@@ -68,13 +77,13 @@ export default function Home() {
                 <div className="relative inline-block mb-8 mt-2">
                   <motion.div
                     initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
+                    animate={isLoaded ? { width: "100%" } : { width: "0%" }}
                     transition={{ duration: 0.8, delay: 0.5, ease: "easeInOut" }}
                     className="absolute inset-0 bg-accent rounded-lg shadow-lg"
                   ></motion.div>
                   <motion.p 
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    animate={isLoaded ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ duration: 0.3, delay: 0.8 }}
                     className="relative z-10 text-xl md:text-3xl font-bold text-accent-foreground px-5 py-2 font-heading whitespace-nowrap"
                   >
@@ -82,13 +91,22 @@ export default function Home() {
                   </motion.p>
                 </div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
                   <p className="text-base md:text-lg text-foreground/70 mb-10 leading-relaxed font-medium max-w-lg">
                     We guide aspiring doctors to secure admissions in globally recognized medical universities with 100% transparency and end-to-end support.
                   </p>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-4">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
+                  transition={{ duration: 0.5, delay: 0.3 }} 
+                  className="flex flex-col sm:flex-row items-center gap-4"
+                >
                   <InquiryModal>
                     <Button size="lg" className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 text-lg px-8 py-6 rounded-full shadow-xl shadow-destructive/20 group cursor-pointer active:scale-95 transition-all">
                       Get Free Counselling
@@ -107,7 +125,7 @@ export default function Home() {
               {/* RIGHT COLUMN: Resized Image Frame & Badges */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                animate={isLoaded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="relative mx-auto w-full max-w-[320px] lg:max-w-[400px] mt-8 lg:mt-0"
               >
@@ -123,7 +141,9 @@ export default function Home() {
 
                 {/* Floating Badge 2: Experience */}
                 <motion.div
-                  initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.7 }}
+                  initial={{ x: 20, opacity: 0 }} 
+                  animate={isLoaded ? { x: 0, opacity: 1 } : { x: 20, opacity: 0 }} 
+                  transition={{ delay: 0.7 }}
                   className="absolute top-1/3 -right-6 md:-right-10 bg-card p-3 rounded-2xl shadow-xl border border-border/50 flex items-center gap-3 z-10"
                 >
                   <div className="bg-primary/10 text-primary p-1.5 rounded-full">
@@ -137,7 +157,9 @@ export default function Home() {
 
                 {/* Floating Badge 3: Students Placed */}
                 <motion.div
-                  initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }}
+                  initial={{ y: -20, opacity: 0 }} 
+                  animate={isLoaded ? { y: 0, opacity: 1 } : { y: -20, opacity: 0 }} 
+                  transition={{ delay: 0.8 }}
                   className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-card p-3 rounded-2xl shadow-xl border border-border/50 flex items-center gap-3 z-10 w-max"
                 >
                    <div className="flex -space-x-2 pl-1">

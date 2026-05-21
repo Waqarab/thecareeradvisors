@@ -18,6 +18,11 @@ import FaqSection from "@/components/FaqSection";
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Silently track unique daily visitors in the background
+  useEffect(() => {
+    fetch('/api/track-visit').catch(() => {});
+  }, []);
+
   // Lock scrolling while preloader is active so users can't scroll down blindly
   useEffect(() => {
     if (!isLoaded) {
@@ -91,7 +96,7 @@ export default function Home() {
                     </Button>
                   </InquiryModal>
                   
-                  <a href="https://wa.me/917889708059" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                  <a href="https://wa.me/916005152350" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                     <Button size="lg" variant="outline" className="w-full text-lg px-8 py-6 rounded-full border-primary/30 hover:bg-primary/5 text-primary bg-background font-bold active:scale-95 transition-all">
                       Chat on WhatsApp
                     </Button>

@@ -237,7 +237,7 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
                   </Button>
                 </InquiryModal>
                 
-                <a href="tel:+917889708059" className="block w-full">
+                <a href="tel:+916005152350" className="block w-full">
                   <Button variant="outline" className="w-full border-primary/30 text-primary font-bold py-6 rounded-xl active:scale-95 transition-transform bg-background">
                     <Phone className="w-4 h-4 mr-2" /> Call Academic Expert
                   </Button>

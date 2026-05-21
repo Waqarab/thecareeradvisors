@@ -63,19 +63,19 @@ export default function AboutPage() {
             <div className="max-w-2xl z-10">
               <FadeUp>
                 <span className="inline-block py-1.5 px-4 rounded-full bg-primary/10 text-primary text-sm font-bold tracking-wider uppercase mb-6 border border-primary/20 shadow-sm">
-                  The Career Advisors
+                  J&K's Most Trusted Educational Consultancy
                 </span>
               </FadeUp>
               
               <FadeUp delay={0.1}>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-heading text-foreground leading-[1.1] tracking-tight mb-6">
-                  We don't just secure admissions. We build <DarkHighlightReveal text="Medical Careers." />
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold font-heading text-foreground leading-[1.1] tracking-tight mb-6">
+                  <span className="text-xl md:text-3xl lg:text-4xl">Helping Students Make</span> <DarkHighlightReveal text="Better Decisions." />
                 </h1>
               </FadeUp>
               
               <FadeUp delay={0.2}>
                 <p className="text-lg md:text-xl text-foreground/70 font-medium leading-relaxed mb-8 max-w-lg">
-                  Since 2010, we have stood against hidden fees and false promises, guiding over 500+ families through a completely transparent, stress-free admission journey.
+                  Since 2010, The Career Advisors have stood against hidden fees and false promises, guiding over 500+ families through a completely transparent, stress-free admission journey.
                 </p>
               </FadeUp>
             </div>
@@ -106,7 +106,7 @@ export default function AboutPage() {
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold font-heading text-foreground leading-tight">Govt. Approved</p>
+                    <p className="font-bold font-heading text-foreground leading-tight">Most Choosen</p>
                     <p className="text-xs font-medium text-foreground/60">Certified Consultancy</p>
                   </div>
                 </div>
@@ -131,20 +131,18 @@ export default function AboutPage() {
           
           <FadeUp delay={0.1}>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading text-center leading-tight mb-12">
-              "We started this agency because we saw too many deserving students lose their careers to fraudulent agents and hidden fee traps."
+              "Since 2016, our purpose has been simple: helping students find clarity, confidence, and the right future."
             </h2>
           </FadeUp>
 
           <div className="grid md:grid-cols-2 gap-12 text-white/70 text-lg leading-relaxed font-medium">
             <FadeUp delay={0.2}>
               <p>
-                In the early 2010s, the medical admission sector was plagued by a lack of transparency. Agents would promise one fee structure in India, only for students to face massive, unexpected "donations" upon landing abroad. Families were being held hostage by their own dreams.
-              </p>
+The Career Advisors was established in 2016 with a simple vision  to help students make better decisions about their future through genuine guidance and international educational opportunities. Over the years, I have personally interacted with students from different backgrounds, each with different goals, dreams, and challenges. Some wanted to pursue medical education, others were looking for undergraduate, postgraduate, scholarship, or international career opportunities. One common thing among all of them was the need for proper direction and trustworthy support. That is exactly what inspired me to build this organization.              </p>
             </FadeUp>
             <FadeUp delay={0.3}>
               <p>
-                The Career Advisors was born out of a rebellion against this system. Our motive is singular: absolute transparency. We visit the universities, audit their clinical facilities, verify their WHO/NMC standings, and present you with the unvarnished truth. Your success is our reputation.
-              </p>
+Today, The Career Advisors has expanded its presence across India and internationally, with offices in Srinagar, Chandigarh, Bangladesh, Uzbekistan, and Egypt. We proudly assist students for admissions, scholarships, career counseling, visa guidance, and international education opportunities across 20+ countries. What makes me happiest is seeing students from Kashmir and across India studying confidently in different parts of the world and building successful careers through the guidance and support we provided. I sincerely thank every student and parent who has trusted us since 2016. Your support and belief in our work continue to motivate us every day.              </p>
             </FadeUp>
           </div>
 

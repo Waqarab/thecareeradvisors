@@ -47,7 +47,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-foreground/70 leading-snug text-sm mt-1">
-              We are dedicated to guiding J&K students towards successful medical careers worldwide with 100% honesty and transparency.
+              The Career Advisors - Best Career Consultancy in Jammu and Kashmir. The Career Advisors is choosed by everybody for its transparency, experience, and dedicated team. <br/> <b><i> Choose us and Feel the difference.</i></b>
             </p>
             <div className="flex items-center gap-4 text-primary">
               <a href="#" className="hover:text-destructive transition-colors"><SocialIcon type="facebook" /></a>
@@ -87,15 +87,15 @@ export default function Footer() {
             <ul className="space-y-4 text-sm text-foreground/70">
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary" />
-                <span>+91 78897 08059</span>
+                <span>+916005152350</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary" />
-                <span>info@thecareeradvisors.com</span>
+                <span>info@thecareeradvisors.in</span>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-primary mt-1 shrink-0" />
-                <span>Hari Singh High Street, Srinagar, J&K – 190001</span>
+                <span>2nd Floor, Baghat Chowk, Al Harim Complex, Near Old Cottage Inn, Baghat, Srinagar, J&K – 190005</span>
               </li>
             </ul>
             <Button variant="outline" className="mt-6 w-full border-primary/30 text-primary hover:bg-primary/5">

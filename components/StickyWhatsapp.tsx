@@ -1,20 +1,49 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 
 export default function StickyWhatsApp() {
+  const pathname = usePathname();
+  const [isHiddenByMenu, setIsHiddenByMenu] = useState(false);
+
+  // Listen for the ultra-fast custom event dispatched by the Navbar
+  useEffect(() => {
+    const handleMenuToggle = (e: Event) => {
+      setIsHiddenByMenu((e as CustomEvent).detail);
+    };
+
+    window.addEventListener("mobileMenuToggle", handleMenuToggle);
+    return () => window.removeEventListener("mobileMenuToggle", handleMenuToggle);
+  }, []);
+
+  // Completely unmount the component to save memory when in the Admin dashboard
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
     <motion.div
-      className="fixed bottom-6 left-6 z-[100] cursor-grab active:cursor-grabbing"
+      className="fixed bottom-6 left-6 z-[90] cursor-grab active:cursor-grabbing"
       drag
       dragConstraints={{ left: 0, right: 300, top: -500, bottom: 0 }} 
       dragElastic={0.1} 
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20, delay: 1 }}
+      // Dynamically animate out of the way if the mobile menu is opened
+      animate={
+        isHiddenByMenu 
+          ? { scale: 0.8, opacity: 0, y: 40, pointerEvents: "none" } 
+          : { scale: 1, opacity: 1, y: 0, pointerEvents: "auto" }
+      }
+      transition={{ 
+        type: "spring", 
+        stiffness: 260, 
+        damping: 20, 
+        // Remove the 1-second delay if it's just hiding for the menu
+        delay: isHiddenByMenu ? 0 : 1 
+      }}
     >
       <motion.a
-        href="https://wa.me/917889708059"
+        href="https://wa.me/+916005152350"
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-center w-16 h-16 bg-[#25D366] text-white rounded-full shadow-[0_8px_30px_rgba(37,211,102,0.4)] relative"

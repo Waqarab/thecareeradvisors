@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, X, Send, Loader2, Bot, Paperclip, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
 
 // Updated interface to support images
 interface Message {
@@ -13,7 +14,9 @@ interface Message {
 }
 
 export default function LiveChat() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isHiddenByMenu, setIsHiddenByMenu] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: "ai", content: "Hi! I'm the AI Assistant for The Career Advisors. How can I help you with your MBBS journey today?" }
   ]);
@@ -24,9 +27,26 @@ export default function LiveChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // --- LIGHTNING FAST EVENT LISTENER ---
+  // Listens for the Navbar to open/close without needing heavy React Context
+  useEffect(() => {
+    const handleMenuToggle = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setIsHiddenByMenu(customEvent.detail);
+      // Auto-close the chat window if they open the mobile menu
+      if (customEvent.detail) setIsOpen(false); 
+    };
+
+    window.addEventListener("mobileMenuToggle", handleMenuToggle);
+    return () => window.removeEventListener("mobileMenuToggle", handleMenuToggle);
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, selectedImage]);
+
+  // Completely destroy the component on Admin routes to save memory
+  if (pathname?.startsWith("/admin")) return null;
 
   // Convert image to base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,14 +102,14 @@ export default function LiveChat() {
         throw new Error("No reply received");
       }
     } catch (error) {
-      setMessages((prev) => [...prev, { role: "ai", content: "I'm having trouble connecting to my servers right now. Please try calling us directly at +91 78897 08059." }]);
+      setMessages((prev) => [...prev, { role: "ai", content: "I'm having trouble connecting to my servers right now. Please try calling us directly at 916005152350." }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
+    <div className={`fixed bottom-6 right-6 z-[90] flex flex-col items-end transition-all duration-300 ease-out ${isHiddenByMenu ? 'opacity-0 pointer-events-none translate-y-10' : 'opacity-100 translate-y-0'}`}>
       
       <AnimatePresence>
         {isOpen && (
@@ -107,7 +127,7 @@ export default function LiveChat() {
                   <Bot className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold font-heading leading-tight text-white">AI Career Expert</h3>
+                  <h3 className="font-bold font-heading leading-tight text-white">thecareeradvisors</h3>
                   <p className="text-[10px] text-white/80 font-medium uppercase tracking-wider flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Online
                   </p>
@@ -195,7 +215,7 @@ export default function LiveChat() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask or upload document..."
+                placeholder="Ask any question..."
                 className="flex-1 bg-muted/50 border border-border/50 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
               />
               

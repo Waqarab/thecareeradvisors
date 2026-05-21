@@ -1,97 +1,112 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Share2, Mail } from "lucide-react";
+import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+// Highly Optimized Data: 
+// 1. Reduced image width in URL (w=400) to save bandwidth.
+// 2. Ordered by hierarchy.
 const coreTeam = [
-  {
-    id: 1,
-    name: "Dr. Tariq Ahmed",
-    role: "Founder & Director",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=600&auto=format&fit=crop",
+  { 
+    id: 1, 
+    name: "Dr. Tariq Ahmed", 
+    role: "Founder & Director", 
+    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&auto=format&fit=crop" 
   },
-  {
-    id: 2,
-    name: "Sarah Khan",
-    role: "Co-Founder & Head of Admissions",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop",
+  { 
+    id: 2, 
+    name: "Sarah Khan", 
+    role: "Co-Founder", 
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop" 
   },
-  {
-    id: 3,
-    name: "Rahul Verma",
-    role: "Visa & Documentation Head",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop",
+  { 
+    id: 3, 
+    name: "Rahul Verma", 
+    role: "Head Counselor", 
+    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=400&auto=format&fit=crop" 
+  },
+  { 
+    id: 4, 
+    name: "Neha Gupta", 
+    role: "Admissions Head", 
+    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=400&auto=format&fit=crop" 
   },
 ];
 
 export default function TeamSection() {
   return (
-    <section className="py-24 bg-background overflow-hidden relative">
-      <div className="container mx-auto px-4 md:px-8">
+    <section className="py-16 md:py-24 bg-background border-t border-border/40">
+      <div className="container mx-auto px-4 md:px-8 max-w-6xl">
         
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <motion.span 
-            initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="text-destructive font-bold tracking-wider uppercase text-sm mb-4 block"
+        {/* Header with Stats */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-5">
+          <div className="max-w-2xl">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }} 
+              whileInView={{ opacity: 1, y: 0 }} 
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-primary/10 border border-primary/20 text-primary font-extrabold text-xs md:text-sm mb-4 shadow-sm"
+            >
+              <Trophy className="w-3.5 h-3.5 md:w-4 md:h-4" /> Counselled 5000+ Students
+            </motion.div>
+            
+            <motion.h2 
+              initial={{ opacity: 0, y: 10 }} 
+              whileInView={{ opacity: 1, y: 0 }} 
+              viewport={{ once: true }} 
+              transition={{ delay: 0.1 }}
+              className="text-3xl md:text-5xl font-black font-heading text-foreground leading-tight"
+            >
+              Meet The Experts Behind Your Success
+            </motion.h2>
+          </div>
+          
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }} 
+            whileInView={{ opacity: 1, x: 0 }} 
+            viewport={{ once: true }}
+            className="shrink-0 w-full md:w-auto"
           >
-            The Experts Behind Your Success
-          </motion.span>
-          <motion.h2 
-            initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-extrabold font-heading text-foreground mb-6"
-          >
-            Meet Our Core Leadership
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
-            className="text-lg text-foreground/70 font-medium"
-          >
-            Guided by professionals with over a decade of experience in international medical education and student welfare.
-          </motion.p>
+            <Link href="/team" className="block w-full">
+              <Button variant="outline" className="w-full md:w-auto rounded-full px-6 font-bold active:scale-95 transition-transform border-border/80 shadow-sm">
+                View Full Team <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {coreTeam.map((member, index) => (
+        {/* Dense Mobile-Optimized Grid (2x2 on Mobile, 4x1 on Desktop) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          {coreTeam.map((member, i) => (
             <motion.div
               key={member.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="group relative"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "50px" }}
+              transition={{ delay: i * 0.1, duration: 0.3 }}
+              className="relative rounded-2xl md:rounded-3xl overflow-hidden group shadow-sm border border-border/50 bg-muted aspect-[3/4] md:aspect-[4/5]"
             >
-              <div className="relative aspect-[4/5] rounded-3xl overflow-hidden mb-6 bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={member.image} 
-                  alt={member.name} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"
-                />
-                {/* Social Overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-primary transition-colors cursor-pointer"><Share2 className="w-5 h-5" /></div>
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-primary transition-colors cursor-pointer"><Mail className="w-5 h-5" /></div>
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="text-2xl font-bold font-heading text-foreground group-hover:text-primary transition-colors">{member.name}</h3>
-                <p className="text-sm font-bold text-destructive uppercase tracking-wider mt-1">{member.role}</p>
+              {/* Native lazy loading for performance */}
+              <img 
+                src={member.image} 
+                alt={member.name} 
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
+              
+              {/* Dark Gradient Overlay for Text Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-3 md:p-6">
+                <h3 className="font-black text-white font-heading leading-tight mb-0.5 text-sm md:text-2xl truncate">
+                  {member.name}
+                </h3>
+                <p className="text-primary font-bold text-[10px] md:text-sm uppercase tracking-wider truncate">
+                  {member.role}
+                </p>
               </div>
             </motion.div>
           ))}
-        </div>
-
-        {/* View All Button */}
-        <div className="mt-16 text-center">
-          <Link href="/team">
-            <Button size="lg" variant="outline" className="border-primary/30 text-primary hover:bg-primary/5 rounded-full px-8 font-bold active:scale-95 transition-all">
-              Meet The Complete Team <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
         </div>
 
       </div>

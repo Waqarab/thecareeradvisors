@@ -5,9 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Users, Banknote, ArrowRight, Loader2, Image as ImageIcon, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import InquiryModal from "@/components/InquiryModal";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/config";
 
+// 1. Define the University interface
 interface University {
   id: string;
   name: string;
@@ -19,25 +18,39 @@ interface University {
   isHidden?: boolean;
 }
 
-export default function UniversitiesClient() {
-  const [universities, setUniversities] = useState<University[]>([]);
-  const [loading, setLoading] = useState(true);
+// 2. Define the Props interface to fix the TypeScript build error
+interface UniversitiesClientProps {
+  initialUniversities?: University[];
+}
+
+// 3. Accept the props in the component signature
+export default function UniversitiesClient({ initialUniversities = [] }: UniversitiesClientProps) {
+  // 4. Initialize state WITH the data passed from the server!
+  const [universities, setUniversities] = useState<University[]>(initialUniversities);
+  const [loading, setLoading] = useState(initialUniversities.length === 0);
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     async function loadUniversities() {
+      // If the server successfully passed the data down, we don't need to fetch anything!
+      if (initialUniversities.length > 0) {
+        setUniversities(initialUniversities.filter(u => !u.isHidden));
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Instant load from Preloader cache
+        // Fallback 1: Instant load from Preloader cache
         const cached = sessionStorage.getItem("tca_universities_cache");
         if (cached) {
           const parsedData = JSON.parse(cached) as University[];
-          setUniversities(parsedData);
+          setUniversities(parsedData.filter(u => !u.isHidden));
           setLoading(false);
           return; 
         }
 
-        // Fallback to Vercel API
+        // Fallback 2: Vercel API
         const res = await fetch("/api/universities");
         const data = await res.json();
         
@@ -50,7 +63,7 @@ export default function UniversitiesClient() {
       }
     }
     loadUniversities();
-  }, []);
+  }, [initialUniversities]);
 
   const countries = ["All", ...Array.from(new Set(universities.map(u => u.country)))];
 

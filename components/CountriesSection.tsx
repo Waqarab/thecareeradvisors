@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Users, Banknote, ArrowRight, Loader2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import InquiryModal from "@/components/InquiryModal";
 import Link from "next/link";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import InquiryModal from "@/components/InquiryModal";
 
 interface University {
   id: string;
@@ -28,7 +26,6 @@ export default function CountriesSection() {
   useEffect(() => {
     async function loadUniversities() {
       try {
-        // 1. Try to get INSTANT data from the preloader cache
         const cached = sessionStorage.getItem("tca_universities_cache");
         if (cached) {
           const parsedData = JSON.parse(cached) as University[];
@@ -37,7 +34,6 @@ export default function CountriesSection() {
           return; 
         }
 
-        // 2. Fallback: Fetch from our Vercel Cached API (Not Firebase directly!)
         const res = await fetch("/api/universities");
         const data = await res.json();
         
@@ -87,17 +83,17 @@ export default function CountriesSection() {
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-10 h-10 animate-spin text-[#6082B6]" /></div>
         ) : (
-          // Removed `layout` property from parent container to prevent mobile flickering
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <AnimatePresence mode="popLayout">
-              {filteredUniversities.map((uni) => (
+              {filteredUniversities.map((uni, idx) => (
                 <motion.div
                   key={uni.id} 
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
+                  // 🚀 PREMIUM POP-OUT ANIMATION ON SCROLL
+                  initial={{ opacity: 0, scale: 0.8, y: 50 }} 
+                  whileInView={{ opacity: 1, scale: 1, y: 0 }} 
                   exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                  // Force hardware acceleration to stop mobile stuttering
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ type: "spring", stiffness: 120, damping: 14, delay: (idx % 6) * 0.1 }}
                   style={{ willChange: "transform, opacity" }}
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-all group flex flex-col"
                 >
@@ -145,11 +141,23 @@ export default function CountriesSection() {
                         </div>
                       </div>
                     </div>
-                    <InquiryModal>
-                      <Button variant="outline" className="w-full border-[#6082B6]/30 hover:bg-[#6082B6]/10 text-[#6082B6] font-bold group-hover:border-[#6082B6] transition-colors cursor-pointer">
-                        Know More <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    </InquiryModal>
+                    
+                    <div className="flex flex-row items-center gap-2 w-full">
+                      <div className="flex-1">
+                        <InquiryModal>
+                          <Button variant="outline" size="sm" className="w-full h-9 border-[#E67E22]/30 bg-[#E67E22]/5 backdrop-blur-md hover:bg-[#E67E22]/15 text-[#E67E22] font-bold group-hover:border-[#E67E22]/60 transition-all duration-300 cursor-pointer text-[13px] px-2 shadow-sm">
+                            Know More
+                          </Button>
+                        </InquiryModal>
+                      </div>
+                      
+                      {/* 🚀 NEW EXPLORE UNIVERSITY BUTTON */}
+                      <Link href={`/universities/${uni.id}`} className="flex-1 flex">
+                        <Button variant="outline" size="sm" className="w-full h-9 border-[#6082B6]/30 bg-[#6082B6]/5 backdrop-blur-md hover:bg-[#6082B6]/15 text-[#6082B6] font-bold group-hover:border-[#6082B6]/60 transition-all duration-300 cursor-pointer text-[13px] px-2 shadow-sm">
+                          Explore <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </motion.div>
               ))}

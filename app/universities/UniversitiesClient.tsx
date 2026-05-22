@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Users, Banknote, ArrowRight, Loader2, Image as ImageIcon, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import InquiryModal from "@/components/InquiryModal";
+import Link from "next/link";
 
-// 1. Define the University interface
 interface University {
   id: string;
   name: string;
@@ -18,14 +17,11 @@ interface University {
   isHidden?: boolean;
 }
 
-// 2. Define the Props interface to fix the TypeScript build error
 interface UniversitiesClientProps {
   initialUniversities?: University[];
 }
 
-// 3. Accept the props in the component signature
 export default function UniversitiesClient({ initialUniversities = [] }: UniversitiesClientProps) {
-  // 4. Initialize state WITH the data passed from the server!
   const [universities, setUniversities] = useState<University[]>(initialUniversities);
   const [loading, setLoading] = useState(initialUniversities.length === 0);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -33,7 +29,6 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
 
   useEffect(() => {
     async function loadUniversities() {
-      // If the server successfully passed the data down, we don't need to fetch anything!
       if (initialUniversities.length > 0) {
         setUniversities(initialUniversities.filter(u => !u.isHidden));
         setLoading(false);
@@ -41,7 +36,6 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
       }
 
       try {
-        // Fallback 1: Instant load from Preloader cache
         const cached = sessionStorage.getItem("tca_universities_cache");
         if (cached) {
           const parsedData = JSON.parse(cached) as University[];
@@ -50,7 +44,6 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
           return; 
         }
 
-        // Fallback 2: Vercel API
         const res = await fetch("/api/universities");
         const data = await res.json();
         
@@ -127,20 +120,21 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <AnimatePresence mode="popLayout">
-              {filteredUniversities.map((uni) => (
+              {filteredUniversities.map((uni, idx) => (
                 <motion.div
                   key={uni.id} 
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
+                  // 🚀 PREMIUM POP-OUT ANIMATION ON SCROLL
+                  initial={{ opacity: 0, scale: 0.8, y: 50 }} 
+                  whileInView={{ opacity: 1, scale: 1, y: 0 }} 
                   exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ type: "spring", stiffness: 120, damping: 14, delay: (idx % 6) * 0.1 }}
                   style={{ willChange: "transform, opacity" }}
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-all group flex flex-col"
                 >
                   <div className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center">
                     <div className="absolute inset-0 bg-[#1b2f45]/20 z-10 group-hover:bg-transparent transition-colors"></div>
                     
-                    {/* Fixed Image Rendering for the Universities Page */}
                     {uni.image && uni.image.trim() !== "" ? (
                       <img 
                         src={uni.image} 
@@ -182,11 +176,13 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
                         </div>
                       </div>
                     </div>
-                    <InquiryModal>
+                    
+                    {/* 🚀 NEW EXPLORE UNIVERSITY BUTTON */}
+                    <Link href={`/universities/${uni.id}`} className="mt-auto">
                       <Button variant="outline" className="w-full border-[#6082B6]/30 hover:bg-[#6082B6]/10 text-[#6082B6] font-bold group-hover:border-[#6082B6] transition-colors cursor-pointer">
-                        Get Admission Details <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        Explore University <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
-                    </InquiryModal>
+                    </Link>
                   </div>
                 </motion.div>
               ))}

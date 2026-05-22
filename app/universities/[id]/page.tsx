@@ -101,11 +101,19 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent z-10" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={university.image} 
-            alt={university.name} 
-            className="w-full h-full object-cover opacity-60 scale-105"
-          />
+          {/* SAFE IMAGE RENDER WITH FALLBACK */}
+            {university?.image && university.image.trim() !== "" ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img 
+                src={university.image} 
+                alt={university.name || "University"} 
+                className="w-full h-full object-cover opacity-60 scale-105"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#1b2f45] opacity-80 flex items-center justify-center">
+                <span className="text-white/20 font-bold tracking-widest uppercase">No Image Available</span>
+              </div>
+            )}
         </div>
 
         {/* Hero Content Layer */}

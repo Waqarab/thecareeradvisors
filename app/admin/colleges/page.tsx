@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, MapPin, Banknote, Users, Globe2 } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, MapPin, Banknote, Users, Globe2, ExternalLink, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface College {
   id: string;
@@ -38,7 +39,18 @@ export default function CollegesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- 1. FETCH COLLEGES (Admin fetches directly from DB to ensure accuracy) ---
+  // --- SEARCH, FILTER & PAGINATION STATES ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [countryFilter, setCountryFilter] = useState("All");
+  const [visibleCount, setVisibleCount] = useState(15);
+
+  // Reset pagination when filters change so users don't get stuck on empty pages
+  useEffect(() => {
+    setVisibleCount(15);
+  }, [searchQuery, statusFilter, countryFilter]);
+
+  // --- 1. FETCH COLLEGES ---
   const fetchColleges = async () => {
     setLoading(true);
     try {
@@ -61,20 +73,14 @@ export default function CollegesPage() {
   }, []);
 
   // --- 2. THE MASTER REVALIDATION TRIGGER ---
-  // Call this after ANY successful database write to update the live website instantly
   const triggerCacheRevalidation = async () => {
     try {
       const secret = process.env.NEXT_PUBLIC_REVALIDATION_TOKEN;
       if (!secret) {
         console.warn("Revalidation token is missing in environment variables!");
       }
-      
-      // 1. Tell Vercel to destroy the old cache and fetch fresh data from Firebase
       await fetch(`/api/revalidate?tag=universities&secret=${secret}`, { method: "POST" });
-      
-      // 2. Clear the browser's local cache so you (the admin) see it instantly on the frontend
       sessionStorage.removeItem("tca_universities_cache");
-      
     } catch (error) {
       console.error("Failed to revalidate cache", error);
     }
@@ -87,22 +93,19 @@ export default function CollegesPage() {
     
     try {
       if (editingId) {
-        // UPDATE EXISTING
         await updateDoc(doc(db, "universities", editingId), formData);
         toast.success("University updated successfully");
       } else {
-        // ADD NEW
         await addDoc(collection(db, "universities"), formData);
         toast.success("University added successfully");
       }
 
-      // 🔥 FIRE THE REVALIDATOR!
       await triggerCacheRevalidation();
       
       setIsModalOpen(false);
       setEditingId(null);
       setFormData(initialFormState);
-      fetchColleges(); // Refresh admin table
+      fetchColleges();
     } catch (error) {
       console.error("Error saving university:", error);
       toast.error("Failed to save university");
@@ -118,10 +121,7 @@ export default function CollegesPage() {
     try {
       await deleteDoc(doc(db, "universities", id));
       toast.success("University deleted successfully");
-      
-      // 🔥 FIRE THE REVALIDATOR!
       await triggerCacheRevalidation();
-      
       fetchColleges();
     } catch (error) {
       console.error("Error deleting university:", error);
@@ -134,10 +134,7 @@ export default function CollegesPage() {
     try {
       await updateDoc(doc(db, "universities", id), { isHidden: !currentStatus });
       toast.success(currentStatus ? "University is now visible" : "University is now hidden");
-      
-      // 🔥 FIRE THE REVALIDATOR!
       await triggerCacheRevalidation();
-      
       fetchColleges();
     } catch (error) {
       console.error("Error toggling visibility:", error);
@@ -145,6 +142,7 @@ export default function CollegesPage() {
     }
   };
 
+  // --- 6. MODAL HANDLERS ---
   const openEditModal = (college: College) => {
     setFormData({
       name: college.name,
@@ -163,14 +161,37 @@ export default function CollegesPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // --- 7. FILTER & PAGINATION LOGIC ---
+  const uniqueCountries = ["All", ...Array.from(new Set(colleges.map(c => c.country)))];
+
+  const filteredColleges = colleges.filter(college => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      college.name.toLowerCase().includes(searchLower) ||
+      college.country.toLowerCase().includes(searchLower) ||
+      college.location.toLowerCase().includes(searchLower);
+    
+    const matchesStatus = 
+      statusFilter === "All" ? true :
+      statusFilter === "Visible" ? !college.isHidden :
+      statusFilter === "Hidden" ? college.isHidden : true;
+
+    const matchesCountry = countryFilter === "All" || college.country === countryFilter;
+
+    return matchesSearch && matchesStatus && matchesCountry;
+  });
+
+  const displayedColleges = filteredColleges.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredColleges.length;
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full pb-24">
       
-      {/* Header */}
+      {/* Header & Add Button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Universities Database</h1>
-          <p className="text-slate-500 mt-1">Manage global medical universities and fees.</p>
+          <p className="text-slate-500 mt-1">Manage global medical universities, fees, and details.</p>
         </div>
         
         <Dialog open={isModalOpen} onOpenChange={(open) => {
@@ -187,7 +208,7 @@ export default function CollegesPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] bg-white">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">{editingId ? "Edit University" : "Add New University"}</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">{editingId ? "Quick Edit Details" : "Add New University"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-1">
@@ -222,26 +243,74 @@ export default function CollegesPage() {
               </div>
               <Button type="submit" disabled={isSaving} className="w-full mt-4 bg-slate-900 text-white hover:bg-slate-800">
                 {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                {editingId ? "Update University" : "Save University"}
+                {editingId ? "Save Quick Edits" : "Create University"}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
+      {/* --- SEARCH & FILTERS BAR --- */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        
+        {/* Search */}
+        <div className="relative w-full md:w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input 
+            placeholder="Search by name, country, or city..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-slate-50 border-slate-200 w-full"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex w-full md:w-auto gap-3 items-center overflow-x-auto pb-1 md:pb-0">
+          <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden md:block" />
+          
+          <select 
+            value={countryFilter}
+            onChange={(e) => setCountryFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer min-w-[120px]"
+          >
+            {uniqueCountries.map(country => (
+              <option key={country} value={country}>{country === "All" ? "All Countries" : country}</option>
+            ))}
+          </select>
+
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer min-w-[120px]"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Visible">Visible Only</option>
+            <option value="Hidden">Hidden Only</option>
+          </select>
+        </div>
+
+      </div>
+
+      {/* --- RESULTS INFO --- */}
+      {!loading && (
+        <p className="text-sm font-semibold text-slate-500 mb-4 px-2">
+          Showing {displayedColleges.length} of {filteredColleges.length} results
+        </p>
+      )}
+
       {/* Database Table / Grid */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="w-10 h-10 animate-spin text-slate-400" />
         </div>
-      ) : colleges.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+      ) : filteredColleges.length === 0 ? (
+        <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
           <Globe2 className="w-12 h-12 mx-auto text-slate-300 mb-4" />
           <h3 className="text-lg font-bold text-slate-700">No universities found</h3>
-          <p className="text-slate-500">Click "Add University" to populate your database.</p>
+          <p className="text-slate-500 text-sm mt-1">Try adjusting your search or filters.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -254,7 +323,7 @@ export default function CollegesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {colleges.map((college) => (
+                {displayedColleges.map((college) => (
                   <tr key={college.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-4">
@@ -266,33 +335,46 @@ export default function CollegesPage() {
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900">{college.name}</p>
-                          <p className="text-xs text-slate-500 mt-1 font-medium">{college.id}</p>
+                          <p className="font-bold text-slate-900 leading-tight">{college.name}</p>
+                          <p className="text-xs text-slate-400 mt-1 font-mono">{college.id}</p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4">
-                      <p className="font-bold text-slate-700 flex items-center gap-1.5"><Globe2 className="w-4 h-4 text-slate-400" />{college.country}</p>
-                      <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-1"><MapPin className="w-3.5 h-3.5 text-slate-400" />{college.location}</p>
+                      <p className="font-bold text-slate-700 flex items-center gap-1.5"><Globe2 className="w-4 h-4 text-slate-400 shrink-0" />{college.country}</p>
+                      <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-1"><MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />{college.location}</p>
                     </td>
                     <td className="p-4">
-                      <p className="text-sm font-semibold text-slate-700 flex items-center gap-1.5"><Banknote className="w-4 h-4 text-emerald-500" />{college.fees}</p>
-                      <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-1"><Users className="w-4 h-4 text-blue-500" />{college.placed}</p>
+                      <p className="text-sm font-semibold text-slate-700 flex items-center gap-1.5"><Banknote className="w-4 h-4 text-emerald-500 shrink-0" />{college.fees}</p>
+                      <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-1"><Users className="w-4 h-4 text-blue-500 shrink-0" />{college.placed}</p>
                     </td>
                     <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${college.isHidden ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${college.isHidden ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         {college.isHidden ? "Hidden" : "Visible"}
                       </span>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="icon" title={college.isHidden ? "Show on site" : "Hide from site"} onClick={() => handleToggleHidden(college.id, college.isHidden)}>
+                        
+                        {/* 1. Toggle Visibility */}
+                        <Button variant="outline" size="icon" title={college.isHidden ? "Publish to Site" : "Hide from Site"} onClick={() => handleToggleHidden(college.id, college.isHidden)}>
                           {college.isHidden ? <EyeOff className="w-4 h-4 text-amber-500" /> : <Eye className="w-4 h-4 text-emerald-500" />}
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => openEditModal(college)}>
+                        
+                        {/* 2. Quick Edit Modal */}
+                        <Button variant="outline" size="icon" title="Quick Edit Basic Info" onClick={() => openEditModal(college)}>
                           <Edit className="w-4 h-4 text-blue-500" />
                         </Button>
-                        <Button variant="outline" size="icon" className="hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => handleDelete(college.id)}>
+
+                        {/* 3. Deep Details Page */}
+                        <Link href={`/admin/colleges/${college.id}`}>
+                          <Button variant="outline" size="icon" title="Manage Deep Details (History, Rankings, etc.)">
+                            <ExternalLink className="w-4 h-4 text-indigo-500" />
+                          </Button>
+                        </Link>
+
+                        {/* 4. Delete */}
+                        <Button variant="outline" size="icon" title="Delete Permanently" className="hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => handleDelete(college.id)}>
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
@@ -304,6 +386,21 @@ export default function CollegesPage() {
           </div>
         </div>
       )}
+
+      {/* --- LOAD MORE BUTTON --- */}
+      {hasMore && (
+        <div className="flex justify-center mt-4">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={() => setVisibleCount(prev => prev + 15)}
+            className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50 font-bold px-8 shadow-sm"
+          >
+            Load 15 More
+          </Button>
+        </div>
+      )}
+
     </div>
   );
 }

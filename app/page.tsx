@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, Award, Users } from "lucide-react";
+import { ArrowRight, ShieldCheck, Award, Users, CalendarDays } from "lucide-react";
 
 // Components
 import Preloader from "@/components/Preloader";
@@ -195,6 +195,33 @@ export default function Home() {
         <SectionDivider />
         <FaqSection />
 
+        <SectionDivider />
+        
+        {/* FINAL CTA SECTION */}
+        <section className="py-16 md:py-20 bg-background">
+          <div className="container mx-auto px-4 md:px-8">
+            <div className="bg-primary rounded-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between shadow-2xl gap-6 max-w-6xl mx-auto">
+              <div className="flex items-center gap-6 text-center lg:text-left">
+                <div className="bg-primary-foreground/10 p-4 rounded-xl hidden sm:block">
+                  <CalendarDays className="w-10 h-10 text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-2 font-heading">
+                    Ready to Secure Your Medical Seat?
+                  </h3>
+                  <p className="text-primary-foreground/80 font-medium">
+                    Let our experts help you choose the right university and make your dream a reality.
+                  </p>
+                </div>
+              </div>
+              <InquiryModal>
+                <Button size="lg" className="w-full lg:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 text-lg px-8 py-6 rounded-full whitespace-nowrap shadow-xl shadow-destructive/20 transition-transform active:scale-95 group">
+                  Book Free Session <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </InquiryModal>
+            </div>
+          </div>
+        </section>
       </div>
     </>
   );

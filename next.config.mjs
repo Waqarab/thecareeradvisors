@@ -17,19 +17,19 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY', // Stops other sites from embedding your site in an iframe
+            value: 'DENY', 
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff', // Prevents browsers from guessing content types
+            value: 'nosniff', 
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin', // Protects where your traffic data goes
+            value: 'strict-origin-when-cross-origin', 
           },
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload', // Forces HTTPS connections
+            value: 'max-age=31536000; includeSubDomains; preload', 
           },
         ],
       },

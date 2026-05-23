@@ -67,39 +67,59 @@ function GradientShineHighlight({ text }: { text: string }) {
 }
 
 // --- STORY DATA ---
+// --- OPTIMIZED STORY DATA ---
+// Only first story fully filled, others kept as placeholders for future updates
+
 const stories = [
   {
     id: 1,
-    student: "Ayaan Bhat",
-    university: "Kazan Federal University, Russia",
-    currentStatus: "3rd Year Medical Student",
-    titlePrefix: "Overcoming NEET Anxiety to",
-    titleHighlight: "Thriving in Kazan",
-    highlightType: "fill",
-    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1000&auto=format&fit=crop",
-    story: "Ayaan had a dream of wearing the white coat, but when his NEET scores hovered around the borderline, panic set in. The prospect of losing a year or paying exorbitant private college fees in India was daunting for his family.\n\nWhen Ayaan approached The Career Advisors, our expert counsellors immediately mapped his score to government-approved universities in Russia. We handled his entire documentation process—from apostille to visa—ensuring zero delays. Today, Ayaan is excelling in his 3rd year at Kazan Federal, completely focused on his studies rather than administrative stress."
+    student: "Mehek Rasool",
+    university: "Cairo University, Egypt",
+    currentStatus: "4th Year Medical Student",
+    
+    // Strong premium heading
+    titlePrefix: "From Uncertainty to a",
+    titleHighlight: "White Coat Dream",
+    
+    // Best animation for emotional impact
+    highlightType: "shine",
+
+    // Better responsive image
+    image:
+      "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779563398/IMG-20260523-WA0087-02_fojw6y.jpg",
+
+    // Optimized storytelling (shorter for mobile readability)
+    story:
+      "After completing her schooling, Mehek dreamed of studying medicine abroad but felt overwhelmed by university options, scholarship concerns, and financial pressure.\n\nThat changed when she connected with The Career Advisors. From counseling and university selection to scholarships, visa guidance, and travel preparation — every step was handled with complete transparency and support.\n\nWith the right mentorship and guidance, Mehek successfully secured admission with a scholarship opportunity at Cairo University, Egypt. Today, she is proudly pursuing her 4th year in medicine and building the future she once only dreamed about."
   },
+
+  // --- DUMMY PLACEHOLDERS ---
   {
     id: 2,
-    student: "Zara Sheikh",
-    university: "Tbilisi State Medical University, Georgia",
-    currentStatus: "FMGE Cleared, Practicing in India",
-    titlePrefix: "Lost in Paperwork to a",
-    titleHighlight: "Seamless Flight to Georgia",
+    student: "Coming Soon",
+    university: "International Medical University",
+    currentStatus: "Student Success Story",
+    titlePrefix: "Another Journey Towards",
+    titleHighlight: "Global Success",
     highlightType: "box",
-    image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1000&auto=format&fit=crop",
-    story: "Zara was clear about her destination: Georgia. However, she had previously been misled by unregistered agents who demanded hidden fees and delayed her admission letter for months.\n\nShe came to us seeking transparency. Within 48 hours, our team secured her direct admission letter. We provided her family with a strict, transparent fee structure with absolutely zero hidden charges. We didn't just stop at the visa; our representative travelled with Zara's batch to Tbilisi, ensuring she settled comfortably into her hostel. She recently cleared her FMGE on the first attempt."
+    image:
+      "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?q=80&w=1200&auto=format&fit=crop",
+    story:
+      "A new inspiring success story will be featured here soon. Stay connected to discover how students are achieving their dreams of studying abroad with expert guidance and support."
   },
+
   {
     id: 3,
-    student: "Rohan Verma",
-    university: "Alexandria University, Egypt",
-    currentStatus: "Clinical Rotation Phase",
-    titlePrefix: "A Small-Town Dream to",
-    titleHighlight: "Global Medical Excellence",
-    highlightType: "shine",
-    image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=1000&auto=format&fit=crop",
-    story: "Coming from a humble background, Rohan’s primary concern was finding an affordable medical education without compromising on clinical exposure and WHO recognition. Egypt wasn't initially on his radar.\n\nOur counselling team sat down with Rohan and his parents to explain the high clinical standards and affordability of Egyptian universities. We guided him toward Alexandria University. Thanks to the rigorous curriculum and our continuous academic support through our alumni network, Rohan is now in his clinical rotation phase, gaining hands-on experience in world-class hospitals."
+    student: "Coming Soon",
+    university: "Top Ranked Medical University",
+    currentStatus: "Future Doctor",
+    titlePrefix: "Turning Ambition Into",
+    titleHighlight: "Real Achievement",
+    highlightType: "fill",
+    image:
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=1200&auto=format&fit=crop",
+    story:
+      "More real student journeys are on the way. Learn how students from different backgrounds transformed uncertainty into successful international medical careers."
   }
 ];
 

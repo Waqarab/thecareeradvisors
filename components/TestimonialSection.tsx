@@ -182,18 +182,18 @@ export default function TestimonialSection() {
         {/* ========================================= */}
         {/* BOTTOM SECTION: FLEXIBLE VIDEO PLAYER     */}
         {/* ========================================= */}
-        <div className="text-center max-w-5xl mx-auto">
+        <div className="text-center w-full mx-auto">
           <h3 className="text-3xl md:text-4xl font-black font-heading mb-10">Watch Their Journeys</h3>
           
           <div className="flex items-center justify-center gap-2 md:gap-6">
             
             {/* Left External Arrow */}
-            <button onClick={prevVid} className="shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full bg-background border-2 border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 z-20">
+            <button onClick={prevVid} className="hidden md:flex shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full bg-background border-2 border-border shadow-sm items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 z-20">
               <ChevronLeft className="w-6 h-6 md:w-8 md:h-8 -ml-0.5" />
             </button>
 
             {/* Flexible Video Frame */}
-            <div className="relative flex-1 w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border border-border/50 bg-black group max-h-[75vh] flex items-center justify-center">
+            <div className="relative flex-1 w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border border-border/50 bg-black group max-h-[75vh] flex items-center justify-center aspect-[9/16] md:aspect-video">
               
               <AnimatePresence mode="wait">
                 <motion.div
@@ -211,16 +211,16 @@ export default function TestimonialSection() {
                     loop
                     muted
                     playsInline
-                    className="w-full h-full max-h-[75vh] object-contain"
+                    className="w-full h-full max-h-[75vh] object-cover md:object-contain"
                   />
 
                   {/* Text Overlay (Bottom Left) */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 md:p-8 pt-20 flex flex-col items-start text-left pointer-events-none">
-                    <h4 className="text-white font-black text-xl md:text-3xl font-heading drop-shadow-lg flex items-center gap-2">
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 md:p-8 pt-16 md:pt-20 flex flex-col items-start text-left pointer-events-none">
+                    <h4 className="text-white font-black text-lg md:text-3xl font-heading drop-shadow-lg flex items-center gap-1.5 md:gap-2">
                       {videoTestimonials[vidIndex].studentName}
-                      <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 fill-blue-500 text-white" />
+                      <BadgeCheck className="w-4 h-4 md:w-6 md:h-6 fill-blue-500 text-white" />
                     </h4>
-                    <p className="text-white/80 font-bold text-sm md:text-base mt-1 tracking-wide">
+                    <p className="text-white/80 font-medium md:font-bold text-xs md:text-base mt-0.5 md:mt-1 tracking-wide">
                       📍 {videoTestimonials[vidIndex].collegeName}
                     </p>
                   </div>
@@ -229,7 +229,7 @@ export default function TestimonialSection() {
                   <img 
                     src="/logo.png" 
                     alt="TCA Logo" 
-                    className="absolute bottom-6 right-6 h-6 md:h-8 w-auto opacity-[0.65] z-20 pointer-events-none drop-shadow-md brightness-0 invert" 
+                    className="absolute bottom-4 right-4 md:bottom-6 md:right-6 h-4 md:h-8 w-auto opacity-[0.65] z-20 pointer-events-none drop-shadow-md brightness-0 invert" 
                   />
                 </motion.div>
               </AnimatePresence>

@@ -4,29 +4,46 @@ import { motion } from "framer-motion";
 
 export default function SectionDivider() {
   return (
-    <div className="w-full flex items-center justify-center py-8 md:py-12 overflow-hidden">
-      <motion.div 
-        initial={{ opacity: 0, x: -50 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="h-[1px] w-1/3 md:w-1/4 bg-gradient-to-r from-transparent to-primary/40"
-      />
+    <div className="relative w-full flex items-center justify-center py-10 md:py-14 overflow-hidden">
       
-      <motion.div 
+      {/* Left Line */}
+      <motion.div
+        initial={{ opacity: 0, scaleX: 0 }}
+        whileInView={{ opacity: 1, scaleX: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+        className="origin-right h-[2px] w-1/3 md:w-1/4 rounded-full 
+        bg-gradient-to-r from-primary/10 via-primary/80 to-primary/10
+        shadow-[0_0_18px_rgba(66,99,235,0.45)]"
+      />
+
+      {/* Center Glow */}
+      <motion.div
         initial={{ scale: 0, opacity: 0 }}
         whileInView={{ scale: 1, opacity: 1 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="w-2 h-2 rounded-full bg-primary mx-4 shadow-[0_0_15px_rgba(66,99,235,0.6)]" // Glaucous blue glow
-      />
-      
-      <motion.div 
-        initial={{ opacity: 0, x: 50 }}
-        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.25 }}
+        className="relative mx-5"
+      >
+        {/* Pulsing Ring */}
+        <div className="absolute inset-0 rounded-full animate-ping bg-primary/30 blur-sm" />
+
+        {/* Main Dot */}
+        <div
+          className="relative w-3 h-3 rounded-full bg-primary
+          shadow-[0_0_25px_rgba(66,99,235,0.9)]"
+        />
+      </motion.div>
+
+      {/* Right Line */}
+      <motion.div
+        initial={{ opacity: 0, scaleX: 0 }}
+        whileInView={{ opacity: 1, scaleX: 1 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="h-[1px] w-1/3 md:w-1/4 bg-gradient-to-l from-transparent to-primary/40"
+        transition={{ duration: 1 }}
+        className="origin-left h-[2px] w-1/3 md:w-1/4 rounded-full 
+        bg-gradient-to-l from-primary/10 via-primary/80 to-primary/10
+        shadow-[0_0_18px_rgba(66,99,235,0.45)]"
       />
     </div>
   );

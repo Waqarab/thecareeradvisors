@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Users, Banknote, ArrowRight, Loader2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -84,17 +83,9 @@ export default function CountriesSection() {
           <div className="flex justify-center py-12"><Loader2 className="w-10 h-10 animate-spin text-[#6082B6]" /></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            <AnimatePresence mode="popLayout">
-              {filteredUniversities.map((uni, idx) => (
-                <motion.div
+              {filteredUniversities.map((uni) => (
+                <div
                   key={uni.id} 
-                  // 🚀 PREMIUM POP-OUT ANIMATION ON SCROLL
-                  initial={{ opacity: 0, scale: 0.8, y: 50 }} 
-                  whileInView={{ opacity: 1, scale: 1, y: 0 }} 
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ type: "spring", stiffness: 120, damping: 14, delay: (idx % 6) * 0.1 }}
-                  style={{ willChange: "transform, opacity" }}
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-all group flex flex-col"
                 >
                   <div className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center">
@@ -159,9 +150,8 @@ export default function CountriesSection() {
                       </Link>
                     </div>
                   </div>
-                </motion.div>
+            </div>
               ))}
-            </AnimatePresence>
           </div>
         )}
 

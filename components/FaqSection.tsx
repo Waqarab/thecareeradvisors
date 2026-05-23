@@ -47,11 +47,7 @@ export default function FaqSection() {
               </AnimatePresence>
             </div>
           ))}
-        </div>
-        
-        <div className="mt-8 text-center">
-          <button className="text-primary font-medium hover:underline">View All FAQs</button>
-        </div>
+        </div>     
       </div>
     </section>
   );

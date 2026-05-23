@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, Award, Users, CalendarDays } from "lucide-react";
-
+import { ArrowRight, ShieldCheck, Award, Users, GraduationCap, CheckCircle2 } from "lucide-react";
 // Components
 import Preloader from "@/components/Preloader";
 import InquiryModal from "@/components/InquiryModal";
@@ -23,7 +22,7 @@ export default function Home() {
     fetch('/api/track-visit').catch(() => {});
   }, []);
 
-  // Lock scrolling while preloader is active so users can't scroll down blindly
+  // Lock scrolling while preloader is active
   useEffect(() => {
     if (!isLoaded) {
       document.body.style.overflow = "hidden";
@@ -35,145 +34,205 @@ export default function Home() {
 
   return (
     <>
-      {/* 1. THE PRELOADER */}
       <Preloader onLoadingComplete={() => setIsLoaded(true)} />
 
-      {/* 2. THE MAIN PAGE */}
       <div className="flex flex-col min-h-screen font-sans">
         
-        {/* PREMIUM HERO SECTION */}
-        <section className="relative min-h-[85vh] flex items-center pt-20 pb-12 overflow-hidden bg-background">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background"></div>
+      {/* PREMIUM APPLE-STYLE HERO SECTION (SEO OPTIMIZED & BALANCED) */}
+        <section className="relative min-h-[85vh] flex items-center pt-2 pb-12 lg:pt-4 lg:pb-20 overflow-hidden bg-background">
+          
+          {/* 1. Alive Ambient Background (Optimized for Speed) */}
+          <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+            <motion.div 
+              animate={isLoaded ? { scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] } : {}}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] rounded-full bg-orange-500/10 blur-[120px] mix-blend-normal will-change-transform"
+            />
+            <motion.div 
+              animate={isLoaded ? { scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] } : {}}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute bottom-[-10%] left-[-5%] w-[40vw] h-[40vw] max-w-[500px] rounded-full bg-amber-500/10 blur-[120px] mix-blend-normal will-change-transform"
+            />
+          </div>
 
-          <div className="container mx-auto px-4 md:px-8">
-            <div className="grid lg:grid-cols-2 gap-10 items-center">
+          <div className="container mx-auto px-6 md:px-12 relative z-10 mt-2 lg:mt-2">
+            <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-              {/* LEFT COLUMN: Hook & CTA */}
-              <div className="max-w-2xl z-10">
+              {/* LEFT COLUMN: Strictly Balanced Typography & SEO Content */}
+              <div className="lg:col-span-7 flex flex-col space-y-6 max-w-[42rem]">
                 
-                {/* Notice how 'animate' now waits for 'isLoaded' to be true */}
+                {/* Glassmorphism Badge */}
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
-                  transition={{ duration: 0.5 }}
+                  initial={{ opacity: 0, y: 15 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }} 
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className="flex"
                 >
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-6 border border-primary/20 shadow-sm">
-                    <ShieldCheck className="w-4 h-4" />
-                    Government Approved Consultancy
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 dark:bg-green/20 backdrop-blur-md border border-orange-500/20 shadow-[0_4px_20px_rgba(249,115,22,0.1)] text-foreground/90 text-xs font-semibold tracking-widest uppercase">
+                    <ShieldCheck className="w-[14px] h-[14px] text-orange-500" />
+                    The Career Advisors - J&K's Top Education Consultancy
                   </span>
                 </motion.div>
 
+                {/* H1 Title */}
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
-                  transition={{ duration: 0.5, delay: 0.1 }}
+                  initial={{ opacity: 0, y: 15 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }} 
+                  transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
                 >
-                  <h1 className="text-4xl md:text-5xl xl:text-6xl font-extrabold tracking-tight text-foreground mb-4 leading-[1.1] font-heading">
-                    Your Dream MBBS <br /> Journey Starts Here.
+                  <h1 className="text-5xl lg:text-6xl xl:text-[4.2rem] font-bold tracking-[-0.02em] text-foreground leading-[1.08]" style={{ fontFamily: "Oregon, sans-serif" }}>
+                    <span className="text-3xl lg:text-4xl text-foreground/80 align-middle mr-2">Your Dream-</span>
+                    <span className="relative inline-block px-2 md:px-3 z-10">
+                      <motion.span 
+                        animate={isLoaded ? { opacity: [1, 0.85, 1], scale: [1, 1.015, 1] } : {}}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        className="relative z-10 uppercase inline-block text-foreground drop-shadow-sm"
+                      >
+                        MBBS ABROAD
+                      </motion.span>
+                      <motion.span
+                        initial={{ scaleX: 0 }}
+                        animate={isLoaded ? { scaleX: 1 } : { scaleX: 0 }}
+                        transition={{ duration: 0.8, ease: "circOut", delay: 0.4 }}
+                        className="absolute inset-0 bg-primary/20 mix-blend-multiply dark:mix-blend-screen origin-left -z-10 rounded-md"
+                      />
+                    </span>
+                    <br/> <span className="text-3xl lg:text-4xl text-foreground/80 align-middle">Starts Here.</span>
                   </h1>
                 </motion.div>
 
-                {/* ANIMATED HIGHLIGHT HOOK */}
-                <div className="relative inline-block mb-8 mt-2">
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={isLoaded ? { width: "100%" } : { width: "0%" }}
-                    transition={{ duration: 0.8, delay: 0.5, ease: "easeInOut" }}
-                    className="absolute inset-0 bg-accent rounded-lg shadow-lg"
-                  ></motion.div>
-                  <motion.p 
-                    initial={{ opacity: 0 }}
-                    animate={isLoaded ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ duration: 0.3, delay: 0.8 }}
-                    className="relative z-10 text-xl md:text-3xl font-bold text-accent-foreground px-5 py-2 font-heading whitespace-nowrap"
-                  >
-                    The White Coat is Waiting.
-                  </motion.p>
+                {/* Animated Darkening Overlay Hook */}
+                <div className="flex">
+                  <div className="relative inline-flex items-center overflow-hidden rounded-xl px-4 py-2 group">
+                    <motion.div
+                      initial={{ x: "-100%" }}
+                      animate={isLoaded ? { x: 0 } : { x: "-100%" }}
+                      transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-0 bg-primary z-0 rounded-xl"
+                    ></motion.div>
+                    <motion.h2 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={isLoaded ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
+                      transition={{ duration: 0.4, delay: 0.6 }}
+                      className="relative z-10 text-xl lg:text-2xl font-bold tracking-wide text-primary-foreground"
+                    >
+                      The White Coat is Waiting...
+                    </motion.h2>
+                  </div>
                 </div>
 
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
-                  transition={{ duration: 0.5, delay: 0.2 }}
+                {/* Main Paragraph */}
+                <motion.p 
+                  initial={{ opacity: 0, y: 15 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }} 
+                  transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+                  className="text-base lg:text-lg text-foreground/75 leading-relaxed max-w-[95%] font-medium"
                 >
-                  <p className="text-base md:text-lg text-foreground/70 mb-10 leading-relaxed font-medium max-w-lg">
-                    We guide aspiring doctors to secure admissions in globally recognized medical universities with 100% transparency and end-to-end support.
-                  </p>
+                  <strong className="font-semibold text-foreground">The Career Advisors</strong> is the most trusted medical education consultancy since 2016. With a decade of expertise, we have secured guaranteed admissions for 500+ students worldwide.
+                </motion.p>
+
+                {/* SEO Feature Grid (Fills empty space beautifully) */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 15 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }} 
+                  transition={{ duration: 0.6, delay: 0.5, ease: "easeOut" }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-foreground/80 font-medium py-2"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                    <span>NMC & WHO Recognized</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                    <span>Guaranteed Admissions</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                    <span>Zero Hidden Charges</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                    <span>End-to-End Visa Support</span>
+                  </div>
                 </motion.div>
 
+                {/* Action Buttons */}
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} 
-                  transition={{ duration: 0.5, delay: 0.3 }} 
-                  className="flex flex-col sm:flex-row items-center gap-4"
+                  initial={{ opacity: 0, y: 15 }} 
+                  animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }} 
+                  transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }} 
+                  className="flex flex-col sm:flex-row items-center gap-4 pt-2"
                 >
                   <InquiryModal>
-                    <Button size="lg" className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 text-lg px-8 py-6 rounded-full shadow-xl shadow-destructive/20 group cursor-pointer active:scale-95 transition-all">
+                    <Button 
+                      size="lg" 
+                      className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-base h-14 px-8 rounded-full shadow-[0_8px_30px_rgba(249,115,22,0.25)] hover:shadow-[0_8px_40px_rgba(249,115,22,0.4)] hover:scale-105 active:scale-95 transition-all duration-300 group"
+                    >
                       Get Free Counselling
-                      <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1.5 transition-transform duration-300" />
                     </Button>
                   </InquiryModal>
                   
                   <a href="https://wa.me/916005152350" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                    <Button size="lg" variant="outline" className="w-full text-lg px-8 py-6 rounded-full border-primary/30 hover:bg-primary/5 text-primary bg-background font-bold active:scale-95 transition-all">
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="w-full h-14 text-base px-8 rounded-full border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/10 text-foreground bg-background/50 backdrop-blur-md hover:scale-105 active:scale-95 transition-all duration-300"
+                    >
                       Chat on WhatsApp
                     </Button>
                   </a>
                 </motion.div>
+
+                {/* Sub-text for SEO Optimization */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={isLoaded ? { opacity: 1 } : { opacity: 0 }}
+                  transition={{ duration: 0.6, delay: 0.8 }}
+                  className="text-[11px] md:text-xs text-foreground/40 mt-4 max-w-xl leading-relaxed"
+                >
+                  * Specializing in top-tier medical universities across Russia, Uzbekistan, Kazakhstan, and Georgia. Expert guidance for Indian students seeking affordable, high-quality MBBS education abroad with safe campus environments and high FMGE passing rates.
+                </motion.p>
+
               </div>
 
-              {/* RIGHT COLUMN: Resized Image Frame & Badges */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={isLoaded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="relative mx-auto w-full max-w-[320px] lg:max-w-[400px] mt-8 lg:mt-0"
-              >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/10 rounded-full blur-3xl -z-10"></div>
-
-                <div className="relative rounded-3xl overflow-hidden border-[6px] border-card shadow-2xl bg-muted aspect-square">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-secondary/20 text-foreground/50 p-6 text-center">
-                     <Users className="w-16 h-16 mb-4 opacity-40 text-primary" />
-                     <p className="font-heading font-bold text-lg text-primary">Team & Students Image</p>
-                     <p className="text-xs mt-2 px-4">(Perfectly sized for a square photo)</p>
-                  </div>
-                </div>
-
-                {/* Floating Badge 2: Experience */}
+              {/* RIGHT COLUMN: Clean Framed Image with Details Overlay */}
+              <div className="lg:col-span-5 relative w-full flex justify-center lg:justify-end mt-6 lg:-mt-12">
                 <motion.div
-                  initial={{ x: 20, opacity: 0 }} 
-                  animate={isLoaded ? { x: 0, opacity: 1 } : { x: 20, opacity: 0 }} 
-                  transition={{ delay: 0.7 }}
-                  className="absolute top-1/3 -right-6 md:-right-10 bg-card p-3 rounded-2xl shadow-xl border border-border/50 flex items-center gap-3 z-10"
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={isLoaded ? { opacity: 1, scale: 1, y: [0, -12, 0] } : { opacity: 0, scale: 0.96 }}
+                  transition={{ 
+                    opacity: { duration: 0.8, delay: 0.2, ease: "easeOut" },
+                    scale: { duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] },
+                    y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 } 
+                  }}
+                  className="relative w-full max-w-[400px] lg:max-w-[460px] aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-border/50 group"
                 >
-                  <div className="bg-primary/10 text-primary p-1.5 rounded-full">
-                    <Award className="w-5 h-5" />
+                  {/* 👇 Replace src with your image path 👇 */}
+                  <img 
+                    src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop" 
+                    alt="Medical Students Abroad" 
+                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  />
+                  
+                  {/* Bottom Overlay with Details */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pt-16 flex flex-col items-start justify-end pointer-events-none z-10">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="bg-orange-500/20 text-orange-500 p-1.5 rounded-full shadow-inner backdrop-blur-sm">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <span className="text-white font-bold text-lg leading-tight">10+ Years Experience</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="bg-blue-500/20 text-blue-400 p-1.5 rounded-full shadow-inner backdrop-blur-sm">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <span className="text-white/90 font-medium text-sm leading-tight">500+ Students Admitted Globally</span>
+                    </div>
                   </div>
-                  <div className="pr-2">
-                    <p className="font-bold font-heading text-sm text-foreground leading-tight">10+ Years</p>
-                    <p className="text-[10px] text-foreground/70 font-medium uppercase tracking-wider">Experience</p>
-                  </div>
-                </motion.div>
 
-                {/* Floating Badge 3: Students Placed */}
-                <motion.div
-                  initial={{ y: -20, opacity: 0 }} 
-                  animate={isLoaded ? { y: 0, opacity: 1 } : { y: -20, opacity: 0 }} 
-                  transition={{ delay: 0.8 }}
-                  className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-card p-3 rounded-2xl shadow-xl border border-border/50 flex items-center gap-3 z-10 w-max"
-                >
-                   <div className="flex -space-x-2 pl-1">
-                      <div className="w-8 h-8 rounded-full border-2 border-card bg-primary/20"></div>
-                      <div className="w-8 h-8 rounded-full border-2 border-card bg-accent/20"></div>
-                      <div className="w-8 h-8 rounded-full border-2 border-card bg-destructive/20"></div>
-                   </div>
-                  <div className="pr-2">
-                    <p className="font-bold font-heading text-sm text-foreground leading-tight">500+ Students</p>
-                    <p className="text-[10px] text-foreground/70 font-medium uppercase tracking-wider">Placed</p>
-                  </div>
                 </motion.div>
-
-              </motion.div>
+              </div>
 
             </div>
           </div>
@@ -194,34 +253,6 @@ export default function Home() {
         
         <SectionDivider />
         <FaqSection />
-
-        <SectionDivider />
-        
-        {/* FINAL CTA SECTION */}
-        <section className="py-16 md:py-20 bg-background">
-          <div className="container mx-auto px-4 md:px-8">
-            <div className="bg-primary rounded-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between shadow-2xl gap-6 max-w-6xl mx-auto">
-              <div className="flex items-center gap-6 text-center lg:text-left">
-                <div className="bg-primary-foreground/10 p-4 rounded-xl hidden sm:block">
-                  <CalendarDays className="w-10 h-10 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-2 font-heading">
-                    Ready to Secure Your Medical Seat?
-                  </h3>
-                  <p className="text-primary-foreground/80 font-medium">
-                    Let our experts help you choose the right university and make your dream a reality.
-                  </p>
-                </div>
-              </div>
-              <InquiryModal>
-                <Button size="lg" className="w-full lg:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 text-lg px-8 py-6 rounded-full whitespace-nowrap shadow-xl shadow-destructive/20 transition-transform active:scale-95 group">
-                  Book Free Session <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </InquiryModal>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

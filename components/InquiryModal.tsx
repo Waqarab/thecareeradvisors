@@ -17,7 +17,6 @@ import { ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
-// --- UPDATED SCHEMA WITH NEW FIELDS ---
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
   email: z.string().email({ message: "Valid email is required" }),
@@ -58,8 +57,22 @@ export default function InquiryModal({ children }: { children: React.ReactNode }
     setIsSubmitting(true);
     
     try {
+      // 1. Fetch Approximate Location via IP
+      let ipLocation = "Unknown Location";
+      try {
+        const res = await fetch("https://ipapi.co/json/");
+        const data = await res.json();
+        if (data.city && data.country_name) {
+          ipLocation = `${data.city}, ${data.country_name} (IP: ${data.ip})`;
+        }
+      } catch (e) {
+        console.log("Could not fetch IP location");
+      }
+
+      // 2. Save to Firestore
       await addDoc(collection(db, "inquiries"), {
         ...values,
+        ipLocation, // Captured Location
         status: "New",
         createdAt: serverTimestamp(),
       });

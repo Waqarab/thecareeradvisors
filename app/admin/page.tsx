@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, orderBy, query, limit } from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { db, app } from "@/firebase/config";
-import { Users, AlertCircle, Loader2, CheckCircle2, ChevronRight, Activity, Eye, Globe } from "lucide-react";
+import { Users, Loader2, CheckCircle2, ChevronRight, Activity, Eye, Globe, LineChart } from "lucide-react";
 import Link from "next/link";
 
 interface Inquiry {
@@ -21,48 +21,15 @@ export default function AdminDashboard() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Realtime DB Metrics (Free 5GB Storage)
+  // Realtime DB Metrics
+  const [totalVisits, setTotalVisits] = useState(0);
   const [dailyVisits, setDailyVisits] = useState(0);
   const [respondedCount, setRespondedCount] = useState(0);
   const [seenPendingCount, setSeenPendingCount] = useState(0);
 
   useEffect(() => {
-    fetchInquiries();
-    
-    // Connect to Free Realtime Database for Metrics
-    const rtdb = getDatabase(app);
-    
-    // 1. Fetch Today's Unique IP Visitors
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const visitsRef = ref(rtdb, `stats/visits/${today}`);
-    onValue(visitsRef, (snapshot) => {
-      const data = snapshot.val();
-      // Count unique IPs logged today
-      setDailyVisits(data ? Object.keys(data).length : 0);
-    });
-
-    // 2. Fetch "Responded" and "Seen" metrics from inquiry_meta
-    const metaRef = ref(rtdb, 'inquiry_meta');
-    onValue(metaRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
-      
-      let responded = 0;
-      let seenPending = 0;
-      
-      Object.values(data).forEach((meta: any) => {
-        if (meta.responded) responded++;
-        else if (meta.seen && !meta.responded) seenPending++;
-      });
-      
-      setRespondedCount(responded);
-      setSeenPendingCount(seenPending);
-    });
-
-  }, []);
-
-  async function fetchInquiries() {
-    try {
+    async function loadDashboard() {
+      // 1. Fetch Inquiries from Firestore
       const q = query(collection(db, "inquiries"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
       const data: Inquiry[] = [];
@@ -70,68 +37,121 @@ export default function AdminDashboard() {
         data.push({ id: docSnap.id, ...docSnap.data() } as Inquiry);
       });
       setInquiries(data);
-    } catch (error) {
-      console.error("Error fetching inquiries:", error);
-    } finally {
       setLoading(false);
-    }
-  }
 
-  const newLeads = inquiries.filter(i => i.status === "New");
+      // 2. Connect to Free Realtime Database for Metrics
+      const rtdb = getDatabase(app);
+      
+      // Fetch ALL visits to calculate Total and Today
+      const visitsRef = ref(rtdb, `stats/visits`);
+      onValue(visitsRef, (snapshot) => {
+        const visitData = snapshot.val();
+        if (!visitData) return;
+        
+        let total = 0;
+        let todayCount = 0;
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        Object.entries(visitData).forEach(([date, ips]: [string, any]) => {
+          const count = Object.keys(ips).length;
+          total += count;
+          if (date === todayStr) todayCount = count;
+        });
+
+        setTotalVisits(total);
+        setDailyVisits(todayCount);
+      });
+
+      // Fetch "Responded" and "Seen" metrics and CROSS-REFERENCE with active Firestore data
+      const validInquiryIds = new Set(data.map(i => i.id)); // Ensures we don't count deleted leads
+      const metaRef = ref(rtdb, 'inquiry_meta');
+      
+      onValue(metaRef, (snapshot) => {
+        const metaData = snapshot.val();
+        if (!metaData) return;
+        
+        let responded = 0;
+        let seenPending = 0;
+        
+        Object.entries(metaData).forEach(([id, meta]: [string, any]) => {
+          if (!validInquiryIds.has(id)) return; // Ignore deleted leads
+          if (meta.responded) responded++;
+          else if (meta.seen && !meta.responded) seenPending++;
+        });
+        
+        setRespondedCount(responded);
+        setSeenPendingCount(seenPending);
+      });
+    }
+
+    loadDashboard();
+  }, []);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       
       {/* ======================================================== */}
-      {/* PREMIUM METRIC CARDS (Firestore + Realtime DB Merged)    */}
+      {/* PREMIUM METRIC CARDS                                     */}
       {/* ======================================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
         
-        {/* Visitors (RTDB) */}
+        {/* Total Visits (All Time) */}
+        <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Total Views</p>
+            <h3 className="text-4xl font-extrabold font-heading text-foreground">{totalVisits}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform relative z-10">
+            <LineChart className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Visits Today */}
         <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
           <div className="relative z-10">
             <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Visits Today</p>
             <h3 className="text-4xl font-extrabold font-heading text-foreground">{dailyVisits}</h3>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform relative z-10">
-            <Globe className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform relative z-10">
+            <Globe className="w-5 h-5" />
           </div>
         </div>
         
-        {/* Total Leads (Firestore) */}
+        {/* Total Leads */}
         <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
           <div className="relative z-10">
             <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Total Leads</p>
             <h3 className="text-4xl font-extrabold font-heading text-foreground">{inquiries.length}</h3>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-110 transition-transform relative z-10">
-            <Users className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-110 transition-transform relative z-10">
+            <Users className="w-5 h-5" />
           </div>
         </div>
 
-        {/* Responded (RTDB) */}
+        {/* Responded */}
         <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
           <div className="relative z-10">
             <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Responded</p>
             <h3 className="text-4xl font-extrabold font-heading text-green-600">{respondedCount}</h3>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform relative z-10">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform relative z-10">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
         
-        {/* Seen but Pending (RTDB) */}
+        {/* Seen but Pending */}
         <div className="bg-card p-6 rounded-2xl border-l-4 border-l-amber-500 border-t border-r border-b border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
           <div className="relative z-10">
-            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Seen / Pending</p>
+            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Pending</p>
             <h3 className="text-4xl font-extrabold font-heading text-amber-600">{seenPendingCount}</h3>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform relative z-10">
-            <Eye className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform relative z-10">
+            <Eye className="w-5 h-5" />
           </div>
         </div>
       </div>

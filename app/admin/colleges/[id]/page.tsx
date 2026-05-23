@@ -26,6 +26,7 @@ export default function UniversityDetailsPage() {
     country: "",
     location: "",
     fees: "",
+    established: "", // Added the established field
     // Deep Details (New Fields)
     history: "",
     rankingGlobal: "",
@@ -144,15 +145,29 @@ export default function UniversityDetailsPage() {
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-6">
             <History className="w-5 h-5 text-blue-500" /> University History & Legacy
           </h2>
-          <div className="space-y-1">
-            <label className="text-sm font-semibold text-slate-700">About the University</label>
-            <Textarea 
-              name="history" 
-              value={formData.history || ""} 
-              onChange={handleInputChange} 
-              placeholder="Enter the history, establishment year, and overall legacy of the university..." 
-              className="min-h-[120px] resize-y"
-            />
+          <div className="space-y-6">
+            {/* Added Established Input */}
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-700">Established Year</label>
+              <Input 
+                name="established" 
+                value={formData.established || ""} 
+                onChange={handleInputChange} 
+                placeholder="e.g. 1930" 
+                className="max-w-xs"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-700">About the University</label>
+              <Textarea 
+                name="history" 
+                value={formData.history || ""} 
+                onChange={handleInputChange} 
+                placeholder="Enter the history, establishment year, and overall legacy of the university..." 
+                className="min-h-[120px] resize-y"
+              />
+            </div>
           </div>
         </div>
 

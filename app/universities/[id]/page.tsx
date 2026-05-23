@@ -3,8 +3,8 @@
 import { useEffect, useState, ReactNode, use } from "react";
 import { motion } from "framer-motion";
 import { 
-  MapPin, Banknote, Users, CheckCircle2, ShieldAlert, 
-  Building2, GraduationCap, ArrowLeft, Phone, Calendar, 
+  MapPin, Banknote, Calendar, CheckCircle2, ShieldAlert, 
+  Building2, GraduationCap, ArrowLeft, Phone,
   FileText, Coffee, HeartPulse, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,12 @@ import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
-// Define strict TypeScript interface
 interface UniversityData {
   name: string;
   country: string;
   location: string;
   fees: string;
-  placed: string;
+  established?: string;
   image: string;
   description?: string;
   courseDuration?: string;
@@ -29,19 +28,16 @@ interface UniversityData {
 }
 
 export default function UniversityDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  // Unwrap params using React.use() for Next.js compatibility
   const resolvedParams = use(params);
   const id = resolvedParams.id;
 
   const [university, setUniversity] = useState<UniversityData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Bulletproof Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Fetch individual data from Firestore
   useEffect(() => {
     async function fetchUniversityDetails() {
       try {
@@ -85,7 +81,6 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
     );
   }
 
-  // Fallback defaults if optional fields aren't configured in your admin panel yet
   const duration = university.courseDuration || "6 Years (Including Internship)";
   const instructionMedium = university.medium || "100% English Medium";
   const recognitions = university.recognition || ["WHO Recognized", "NMC / MCI Approved", "Ministry of Education Approved"];
@@ -97,11 +92,8 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
       
       {/* IMMERSIVE COMPACT HERO BANNER */}
       <section className="relative h-[45vh] min-h-[350px] bg-gray-950 overflow-hidden flex items-end">
-        {/* Cloudinary Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent z-10" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {/* SAFE IMAGE RENDER WITH FALLBACK */}
             {university?.image && university.image.trim() !== "" ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img 
@@ -158,10 +150,10 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
               </div>
               
               <div className="bg-card p-5 rounded-2xl border border-border/40 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent shrink-0"><Users className="w-6 h-6" /></div>
+                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent shrink-0"><Calendar className="w-6 h-6" /></div>
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-foreground/40 tracking-wider">Alumni Base</p>
-                  <p className="font-bold text-sm text-foreground">{university.placed} Placed</p>
+                  <p className="text-[10px] uppercase font-bold text-foreground/40 tracking-wider">Established</p>
+                  <p className="font-bold text-sm text-foreground">{university.established || "N/A"}</p>
                 </div>
               </div>
 

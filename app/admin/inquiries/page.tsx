@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, orderBy, query, doc, updateDoc as updateFirestoreDoc } from "firebase/firestore";
-import { getDatabase, ref, onValue, update as updateRealtimeDB } from "firebase/database";
+import { collection, getDocs, orderBy, query, doc, updateDoc as updateFirestoreDoc, deleteDoc } from "firebase/firestore";
+import { getDatabase, ref, onValue, update as updateRealtimeDB, remove as removeRealtimeDB } from "firebase/database";
 import { db, app } from "@/firebase/config";
-import { Search, Loader2, Copy, Check, CheckSquare, ChevronDown, ChevronUp, Save } from "lucide-react";
+import { Search, Loader2, Copy, Check, CheckSquare, ChevronDown, ChevronUp, Save, Trash2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 interface Inquiry {
@@ -17,10 +17,10 @@ interface Inquiry {
   countries: string[];
   neetScore: string;
   status: string;
+  ipLocation?: string; // Newly added location field
   createdAt: any;
 }
 
-// Micro-component for the Copy Button
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
@@ -41,8 +41,9 @@ export default function InquiriesPage() {
   const [inquiryMeta, setInquiryMeta] = useState<Record<string, { responded?: boolean, seen?: boolean, note?: string }>>({});
   const [loading, setLoading] = useState(true);
   
-  // Accordion State
+  // Interaction States
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
   // Note Saving State
   const [activeNoteText, setActiveNoteText] = useState("");
@@ -81,7 +82,7 @@ export default function InquiriesPage() {
     try {
       await updateFirestoreDoc(doc(db, "inquiries", id), { status: newStatus });
       setInquiries(inquiries.map(inq => inq.id === id ? { ...inq, status: newStatus } : inq));
-      toast.success("Status updated in Firestore");
+      toast.success("Status updated");
     } catch (error) {
       toast.error("Failed to update status");
     }
@@ -117,11 +118,52 @@ export default function InquiriesPage() {
     } else {
       setExpandedId(id);
       setActiveNoteText(currentNote || "");
-      
-      // Auto-mark as seen in RTDB when expanded
       if (!inquiryMeta[id]?.seen) {
         updateRealtimeDB(ref(getDatabase(app), `inquiry_meta/${id}`), { seen: true });
       }
+    }
+  };
+
+  // --- SELECTION & BULK DELETE LOGIC ---
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredInquiries.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredInquiries.map(i => i.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedIds(newSet);
+  };
+
+  const deleteInquiries = async (idsToDelete: string[]) => {
+    const isBulk = idsToDelete.length > 1;
+    if (!window.confirm(`Are you sure you want to completely delete ${isBulk ? `${idsToDelete.length} inquiries` : 'this inquiry'}? This cannot be undone.`)) return;
+    
+    setLoading(true);
+    const rtdb = getDatabase(app);
+    
+    try {
+      // Delete from both Firestore and RTDB for completely clean stats
+      await Promise.all(idsToDelete.map(async (id) => {
+        await deleteDoc(doc(db, "inquiries", id));
+        await removeRealtimeDB(ref(rtdb, `inquiry_meta/${id}`));
+      }));
+      
+      // Update local state
+      setInquiries(inquiries.filter(inq => !idsToDelete.includes(inq.id)));
+      setSelectedIds(new Set());
+      setExpandedId(null);
+      toast.success(`Successfully deleted ${idsToDelete.length} record(s).`);
+    } catch (error) {
+      console.error("Deletion error:", error);
+      toast.error("Failed to delete records.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,7 +175,9 @@ export default function InquiriesPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
+      
+      {/* Top Bar: Title & Global Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-2xl border border-border/50 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold font-heading">Lead Management CRM</h1>
@@ -141,6 +185,15 @@ export default function InquiriesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {selectedIds.size > 0 && (
+            <button 
+              onClick={() => deleteInquiries(Array.from(selectedIds))}
+              className="px-4 py-2 bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive hover:text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors mr-2"
+            >
+              <Trash2 className="w-4 h-4" /> Delete ({selectedIds.size})
+            </button>
+          )}
+
           <div className="relative flex-1 md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
             <input 
@@ -165,33 +218,52 @@ export default function InquiriesPage() {
         </div>
       </div>
 
+      {/* Leads Table */}
       <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-muted/30 border-b border-border/50 text-[11px] uppercase tracking-wider font-bold text-foreground/50">
+                <th className="p-4 w-12 text-center">
+                  <input 
+                    type="checkbox" 
+                    checked={filteredInquiries.length > 0 && selectedIds.size === filteredInquiries.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </th>
                 <th className="p-4 w-12 text-center" title="Responded">RSP</th>
                 <th className="p-4 w-48">Name & Date</th>
                 <th className="p-4 w-40">Phone</th>
-                <th className="p-4 w-32">Firestore Status</th>
-                <th className="p-4 w-16 text-center">Details</th>
+                <th className="p-4 w-32">Status</th>
+                <th className="p-4 w-16 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {loading ? (
-                <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>
+                <tr><td colSpan={6} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>
               ) : filteredInquiries.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-foreground/50 font-medium">No leads match your search.</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-foreground/50 font-medium">No leads match your search.</td></tr>
               ) : (
                 filteredInquiries.map((inq) => {
                   const meta = inquiryMeta[inq.id] || {};
                   const isExpanded = expandedId === inq.id;
+                  const isSelected = selectedIds.has(inq.id);
                   
                   return (
                     <React.Fragment key={inq.id}>
                       {/* --- MAIN COMPACT ROW --- */}
-                      <tr className={`border-b border-border/50 transition-colors ${meta.responded ? 'bg-green-500/5' : 'hover:bg-muted/10'} ${!meta.seen ? 'font-bold' : ''}`}>
+                      <tr className={`border-b border-border/50 transition-colors ${isSelected ? 'bg-primary/5' : meta.responded ? 'bg-green-500/5' : 'hover:bg-muted/10'} ${!meta.seen ? 'font-bold' : ''}`}>
                         
+                        <td className="p-4 text-center">
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected}
+                            onChange={() => toggleSelect(inq.id)}
+                            className="w-4 h-4 cursor-pointer"
+                          />
+                        </td>
+
                         <td className="p-4 text-center">
                           <button 
                             onClick={() => toggleResponded(inq.id, !!meta.responded)}
@@ -232,9 +304,14 @@ export default function InquiriesPage() {
                         </td>
 
                         <td className="p-4 text-center">
-                          <button onClick={() => toggleExpand(inq.id, meta.note || "")} className="p-2 hover:bg-muted rounded-full transition-colors">
-                            {isExpanded ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-foreground/50 hover:text-primary" />}
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => deleteInquiries([inq.id])} className="p-1.5 hover:bg-destructive/10 text-foreground/40 hover:text-destructive rounded-md transition-colors" title="Delete">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => toggleExpand(inq.id, meta.note || "")} className="p-1.5 hover:bg-muted rounded-full transition-colors" title="Expand Details">
+                              {isExpanded ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-foreground/50 hover:text-primary" />}
+                            </button>
+                          </div>
                         </td>
 
                       </tr>
@@ -242,18 +319,25 @@ export default function InquiriesPage() {
                       {/* --- EXPANDED DETAILS ACCORDION --- */}
                       {isExpanded && (
                         <tr className="bg-muted/20 border-b border-border/80">
-                          <td colSpan={5} className="p-6">
+                          <td colSpan={6} className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
                               
                               {/* Read Only Details */}
-                              <div className="space-y-3 bg-card p-5 rounded-2xl border border-border/50 shadow-sm">
+                              <div className="space-y-3 bg-card p-5 rounded-2xl border border-border/50 shadow-sm relative">
+                                {/* Captured IP Location Tag */}
+                                {inq.ipLocation && (
+                                  <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-md uppercase tracking-wide">
+                                    <MapPin className="w-3 h-3" /> {inq.ipLocation}
+                                  </div>
+                                )}
+
                                 <h4 className="font-bold text-xs uppercase tracking-wider text-foreground/50 border-b border-border/50 pb-2 mb-4">Student Information</h4>
                                 
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
                                     <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1">Email</span>
                                     <div className="flex items-center gap-2">
-                                      <p className="text-sm font-medium">{inq.email || "N/A"}</p>
+                                      <p className="text-sm font-medium truncate max-w-[150px]">{inq.email || "N/A"}</p>
                                       {inq.email && <CopyButton text={inq.email} />}
                                     </div>
                                   </div>
@@ -264,7 +348,7 @@ export default function InquiriesPage() {
                                 </div>
                                 
                                 <div>
-                                  <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1 mt-2">Address</span>
+                                  <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1 mt-2">Provided Address</span>
                                   <p className="text-sm font-medium">{inq.address || "No address provided"}</p>
                                 </div>
 

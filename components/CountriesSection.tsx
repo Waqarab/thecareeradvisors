@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, Users, Banknote, ArrowRight, Loader2, Image as ImageIcon } from "lucide-react";
+import { MapPin, Banknote, ArrowRight, Loader2, Image as ImageIcon, ShieldCheck, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import InquiryModal from "@/components/InquiryModal";
@@ -12,7 +12,7 @@ interface University {
   country: string;
   location: string;
   fees: string;
-  placed: string;
+  established?: string; // Replaced 'placed' with 'established'
   image: string;
   isHidden?: boolean;
 }
@@ -88,7 +88,7 @@ export default function CountriesSection() {
                   key={uni.id} 
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-all group flex flex-col"
                 >
-                  <div className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center">
+                  <Link href={`/universities/${uni.id}`} className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center block">
                     <div className="absolute inset-0 bg-[#1b2f45]/20 z-10 group-hover:bg-transparent transition-colors"></div>
                     
                     {uni.image && uni.image.trim() !== "" ? (
@@ -105,17 +105,29 @@ export default function CountriesSection() {
                       </div>
                     )}
 
+                    {/* Left Tag: Country */}
                     <div className="absolute top-4 left-4 z-20">
                       <span className="bg-[#FFFFF0]/90 backdrop-blur text-[#22354a] px-3 py-1 rounded-full text-xs font-bold shadow-sm">{uni.country}</span>
                     </div>
+
+                    {/* Right Tag: WHO Approved */}
+                    <div className="absolute top-4 right-4 z-20">
+                      <span className="bg-green-600/90 backdrop-blur text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 border border-green-400/30">
+                        <ShieldCheck className="w-3.5 h-3.5" /> WHO Approved
+                      </span>
+                    </div>
+
                     <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 text-white">
                       <MapPin className="w-4 h-4 text-[#AEC6CF]" />
                       <span className="text-sm font-medium drop-shadow-md">{uni.location}</span>
                     </div>
-                  </div>
+                  </Link>
                   
                   <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold font-heading mb-4 text-[#22354a] leading-tight group-hover:text-[#6082B6] transition-colors">{uni.name}</h3>
+                    <Link href={`/universities/${uni.id}`}>
+                      <h3 className="text-xl font-bold font-heading mb-4 text-[#22354a] leading-tight group-hover:text-[#6082B6] transition-colors">{uni.name}</h3>
+                    </Link>
+                    
                     <div className="grid grid-cols-2 gap-4 mb-6 mt-auto">
                       <div>
                         <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Avg Fees</p>
@@ -125,29 +137,20 @@ export default function CountriesSection() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Our Students</p>
+                        <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Established</p>
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-[#6082B6]" />
-                          <span className="font-bold text-sm text-[#22354a]">{uni.placed} Placed</span>
+                          <Calendar className="w-4 h-4 text-[#6082B6]" />
+                          <span className="font-bold text-sm text-[#22354a]">{uni.established || "N/A"}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex flex-row items-center gap-2 w-full">
-                      <div className="flex-1">
-                        <InquiryModal>
-                          <Button variant="outline" size="sm" className="w-full h-9 border-[#E67E22]/30 bg-[#E67E22]/5 backdrop-blur-md hover:bg-[#E67E22]/15 text-[#E67E22] font-bold group-hover:border-[#E67E22]/60 transition-all duration-300 cursor-pointer text-[13px] px-2 shadow-sm">
-                            Know More
-                          </Button>
-                        </InquiryModal>
-                      </div>
-                      
-                      {/* 🚀 NEW EXPLORE UNIVERSITY BUTTON */}
-                      <Link href={`/universities/${uni.id}`} className="flex-1 flex">
-                        <Button variant="outline" size="sm" className="w-full h-9 border-[#6082B6]/30 bg-[#6082B6]/5 backdrop-blur-md hover:bg-[#6082B6]/15 text-[#6082B6] font-bold group-hover:border-[#6082B6]/60 transition-all duration-300 cursor-pointer text-[13px] px-2 shadow-sm">
-                          Explore <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+                    <div className="w-full">
+                      <InquiryModal>
+                        <Button variant="outline" size="sm" className="w-full h-10 border-[#E67E22]/30 bg-[#E67E22]/5 backdrop-blur-md hover:bg-[#E67E22]/15 text-[#E67E22] font-bold group-hover:border-[#E67E22]/60 transition-all duration-300 cursor-pointer text-sm shadow-sm">
+                          Check Eligibility & Know More
                         </Button>
-                      </Link>
+                      </InquiryModal>
                     </div>
                   </div>
             </div>

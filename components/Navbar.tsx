@@ -96,12 +96,13 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-xl saturate-[1.5] border-b border-border/50 shadow-sm transition-all duration-300">
-        <div className="w-full mx-auto flex h-20 md:h-24 items-center justify-between px-4 md:px-8 xl:px-12 relative z-50">
+        {/* Changed h-20 to h-16 on mobile for a tighter fit */}
+        <div className="w-full mx-auto flex h-16 md:h-24 items-center justify-between px-4 md:px-8 xl:px-12 relative z-50">
           
           {/* LOGO */}
           <Link href="/" className="flex items-center active:scale-95 transition-transform duration-200 shrink-0 z-50">
-            <div className="scale-[1.1] md:scale-[1.4] origin-left">
-              <Image src="/logo.png" alt="The Career Advisors" width={300} height={100} className="h-12 md:h-16 w-auto object-contain" priority />
+            <div className="scale-[1.05] md:scale-[1.4] origin-left">
+              <Image src="/logo.png" alt="The Career Advisors" width={300} height={100} className="h-10 md:h-16 w-auto object-contain" priority />
             </div>
           </Link>
 
@@ -128,9 +129,9 @@ export default function Navbar() {
             
             {/* NOTIFICATION INBOX */}
             <div className="relative" ref={inboxRef}>
-              <button onClick={handleOpenInbox} className={`relative p-2.5 md:p-3 rounded-full border transition-all duration-200 active:scale-95 ${isInboxOpen ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-muted hover:bg-muted/80 text-foreground/70 hover:text-foreground'}`}>
-                <Bell className="w-5 h-5" />
-                {hasUnread && <span className="absolute top-0 right-0 w-3 h-3 bg-destructive rounded-full border-2 border-background animate-pulse"></span>}
+              <button onClick={handleOpenInbox} className={`relative p-2 md:p-3 rounded-full border transition-all duration-200 active:scale-95 ${isInboxOpen ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-muted hover:bg-muted/80 text-foreground/70 hover:text-foreground'}`}>
+                <Bell className="w-4 h-4 md:w-5 md:h-5" />
+                {hasUnread && <span className="absolute top-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 bg-destructive rounded-full border-2 border-background animate-pulse"></span>}
               </button>
 
               {isInboxOpen && (
@@ -174,9 +175,9 @@ export default function Navbar() {
             {/* MOBILE MENU TOGGLE BUTTON */}
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
-              className="lg:hidden p-2.5 text-foreground active:scale-90 transition-transform duration-200 bg-muted hover:bg-muted/80 rounded-full border border-border"
+              className="lg:hidden p-2 text-foreground active:scale-90 transition-transform duration-200 bg-muted hover:bg-muted/80 rounded-full border border-border"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </button>
           </div>
         </div>

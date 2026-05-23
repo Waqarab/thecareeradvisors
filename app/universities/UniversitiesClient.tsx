@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Users, Banknote, ArrowRight, Loader2, Image as ImageIcon, Search } from "lucide-react";
+import { MapPin, Banknote, Loader2, Image as ImageIcon, Search, ShieldCheck, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import InquiryModal from "@/components/InquiryModal";
 
 interface University {
   id: string;
@@ -12,7 +13,7 @@ interface University {
   country: string;
   location: string;
   fees: string;
-  placed: string;
+  established?: string;
   image: string;
   isHidden?: boolean;
 }
@@ -123,7 +124,6 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
               {filteredUniversities.map((uni, idx) => (
                 <motion.div
                   key={uni.id} 
-                  // 🚀 PREMIUM POP-OUT ANIMATION ON SCROLL
                   initial={{ opacity: 0, scale: 0.8, y: 50 }} 
                   whileInView={{ opacity: 1, scale: 1, y: 0 }} 
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -132,7 +132,7 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
                   style={{ willChange: "transform, opacity" }}
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-all group flex flex-col"
                 >
-                  <div className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center">
+                  <Link href={`/universities/${uni.id}`} className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center block">
                     <div className="absolute inset-0 bg-[#1b2f45]/20 z-10 group-hover:bg-transparent transition-colors"></div>
                     
                     {uni.image && uni.image.trim() !== "" ? (
@@ -152,14 +152,25 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
                     <div className="absolute top-4 left-4 z-20">
                       <span className="bg-[#FFFFF0]/90 backdrop-blur text-[#22354a] px-3 py-1 rounded-full text-xs font-bold shadow-sm">{uni.country}</span>
                     </div>
+
+                    {/* Right Tag: WHO Approved */}
+                    <div className="absolute top-4 right-4 z-20">
+                      <span className="bg-green-600/90 backdrop-blur text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 border border-green-400/30">
+                        <ShieldCheck className="w-3.5 h-3.5" /> WHO Approved
+                      </span>
+                    </div>
+
                     <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 text-white">
                       <MapPin className="w-4 h-4 text-[#AEC6CF]" />
                       <span className="text-sm font-medium drop-shadow-md">{uni.location}</span>
                     </div>
-                  </div>
+                  </Link>
                   
                   <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold font-heading mb-4 text-[#22354a] leading-tight group-hover:text-[#6082B6] transition-colors">{uni.name}</h3>
+                    <Link href={`/universities/${uni.id}`}>
+                      <h3 className="text-xl font-bold font-heading mb-4 text-[#22354a] leading-tight group-hover:text-[#6082B6] transition-colors">{uni.name}</h3>
+                    </Link>
+                    
                     <div className="grid grid-cols-2 gap-4 mb-6 mt-auto">
                       <div>
                         <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Avg Fees</p>
@@ -169,20 +180,21 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Our Students</p>
+                        <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Established</p>
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-[#6082B6]" />
-                          <span className="font-bold text-sm text-[#22354a]">{uni.placed} Placed</span>
+                          <Calendar className="w-4 h-4 text-[#6082B6]" />
+                          <span className="font-bold text-sm text-[#22354a]">{uni.established || "N/A"}</span>
                         </div>
                       </div>
                     </div>
                     
-                    {/* 🚀 NEW EXPLORE UNIVERSITY BUTTON */}
-                    <Link href={`/universities/${uni.id}`} className="mt-auto">
-                      <Button variant="outline" className="w-full border-[#6082B6]/30 hover:bg-[#6082B6]/10 text-[#6082B6] font-bold group-hover:border-[#6082B6] transition-colors cursor-pointer">
-                        Explore University <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    </Link>
+                    <div className="mt-auto">
+                      <InquiryModal>
+                        <Button variant="outline" className="w-full border-[#6082B6]/30 hover:bg-[#6082B6]/10 text-[#6082B6] font-bold group-hover:border-[#6082B6] transition-colors cursor-pointer">
+                          Check Eligibility & Know More
+                        </Button>
+                      </InquiryModal>
+                    </div>
                   </div>
                 </motion.div>
               ))}

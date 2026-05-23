@@ -158,7 +158,7 @@ export default function AboutPage() {
               
               <div className="relative aspect-[4/5] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl bg-[#FFFFF0] group">
                 <img 
-                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop" 
+                  src="/waqarportrait.png" 
                   alt="Waqar Abdullah" 
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 />
@@ -167,7 +167,7 @@ export default function AboutPage() {
                 <div className="absolute bottom-6 left-6 right-6 md:bottom-8 md:left-8 md:right-8">
                   <motion.div initial={{ y: 20, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}>
                     <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight">Waqar Abdullah</h3>
-                    <p className="text-[#AEC6CF] font-bold text-xs md:text-sm tracking-widest uppercase mt-1 md:mt-2">Founder & Director</p>
+                    <p className="text-[#AEC6CF] font-bold text-xs md:text-sm tracking-widest uppercase mt-1 md:mt-2">Founder & Director- The Career Advisors</p>
                   </motion.div>
                 </div>
               </div>

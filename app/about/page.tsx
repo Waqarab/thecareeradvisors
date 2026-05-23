@@ -158,7 +158,7 @@ export default function AboutPage() {
               
               <div className="relative aspect-[4/5] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl bg-[#FFFFF0] group">
                 <img 
-                  src="/waqarportrait.png" 
+                  src="https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779560322/waqarportrait_ktr3dd.png" 
                   alt="Waqar Abdullah" 
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 />

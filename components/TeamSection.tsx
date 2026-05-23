@@ -11,27 +11,27 @@ import Link from "next/link";
 const coreTeam = [
   { 
     id: 1, 
-    name: "Dr. Tariq Ahmed", 
-    role: "Founder & Director", 
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&auto=format&fit=crop" 
+    name: "Waqar Abdullah", 
+    role: "Founder & CEO", 
+    image: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779560322/waqarportrait_ktr3dd.png" 
   },
   { 
     id: 2, 
-    name: "Sarah Khan", 
-    role: "Co-Founder", 
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop" 
+    name: "Mr. Salman Yousuf", 
+    role: "Manager", 
+    image: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779570304/WhatsApp_Image_2026-05-24_at_02.30.20_rzydzz.jpg" 
   },
   { 
     id: 3, 
-    name: "Rahul Verma", 
-    role: "Head Counselor", 
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=400&auto=format&fit=crop" 
+    name: "Ms. Sadiya Sofi", 
+    role: "Student Relationship Manager", 
+    image: "https://cdn.vectorstock.com/i/500p/60/84/faceless-woman-in-blue-hijab-vector-61316084.jpg" 
   },
   { 
     id: 4, 
-    name: "Neha Gupta", 
-    role: "Admissions Head", 
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=400&auto=format&fit=crop" 
+    name: "Mr. Danish Shafi", 
+    role: "Head Counsellor", 
+    image: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779570304/WhatsApp_Image_2026-05-24_at_02.33.29_yxfwdt.jpg" 
   },
 ];
 
@@ -62,19 +62,6 @@ export default function TeamSection() {
               Meet The Experts Behind Your Success
             </motion.h2>
           </div>
-          
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
-            viewport={{ once: true }}
-            className="shrink-0 w-full md:w-auto"
-          >
-            <Link href="/team" className="block w-full">
-              <Button variant="outline" className="w-full md:w-auto rounded-full px-6 font-bold active:scale-95 transition-transform border-border/80 shadow-sm">
-                View Full Team <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </motion.div>
         </div>
 
         {/* Dense Mobile-Optimized Grid (2x2 on Mobile, 4x1 on Desktop) */}

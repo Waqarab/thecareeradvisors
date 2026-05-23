@@ -1,6 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-// ADD THESE IMPORTS:
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -16,19 +15,22 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
-// 2. Initialize App Check (ONLY on the client side!)
+// 2. Initialize App Check (ONLY on client side AND ONLY in Production)
 if (typeof window !== "undefined") {
   
-  // This allows you to test on localhost without Firebase blocking you
-  if (process.env.NODE_ENV === 'development') {
-    (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  // Hard kill-switch: If we are on localhost, DO NOT run App Check.
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string),
+        isTokenAutoRefreshEnabled: true 
+      });
+    } catch (e) {
+      console.warn("App Check initialization error:", e);
+    }
+  } else {
+    console.log("Local development detected: Firebase App Check completely bypassed.");
   }
-
-  // Activate the shield
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string),
-    isTokenAutoRefreshEnabled: true // Refreshes the security token silently in the background
-  });
 }
 
 export { app, db };

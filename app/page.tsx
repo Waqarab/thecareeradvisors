@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ShieldCheck, Award, Users, GraduationCap, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ShieldCheck, Award, Users, CheckCircle2 } from "lucide-react";
+
 // Components
 import Preloader from "@/components/Preloader";
 import InquiryModal from "@/components/InquiryModal";
@@ -19,23 +20,31 @@ export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const heroImages = [
-    "https://res.cloudinary.com/drytpdpx3/image/upload/v1779545094/copy_of_img-20250920-wa0013jpg_nar0fd.webp",
-    "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779551416/20251110_151107.jpg_tca5p1.jpg",
-    "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779550304/20260424_121718.jpg_kzrzqy.jpg"
+    "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto,f_auto,w_800/v1779545094/copy_of_img-20250920-wa0013jpg_nar0fd.webp",
+    "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto,f_auto,w_800/v1779551416/20251110_151107.jpg_tca5p1.jpg",
+    "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto,f_auto,w_800/v1779550304/20260424_121718.jpg_kzrzqy.jpg"
   ];
+
+  // 1. MEMOIZE THE CALLBACK to prevent infinite preloader resets
+  const handleLoadingComplete = useCallback(() => {
+    setIsLoaded(true);
+  }, []);
 
   // Silently track unique daily visitors in the background
   useEffect(() => {
     fetch('/api/track-visit').catch(() => {});
   }, []);
 
-  // Image slider timer
+  // 2. IMAGE SLIDER TIMER (Fixed to wait for preloader to finish)
   useEffect(() => {
+    if (!isLoaded) return; // Do not start sliding images while preloader is active!
+
     const timer = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
     }, 4000); // Crossfade every 4 seconds
+    
     return () => clearInterval(timer);
-  }, [heroImages.length]);
+  }, [heroImages.length, isLoaded]); // Added isLoaded as a dependency
 
   // Lock scrolling while preloader is active
   useEffect(() => {
@@ -49,7 +58,7 @@ export default function Home() {
 
   return (
     <>
-      <Preloader onLoadingComplete={() => setIsLoaded(true)} />
+      <Preloader onLoadingComplete={handleLoadingComplete} />
 
       <div className="flex flex-col min-h-screen font-sans">
         
@@ -83,7 +92,7 @@ export default function Home() {
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   className="flex"
                 >
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 dark:bg-green/20 backdrop-blur-md border border-orange-500/20 shadow-[0_4px_20px_rgba(249,115,22,0.1)] text-foreground/90 text-xs font-semibold tracking-widest uppercase">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 dark:bg-green-500/20 backdrop-blur-md border border-orange-500/20 shadow-[0_4px_20px_rgba(249,115,22,0.1)] text-foreground/90 text-xs font-semibold tracking-widest uppercase">
                     <ShieldCheck className="w-[14px] h-[14px] text-orange-500" />
                     The Career Advisors - J&K's Top Education Consultancy
                   </span>
@@ -146,7 +155,7 @@ export default function Home() {
                   <strong className="font-semibold text-foreground">The Career Advisors</strong> is the most trusted medical education consultancy since 2016. With a decade of expertise, we have secured guaranteed admissions for 500+ students worldwide.
                 </motion.p>
 
-                {/* SEO Feature Grid (Fills empty space beautifully) */}
+                {/* SEO Feature Grid */}
                 <motion.div 
                   initial={{ opacity: 0, y: 15 }} 
                   animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }} 

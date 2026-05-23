@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ShieldCheck, Award, Users, GraduationCap, CheckCircle2 } from "lucide-react";
 // Components
 import Preloader from "@/components/Preloader";
@@ -16,11 +16,26 @@ import FaqSection from "@/components/FaqSection";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const heroImages = [
+    "https://res.cloudinary.com/drytpdpx3/image/upload/v1779545094/copy_of_img-20250920-wa0013jpg_nar0fd.webp",
+    "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779551416/20251110_151107.jpg_tca5p1.jpg",
+    "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779550304/20260424_121718.jpg_kzrzqy.jpg"
+  ];
 
   // Silently track unique daily visitors in the background
   useEffect(() => {
     fetch('/api/track-visit').catch(() => {});
   }, []);
+
+  // Image slider timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4000); // Crossfade every 4 seconds
+    return () => clearInterval(timer);
+  }, [heroImages.length]);
 
   // Lock scrolling while preloader is active
   useEffect(() => {
@@ -189,9 +204,9 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   animate={isLoaded ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
-                  className="text-[11px] md:text-xs text-foreground/40 mt-4 max-w-xl leading-relaxed"
+                  className="text-[22px] md:text-xs text-foreground/100 mt-8 max-w-xl leading-relaxed"
                 >
-                  * Specializing in top-tier medical universities across Russia, Uzbekistan, Kazakhstan, and Georgia. Expert guidance for Indian students seeking affordable, high-quality MBBS education abroad with safe campus environments and high FMGE passing rates.
+                  * The Career Advisors features universities across Russia, Bangladesh, Kazakhstan, Egypt, Tajikistan, and more . Guidance by top experts for Indian students seeking affordable, high-quality MBBS education abroad with safe campus environments and happy journey. <br/> The Career Advisors is the most trusted medical education consultancy since 2016. With a decade of expertise, we have secured guaranteed admissions for 500+ students worldwide
                 </motion.p>
 
               </div>
@@ -206,28 +221,43 @@ export default function Home() {
                     scale: { duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] },
                     y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 } 
                   }}
-                  className="relative w-full max-w-[400px] lg:max-w-[460px] aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-border/50 group"
+                  className="relative w-full max-w-[460px] lg:max-w-[560px] xl:max-w-[620px] aspect-[814/695] rounded-3xl overflow-hidden shadow-2xl border border-border/50 group"
                 >
-                  {/* 👇 Replace src with your image path 👇 */}
-                  <img 
-                    src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop" 
-                    alt="Medical Students Abroad" 
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                  />
+                  {/* Image Slider */}
+                  <AnimatePresence>
+                    <motion.img 
+                      key={currentImageIndex}
+                      src={heroImages[currentImageIndex]}
+                      alt="Medical Students Abroad"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1 }}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                    />
+                  </AnimatePresence>
                   
                   {/* Bottom Overlay with Details */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pt-16 flex flex-col items-start justify-end pointer-events-none z-10">
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="bg-orange-500/20 text-orange-500 p-1.5 rounded-full shadow-inner backdrop-blur-sm">
-                        <Award className="w-5 h-5" />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-5 sm:p-7 pt-32 flex flex-row flex-wrap items-center justify-start gap-x-5 gap-y-3 pointer-events-none z-10">
+                    <div className="flex items-center gap-2.5">
+                      <div className="bg-yellow-500/20 text-yellow-400 p-1.5 rounded-full shadow-inner backdrop-blur-md border border-yellow-500/30">
+                        <Award className="w-4 h-4" />
                       </div>
-                      <span className="text-white font-bold text-lg leading-tight">10+ Years Experience</span>
+                      <motion.span 
+                        animate={isLoaded ? { backgroundPosition: ["0% 50%", "200% 50%"] } : {}}
+                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                        className="bg-[linear-gradient(to_right,#BF953F,#FCF6BA,#B38728,#FBF5B7,#BF953F)] bg-[length:200%_auto] bg-clip-text text-transparent font-extrabold text-sm sm:text-base leading-tight"
+                      >
+                        10+ Years Experience
+                      </motion.span>
                     </div>
                     <div className="flex items-center gap-2.5">
-                      <div className="bg-blue-500/20 text-blue-400 p-1.5 rounded-full shadow-inner backdrop-blur-sm">
-                        <Users className="w-5 h-5" />
+                      <div className="bg-yellow-500/20 text-yellow-400 p-1.5 rounded-full shadow-inner backdrop-blur-md border border-yellow-500/30">
+                        <Users className="w-4 h-4" />
                       </div>
-                      <span className="text-white/90 font-medium text-sm leading-tight">500+ Students Admitted Globally</span>
+                      <span className="bg-[linear-gradient(to_right,#BF953F,#FCF6BA,#B38728,#FBF5B7,#BF953F)] bg-clip-text text-transparent font-extrabold text-sm sm:text-base leading-tight">
+                        500+ Students Admitted Globally
+                      </span>
                     </div>
                   </div>
 

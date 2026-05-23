@@ -27,7 +27,7 @@ export default function TrustSection() {
     },
     { 
       icon: "/icons/free.png", 
-      title: "Free Strategy", 
+      title: "Free Consultation", 
       desc: "Cost-free initial consultation to map your exact roadmap." 
     },
     { 

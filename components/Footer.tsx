@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MapPin, MessageCircle, CalendarDays } from "lucide-react";
+import InquiryModal from "@/components/InquiryModal";
 
 export default function Footer() {
   return (
@@ -25,9 +26,11 @@ export default function Footer() {
               </p>
             </div>
           </div>
-          <Button size="lg" className="w-full md:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 text-lg px-8 py-6 rounded-full whitespace-nowrap shadow-xl shadow-destructive/20 transition-transform active:scale-95">
-            Book Now <ArrowRightIcon className="ml-2 w-5 h-5" />
-          </Button>
+          <InquiryModal>
+            <Button size="lg" className="group w-full md:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90 text-lg px-8 py-6 rounded-full whitespace-nowrap shadow-xl shadow-destructive/20 hover:shadow-2xl hover:shadow-destructive/40 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer">
+              Book Now <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1.5 transition-transform duration-300" />
+            </Button>
+          </InquiryModal>
         </div>
       </div>
 
@@ -86,7 +89,11 @@ export default function Footer() {
             <ul className="space-y-4 text-sm text-foreground/70 font-medium mb-6">
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary shrink-0" />
-                <a href="tel:+916005152350" className="hover:text-primary transition-colors">+91 60051 52350</a>
+                <div className="flex flex-wrap gap-x-2">
+                  <a href="tel:+916005152350" className="hover:text-primary transition-colors">+91 60051 52350</a>
+                  <span className="text-foreground/40">/</span>
+                  <a href="tel:+919682626537" className="hover:text-primary transition-colors">+91 96826 26537</a>
+                </div>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary shrink-0" />

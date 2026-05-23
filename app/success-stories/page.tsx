@@ -86,7 +86,7 @@ const stories = [
 
     // Better responsive image
     image:
-      "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779563398/IMG-20260523-WA0087-02_fojw6y.jpg",
+      "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779564959/IMG-20260523-WA0087-02_hhv8rd.jpg",
 
     // Optimized storytelling (shorter for mobile readability)
     story:
@@ -133,16 +133,16 @@ export default function SuccessStoriesPage() {
     <div className="min-h-screen bg-background pb-24 font-sans">
       
       {/* ULTRA-COMPACT HEADER */}
-      <section className="relative pt-10 pb-10 overflow-hidden bg-primary text-primary-foreground border-b border-border/20">
+      <section className="relative py-6 md:py-8 overflow-hidden bg-primary text-white border-b border-border/20 shadow-md">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
-        <div className="container mx-auto px-4 md:px-8 relative z-10 text-center max-w-4xl flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
-          <h1 className="text-3xl md:text-5xl font-extrabold font-heading tracking-tight leading-tight">
+        <div className="container mx-auto px-4 md:px-8 relative z-10 text-center max-w-4xl flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
+          <h1 className="text-2xl md:text-4xl font-black font-heading tracking-tight leading-tight drop-shadow-md">
             Real Journeys. <br className="md:hidden" />
-            <span className="text-accent ml-2">Extraordinary Outcomes.</span>
+            <span className="text-orange-400 ml-1 md:ml-2">Extraordinary Outcomes.</span>
           </h1>
           {/* Subtle vertical divider on desktop */}
-          <div className="hidden md:block w-px h-12 bg-primary-foreground/20"></div>
-          <p className="text-sm md:text-base text-primary-foreground/80 font-medium max-w-md text-left hidden md:block">
+          <div className="hidden md:block w-px h-10 bg-white/20"></div>
+          <p className="text-xs md:text-sm text-white/90 font-bold max-w-md text-left hidden md:block drop-shadow-sm leading-relaxed">
             Behind every admission letter is a story of determination. Read how we helped these aspiring doctors navigate their path to success.
           </p>
         </div>
@@ -168,10 +168,10 @@ export default function SuccessStoriesPage() {
                 <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-border/50 shadow-lg">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={story.image} alt={story.student} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-0"></div>
                   
                   {/* Student Tag */}
-                  <div className="absolute bottom-6 left-6 text-white">
+                  <div className="absolute bottom-6 left-6 text-white z-10">
                     <p className="font-bold font-heading text-2xl drop-shadow-md">{story.student}</p>
                     <div className="flex items-center gap-2 text-sm font-bold text-white/90 mt-1">
                       <GraduationCap className="w-4 h-4 text-destructive" /> {story.currentStatus}

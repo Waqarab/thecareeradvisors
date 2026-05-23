@@ -14,6 +14,7 @@ import TrustSection from "@/components/TrustSection";
 import TestimonialSection from "@/components/TestimonialSection";
 import TeamSection from "@/components/TeamSection";
 import FaqSection from "@/components/FaqSection";
+import ScholarshipsSection from "@/components/ScholarshipsSection";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -282,6 +283,9 @@ export default function Home() {
         <CountriesSection />
         
         <SectionDivider />
+        <ScholarshipsSection />
+        
+        <SectionDivider />
         <TrustSection />
 
         <SectionDivider />
@@ -292,6 +296,9 @@ export default function Home() {
         
         <SectionDivider />
         <FaqSection />
+        <SectionDivider />
+       <SectionDivider />
+        
       </div>
     </>
   );

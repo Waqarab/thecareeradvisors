@@ -77,9 +77,7 @@ export default function Footer() {
             <ul className="space-y-4 text-sm text-foreground/70 font-medium">
               <li><Link href="/universities?country=Russia" className="hover:text-primary transition-colors">MBBS in Russia</Link></li>
               <li><Link href="/universities?country=Kazakhstan" className="hover:text-primary transition-colors">MBBS in Kazakhstan</Link></li>
-              <li><Link href="/universities?country=Bangladesh" className="hover:text-primary transition-colors">MBBS in Bangladesh</Link></li>
-              <li><Link href="/universities?country=Georgia" className="hover:text-primary transition-colors">MBBS in Georgia</Link></li>
-              <li><Link href="/universities?country=Egypt" className="hover:text-primary transition-colors">MBBS in Egypt</Link></li>
+              <li><Link href="/universities?country=Bangladesh" className="hover:text-primary transition-colors">MBBS in Bangladesh</Link></li>              <li><Link href="/universities?country=Egypt" className="hover:text-primary transition-colors">MBBS in Egypt</Link></li>
             </ul>
           </div>
 

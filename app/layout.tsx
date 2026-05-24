@@ -29,12 +29,12 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://www.thecareeradvisors.in", // Replace with your actual domain
+    url: "https://thecareeradvisors.in",
     title: "The Career Advisors | Best Educational Consultancy in JK",
     description: "Leading as top education consultancy in JK, founded by Waqar Abdullah in 2016. Get free counselling today.",
     siteName: "The Career Advisors",
     images: [{
-      url: "https://res.cloudinary.com/drytpdpx3/image/upload/v1779545094/logo.png", // Update to your logo URL
+      url: "https://res.cloudinary.com/drytpdpx3/image/upload/v1779545094/logo.png", 
       width: 1200,
       height: 630,
       alt: "The Career Advisors Logo"
@@ -51,12 +51,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  // 2. FAVICON INJECTION
-  icons: {
-    icon: '/logo.png', // Relies on logo.png in your public folder
-    shortcut: '/logo.png',
-    apple: '/logo.png',
-  }
 };
 
 export const viewport: Viewport = {
@@ -71,8 +65,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     "@type": "EducationalOrganization",
     "name": "The Career Advisors",
     "alternateName": "TheCareerAdvisors",
-    "url": "https://www.thecareeradvisors.in",
-    "logo": "https://www.thecareeradvisors.in/logo.png",
+    "url": "https://thecareeradvisors.in",
+    "logo": "https://thecareeradvisors.in/logo.png",
     "foundingDate": "2016",
     "founder": {
       "@type": "Person",
@@ -85,7 +79,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       "addressCountry": "IN"
     },
     "sameAs": [
-      // Add your social links here
+      // Update these with your actual social media URLs later
       "https://www.facebook.com/yourpage",
       "https://www.instagram.com/yourpage"
     ]

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.thecareeradvisors.in'
+  const baseUrl = 'https://thecareeradvisors.in'
   
   return [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'yearly', priority: 1 },

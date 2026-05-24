@@ -1,10 +1,10 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useScroll, useTransform, Variants } from "framer-motion";
-import { Target, Eye, History, Globe2, Sparkles, ChevronRight, GraduationCap, MapPin, Users, Award, Quote } from "lucide-react";
+import { Target, Eye, History, Globe2, Sparkles, ChevronRight, GraduationCap, MapPin, Users, Award, Quote, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import InquiryModal from "@/components/InquiryModal";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 // --- BRAND COLOR PALETTE MAP ---
 // Glaucous: #6082B6
@@ -16,18 +16,17 @@ import { useEffect, useRef } from "react";
 
 // --- ANIMATION VARIANTS ---
 const smoothReveal: Variants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
 };
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
 // --- CUSTOM ANIMATED COMPONENTS ---
 
-// 1. Darken Highlight Overlay
 const DarkenHighlight = ({ text }: { text: string }) => (
   <span className="relative inline-block px-1 md:px-2 z-10">
     <span className="relative z-10">{text}</span>
@@ -41,7 +40,6 @@ const DarkenHighlight = ({ text }: { text: string }) => (
   </span>
 );
 
-// 2. Animated Divider Line
 const AnimatedLine = ({ className = "bg-[#AEC6CF]/40", delay = 0 }: { className?: string, delay?: number }) => (
   <motion.div
     initial={{ scaleX: 0 }}
@@ -52,7 +50,6 @@ const AnimatedLine = ({ className = "bg-[#AEC6CF]/40", delay = 0 }: { className?
   />
 );
 
-// 3. Looping Pulse Button
 const PulseButton = ({ children, className }: { children: React.ReactNode, className?: string }) => (
   <motion.div
     animate={{ 
@@ -68,62 +65,147 @@ const PulseButton = ({ children, className }: { children: React.ReactNode, class
 );
 
 export default function AboutPage() {
-  // Ultra-Fast Cursor Tracking Logic
   const mouseX = useMotionValue(-1000); 
   const mouseY = useMotionValue(-1000);
   
   const springX = useSpring(mouseX, { stiffness: 800, damping: 30, mass: 0.1 });
   const springY = useSpring(mouseY, { stiffness: 800, damping: 30, mass: 0.1 });
 
-  // Scroll Parallax Logic for extreme animation feel
   const { scrollYProgress } = useScroll();
   const yParallaxFast = useTransform(scrollYProgress, [0, 1], [0, -150]);
   const yParallaxSlow = useTransform(scrollYProgress, [0, 1], [0, -80]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
     };
-
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [mouseX, mouseY]);
 
+  // JSON-LD SCHEMA FOR GOOGLE SEARCH & IMAGE RANKING
+  const jsonLdSchema = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "The Career Advisors",
+    "alternateName": "Best Educational Consultancy near me",
+    "description": "The top-rated educational consultancy in Srinagar, Kashmir, specializing in guaranteed MBBS admission guidance worldwide.",
+    "foundingDate": "2016",
+    "founder": {
+      "@type": "Person",
+      "name": "Waqar Abdullah",
+      "jobTitle": "Founder & Director",
+      "image": "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779560322/waqarportrait_ktr3dd.png",
+      "url": "https://thecareeradvisors.in/about"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Srinagar",
+      "addressRegion": "Jammu and Kashmir",
+      "addressCountry": "IN"
+    }
+  };
+
   return (
     <div className="w-full font-sans selection:bg-[#6082B6] selection:text-white bg-[#F2F3F4] relative flex flex-col">
       
-      {/* --- MOUSE TRACKING SPRAY --- */}
+      {/* Inject SEO Schema invisibly into the head */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }} />
+
       <motion.div 
         style={{ x: springX, y: springY, translateX: "-50%", translateY: "-50%" }} 
         className="fixed top-0 left-0 w-40 h-40 bg-gradient-to-tr from-[#AEC6CF]/60 to-[#86EFAC]/50 blur-[50px] rounded-full pointer-events-none z-[1] hidden md:block" 
       />
 
-      {/* SEAMLESS BRAND GRID BACKGROUND */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-40 mix-blend-multiply bg-[linear-gradient(to_right,#AEC6CF30_1px,transparent_1px),linear-gradient(to_bottom,#AEC6CF30_1px,transparent_1px)] bg-[size:40px_40px]"></div>
 
       {/* ========================================= */}
-      {/* 1. HERO & FOUNDER'S NOTE                  */}
+      {/* 1. NEWSPAPER EDITORIAL: SEO SECTION 1       */}
       {/* ========================================= */}
-      <section className="relative pt-16 pb-12 md:pt-24 md:pb-20 z-10 overflow-hidden">
-        {/* Parallax Blobs */}
+      <section className="relative pt-32 pb-12 md:pt-40 md:pb-16 z-10 bg-[#FFFFF0]">
+        <div className="container mx-auto px-4 md:px-8 max-w-5xl relative z-10">
+          
+          {/* THE MASTER H1 FOR SEO */}
+          <motion.div variants={staggerContainer} initial="hidden" animate="show" className="text-center mb-8 md:mb-12 border-b-2 border-[#22354a] pb-8">
+            <motion.p variants={smoothReveal} className="text-[#6082B6] font-bold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
+              Est. 2016 • Srinagar, Jammu & Kashmir
+            </motion.p>
+            <motion.h1 variants={smoothReveal} className="text-4xl md:text-6xl lg:text-[4.5rem] font-serif font-black text-[#22354a] leading-[1.05] tracking-tight">
+              The Career Advisors: <br />
+              <span className="font-sans font-extrabold text-[#3A5F8B] text-3xl md:text-5xl lg:text-6xl tracking-tight">
+                Best Educational Consultancy Near Me in Srinagar, Kashmir.
+              </span>
+            </motion.h1>
+          </motion.div>
+
+          {/* Newspaper Column Layout */}
+          <motion.div variants={smoothReveal} initial="hidden" whileInView="show" viewport={{ once: true }} className="text-[#22354a] md:columns-2 gap-10 md:gap-16 text-justify space-y-6 md:space-y-0 text-base md:text-lg leading-relaxed">
+            <p className="first-letter:text-6xl md:first-letter:text-7xl first-letter:font-serif first-letter:font-black first-letter:text-[#6082B6] first-letter:mr-3 first-letter:float-left first-letter:leading-none">
+              When students and parents search for the <strong>"best educational consultancy near me"</strong> in Srinagar, Kashmir, or across J&K, they are looking for more than just an admissions broker; they are looking for a trusted mentor. Established in 2016, The Career Advisors was founded with a singular, powerful vision: to bridge the gap between ambitious medical aspirants in Jammu and Kashmir and world-class universities globally. 
+            </p>
+            <p>
+              Over the years, we have organically grown to become the most sought-after education consultancy in Srinagar. We recognized early on that navigating the complexities of international medical admissions—from NMC regulations and WHO approvals to visa processing—was overwhelming. Our foundation is built on absolute transparency, ensuring every student who walks through our doors is given realistic, accurate, and highly personalized guidance.
+            </p>
+            <p>
+              Our primary aim is not just to secure an admission seat, but to carefully curate a pathway that guarantees a successful medical career. We meticulously evaluate universities based on FMGE/NEXT passing ratios, clinical exposure, infrastructure, and safety protocols before we ever recommend them to our students.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ========================================= */}
+      {/* 2. NEWSPAPER EDITORIAL: SEO SECTION 2       */}
+      {/* ========================================= */}
+      <section className="relative py-12 md:py-16 z-10 bg-white border-t border-b border-[#AEC6CF]/40">
+        <div className="container mx-auto px-4 md:px-8 max-w-5xl relative z-10">
+          
+          {/* H2 FOR SEO SUB-TOPIC */}
+          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true }} className="mb-8 md:mb-12">
+            <motion.h2 variants={smoothReveal} className="text-3xl md:text-5xl font-serif font-black text-[#22354a] leading-tight border-l-4 border-[#D85C34] pl-4 md:pl-6">
+              Guiding Dreams: Why We Are The Top MBBS Admission Consultancy in J&K
+            </motion.h2>
+          </motion.div>
+
+          <motion.div variants={smoothReveal} initial="hidden" whileInView="show" viewport={{ once: true }} className="text-[#3A5F8B] text-base md:text-lg leading-relaxed space-y-6">
+            <p>
+              Our core motive is student empowerment. We believe that financial constraints or a lack of accurate information should never be the reason a deserving candidate gives up on their dream of wearing the white coat. By providing honest fee structures without hidden charges, complete documentation support, and continuous post-arrival assistance, we ensure our students focus entirely on their medical education.
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-6 mt-8">
+              <div className="bg-[#FFFFF0] p-6 border border-[#AEC6CF]/30 shadow-sm">
+                <h3 className="font-bold text-[#22354a] text-xl mb-2 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-[#6082B6]" /> 100% Transparent Processing</h3>
+                <p className="text-sm md:text-base">No hidden charges, no false promises. As the leading education consultancy in Kashmir, we provide a complete breakdown of expenses from day one.</p>
+              </div>
+              <div className="bg-[#FFFFF0] p-6 border border-[#AEC6CF]/30 shadow-sm">
+                <h3 className="font-bold text-[#22354a] text-xl mb-2 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-[#6082B6]" /> Direct University Tie-ups</h3>
+                <p className="text-sm md:text-base">We are official representatives of top-tier, WHO, and NMC approved medical institutions, making us the top choice for MBBS abroad.</p>
+              </div>
+            </div>
+          </motion.div>
+
+        </div>
+      </section>
+
+      {/* ========================================= */}
+      {/* 3. FOUNDER'S NOTE                           */}
+      {/* ========================================= */}
+      <section className="relative pt-16 pb-12 md:pt-24 md:pb-20 z-10 overflow-hidden bg-[#F2F3F4]">
         <motion.div style={{ y: yParallaxFast }} className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#6082B6]/20 rounded-full blur-[100px] -z-10 pointer-events-none" />
-        <motion.div style={{ y: yParallaxSlow }} className="absolute top-40 left-[-10%] w-[300px] h-[300px] bg-[#AEC6CF]/20 rounded-full blur-[100px] -z-10 pointer-events-none" />
 
         <div className="container mx-auto px-4 md:px-8 max-w-7xl relative z-10">
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
             
-            <motion.div variants={staggerContainer} initial="hidden" animate="show" className="lg:col-span-7">
+            <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true }} className="lg:col-span-7">
               <motion.div variants={smoothReveal} className="flex items-center gap-2 text-[#3A5F8B] font-bold tracking-[0.15em] uppercase mb-6 text-xs md:text-sm">
                 <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-[#6082B6]" /> A Message from the Founder
               </motion.div>
 
-              <motion.h1 variants={smoothReveal} className="text-4xl md:text-5xl lg:text-6xl font-black text-[#22354a] leading-[1.1] mb-6 tracking-tight">
+              <motion.h2 variants={smoothReveal} className="text-4xl md:text-5xl lg:text-6xl font-black text-[#22354a] leading-[1.1] mb-6 tracking-tight">
                 Empowering Your Dream to <br className="hidden md:block" />
                 <DarkenHighlight text="Heal the World." />
-              </motion.h1>
+              </motion.h2>
 
               <AnimatedLine className="bg-[#6082B6]/30 mb-6 max-w-sm" delay={0.4} />
               
@@ -150,7 +232,8 @@ export default function AboutPage() {
 
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }} 
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} 
+              whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }} 
+              viewport={{ once: true }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} 
               className="lg:col-span-5 relative mt-8 lg:mt-0"
             >
@@ -159,7 +242,8 @@ export default function AboutPage() {
               <div className="relative aspect-[4/5] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl bg-[#FFFFF0] group">
                 <img 
                   src="https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779560322/waqarportrait_ktr3dd.png" 
-                  alt="Waqar Abdullah" 
+                  alt="Waqar Abdullah - Founder & Director of The Career Advisors, Best Education Consultancy in Srinagar, J&K" 
+                  title="Waqar Abdullah - Founder & Director"
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1b2f45] via-[#1b2f45]/20 to-transparent"></div>
@@ -178,7 +262,7 @@ export default function AboutPage() {
       </section>
 
       {/* ========================================= */}
-      {/* 2. THE PILLARS                            */}
+      {/* 4. THE PILLARS                              */}
       {/* ========================================= */}
       <section className="py-16 md:py-24 relative z-10 bg-transparent">
         <AnimatedLine className="bg-[#6082B6]/20 mb-16 max-w-7xl mx-auto" />
@@ -207,7 +291,6 @@ export default function AboutPage() {
             ))}
           </motion.div>
 
-          {/* Impact Banner */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="mt-20 md:mt-32 max-w-4xl mx-auto text-center"
@@ -224,7 +307,7 @@ export default function AboutPage() {
       </section>
 
       {/* ========================================= */}
-      {/* 3. OUR REACH (DUSK BLUE SECTION)          */}
+      {/* 5. OUR REACH                                */}
       {/* ========================================= */}
       <section className="py-20 md:py-32 bg-[#3A5F8B] text-[#FFFFF0] relative z-10 overflow-hidden">
         <motion.div style={{ y: yParallaxFast }} className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#6082B6]/30 rounded-full blur-[100px] pointer-events-none" />
@@ -266,17 +349,17 @@ export default function AboutPage() {
             <h3 className="text-xl md:text-2xl font-bold text-[#FFFFF0] mb-8 text-center tracking-tight">Top Destinations for our Students</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
               {[
-                { name: "Russia", students: "4,500+ Placed", img: "https://images.unsplash.com/photo-1513622470522-26c3112c3f91?q=80&w=400&auto=format&fit=crop" },
-                { name: "Uzbekistan", students: "2,000+ Placed", img: "https://images.unsplash.com/photo-1627315147817-48fdb454f767?q=80&w=400&auto=format&fit=crop" },
-                { name: "Kazakhstan", students: "1,500+ Placed", img: "https://images.unsplash.com/photo-1580838183186-04bb2b2e8cae?q=80&w=400&auto=format&fit=crop" },
-                { name: "Bangladesh", students: "1,200+ Placed", img: "https://images.unsplash.com/photo-1628318359045-8173dc76cc1d?q=80&w=400&auto=format&fit=crop" },
-                { name: "Egypt", students: "800+ Placed", img: "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?q=80&w=400&auto=format&fit=crop" }
+                { name: "Kyrgyzstan", students: "90+ Placed", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Flag_of_Kyrgyzstan.svg/1280px-Flag_of_Kyrgyzstan.svg.png" },
+                { name: "Uzbekistan", students: "300+ Placed", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Flag_of_Uzbekistan.svg/330px-Flag_of_Uzbekistan.svg.png" },
+                { name: "Kazakhstan", students: "150+ Placed", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Flag_of_Kazakhstan_%283-2%29.svg/1280px-Flag_of_Kazakhstan_%283-2%29.svg.png" },
+                { name: "Bangladesh", students: "250+ Placed", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Flag_of_Bangladesh.svg/1280px-Flag_of_Bangladesh.svg.png" },
+                { name: "Egypt", students: "200+ Placed", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Flag_of_Egypt.svg/1280px-Flag_of_Egypt.svg.png" }
               ].map((country, idx) => (
                 <motion.div 
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ delay: idx * 0.1, duration: 0.6 }}
                   key={country.name} className="relative aspect-[3/4] rounded-xl md:rounded-2xl overflow-hidden group cursor-pointer border border-[#6082B6]/40 shadow-lg"
                 >
-                  <img src={country.img} alt={country.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100" />
+                  <img src={country.img} alt={`MBBS in ${country.name}`} title={`Study MBBS in ${country.name} with The Career Advisors`} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1b2f45] via-[#1b2f45]/40 to-transparent"></div>
                   <div className="absolute bottom-4 left-4 right-4 md:bottom-5 md:left-5 md:right-5">
                     <h4 className="text-[#FFFFF0] font-black text-lg md:text-xl mb-1.5 md:mb-2 flex items-center gap-1.5 md:gap-2"><MapPin className="w-3 h-3 md:w-4 md:h-4 text-[#AEC6CF]" /> {country.name}</h4>
@@ -293,14 +376,13 @@ export default function AboutPage() {
       </section>
 
       {/* ========================================= */}
-      {/* 4. THE HIGHLY ANIMATED CTA SECTION        */}
+      {/* 6. CTA SECTION                              */}
       {/* ========================================= */}
       <section className="pt-20 pb-16 md:pt-32 md:pb-24 relative z-10 bg-[#FFFFF0] overflow-hidden">
         
-        {/* LEFT ANIMATED CLOUDINARY IMAGE */}
         <motion.img
           src="https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779390076/download_1_-Photoroom_1_tepfkp.png"
-          alt="Student Right"
+          alt="Happy Medical Student smiling - The Career Advisors"
           initial={{ x: -150, opacity: 0, rotate: -5 }}
           whileInView={{ x: 0, opacity: 1, rotate: 0 }}
           viewport={{ once: true, margin: "-50px" }}
@@ -308,10 +390,9 @@ export default function AboutPage() {
           className="absolute left-0 bottom-0 w-[200px] md:w-[300px] lg:w-[350px] xl:w-[450px] object-contain opacity-20 md:opacity-90 pointer-events-none z-0 transform translate-y-12 md:translate-y-4 lg:translate-x-4"
         />
 
-        {/* RIGHT ANIMATED CLOUDINARY IMAGE */}
         <motion.img
           src="https://res.cloudinary.com/drytpdpx3/image/upload/f_webp/q_auto:eco/Best_Diagnostic_Centre_in_Chandigarh_Offering_Advanced_Imaging_and_Lab_Services_Sanjivini_Diagnost-Photoroom_ohgj9w.png"
-          alt="Student Left"
+          alt="Female Doctor with Stethoscope - The Career Advisors"
           initial={{ x: 150, opacity: 0, rotate: 5 }}
           whileInView={{ x: 0, opacity: 1, rotate: 0 }}
           viewport={{ once: true, margin: "-50px" }}
@@ -349,7 +430,7 @@ export default function AboutPage() {
       </section>
 
       {/* ========================================= */}
-      {/* 5. DEDICATED FOOTER CLEARANCE SPACER      */}
+      {/* 7. DEDICATED FOOTER CLEARANCE SPACER        */}
       {/* ========================================= */}
       <div className="h-32 md:h-48 w-full bg-[#FFFFF0] relative z-0 shrink-0 border-none m-0 p-0"></div>
 

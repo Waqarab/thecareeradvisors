@@ -6,7 +6,6 @@ import { MessageSquare, X, Send, Loader2, Bot, Paperclip, Image as ImageIcon } f
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 
-// Updated interface to support images
 interface Message {
   role: "user" | "ai";
   content: string;
@@ -27,13 +26,10 @@ export default function LiveChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- LIGHTNING FAST EVENT LISTENER ---
-  // Listens for the Navbar to open/close without needing heavy React Context
   useEffect(() => {
     const handleMenuToggle = (e: Event) => {
       const customEvent = e as CustomEvent;
       setIsHiddenByMenu(customEvent.detail);
-      // Auto-close the chat window if they open the mobile menu
       if (customEvent.detail) setIsOpen(false); 
     };
 
@@ -45,15 +41,12 @@ export default function LiveChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, selectedImage]);
 
-  // Completely destroy the component on Admin routes to save memory
   if (pathname?.startsWith("/admin")) return null;
 
-  // Convert image to base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size (limit to ~4MB to prevent Next.js payload errors)
     if (file.size > 4 * 1024 * 1024) {
       alert("Please upload an image smaller than 4MB.");
       return;
@@ -65,7 +58,6 @@ export default function LiveChat() {
     };
     reader.readAsDataURL(file);
     
-    // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -79,7 +71,6 @@ export default function LiveChat() {
     setInput("");
     setSelectedImage(null);
     
-    // Add user message to UI
     setMessages((prev) => [...prev, { role: "user", content: userMessage, image: imageToSend || undefined }]);
     setIsLoading(true);
 
@@ -90,7 +81,7 @@ export default function LiveChat() {
         body: JSON.stringify({
           message: userMessage,
           history: messages,
-          image: imageToSend, // Send the base64 image to backend
+          image: imageToSend, 
         }),
       });
 
@@ -109,7 +100,8 @@ export default function LiveChat() {
   };
 
   return (
-    <div className={`fixed bottom-6 right-6 z-[90] flex flex-col items-end transition-all duration-300 ease-out ${isHiddenByMenu ? 'opacity-0 pointer-events-none translate-y-10' : 'opacity-100 translate-y-0'}`}>
+    // OPTIMIZATION: Pushed closer to the edge on mobile (bottom-4 right-4)
+    <div className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[90] flex flex-col items-end transition-all duration-300 ease-out ${isHiddenByMenu ? 'opacity-0 pointer-events-none translate-y-10' : 'opacity-100 translate-y-0'}`}>
       
       <AnimatePresence>
         {isOpen && (
@@ -118,7 +110,7 @@ export default function LiveChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-4 w-[350px] sm:w-[380px] h-[550px] max-h-[80vh] bg-card border border-border/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            className="mb-4 w-[330px] sm:w-[380px] h-[500px] max-h-[75vh] bg-card border border-border/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="bg-primary p-4 flex items-center justify-between text-primary-foreground shadow-md relative z-10">
@@ -152,7 +144,6 @@ export default function LiveChat() {
                       ? "bg-destructive text-destructive-foreground rounded-br-sm" 
                       : "bg-card border border-border/50 text-foreground rounded-bl-sm"
                   }`}>
-                    {/* Render Image if exists */}
                     {msg.image && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={msg.image} alt="Uploaded" className="max-w-full rounded-xl object-contain border border-black/10" />
@@ -177,7 +168,7 @@ export default function LiveChat() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Image Preview Area (Above Input) */}
+            {/* Image Preview Area */}
             <AnimatePresence>
               {selectedImage && (
                 <motion.div 
@@ -199,8 +190,6 @@ export default function LiveChat() {
 
             {/* Input Form */}
             <form onSubmit={sendMessage} className="p-3 bg-card border-t border-border/50 flex gap-2 items-end">
-              
-              {/* Hidden File Input & Trigger Button */}
               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
               <button 
                 type="button" 
@@ -233,7 +222,8 @@ export default function LiveChat() {
           {!isOpen && (
             <motion.div
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10, scale: 0.9 }} transition={{ delay: 2 }}
-              className="absolute right-[80px] bg-card px-4 py-2 rounded-xl shadow-lg border border-border/50 whitespace-nowrap hidden sm:block"
+              // OPTIMIZATION: Tooltip moved closer since button is smaller
+              className="absolute right-[60px] md:right-[70px] bg-card px-4 py-2 rounded-xl shadow-lg border border-border/50 whitespace-nowrap hidden sm:block"
             >
               <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-card border-t border-r border-border/50 rotate-45"></div>
               <p className="text-sm font-bold font-heading text-foreground relative z-10">Chat</p>
@@ -244,13 +234,18 @@ export default function LiveChat() {
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
           whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          className="w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-[0_8px_30px_rgba(66,99,235,0.4)] flex items-center justify-center relative z-20"
+          // OPTIMIZATION: Reduced from w-16 to w-12 on mobile
+          className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary text-primary-foreground shadow-[0_4px_15px_rgba(66,99,235,0.4)] flex items-center justify-center relative z-20"
         >
           <AnimatePresence mode="wait">
             {isOpen ? (
-              <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}><X className="w-8 h-8" /></motion.div>
+              <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                <X className="w-6 h-6 md:w-7 md:h-7" />
+              </motion.div>
             ) : (
-              <motion.div key="chat" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}><MessageSquare className="w-8 h-8" /></motion.div>
+              <motion.div key="chat" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+                <MessageSquare className="w-6 h-6 md:w-7 md:h-7" />
+              </motion.div>
             )}
           </AnimatePresence>
         </motion.button>

@@ -47,6 +47,7 @@ export default function Footer() {
                 width={1868} 
                 height={832} 
                 className="w-[240px] md:w-[280px] h-auto object-contain"
+                priority
               />
             </Link>
             <p className="text-foreground/70 leading-snug text-sm">

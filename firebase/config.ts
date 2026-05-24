@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+/*import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";*/
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -21,10 +21,10 @@ if (typeof window !== "undefined") {
   // Hard kill-switch: If we are on localhost, DO NOT run App Check.
   if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
     try {
-      initializeAppCheck(app, {
+      /*initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string),
         isTokenAutoRefreshEnabled: true 
-      });
+      });*/
     } catch (e) {
       console.warn("App Check initialization error:", e);
     }

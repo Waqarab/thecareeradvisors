@@ -210,7 +210,7 @@ export default function Navbar() {
               {/* Top Bar inside Menu */}
               <div className="flex items-center justify-between p-4 px-6 border-b border-border/20">
                 <div className="scale-90 origin-left">
-                  <Image src="/logo.png" alt="The Career Advisors" width={150} height={60} className="h-8 w-auto object-contain" />
+                  <Image src="/logo.png" alt="The Career Advisors" width={150} height={60} className="h-8 w-auto object-contain" priority />
                 </div>
                 <button 
                   onClick={() => setIsMobileMenuOpen(false)}

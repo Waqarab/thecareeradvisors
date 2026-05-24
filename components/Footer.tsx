@@ -77,7 +77,8 @@ export default function Footer() {
             <ul className="space-y-4 text-sm text-foreground/70 font-medium">
               <li><Link href="/universities?country=Russia" className="hover:text-primary transition-colors">MBBS in Russia</Link></li>
               <li><Link href="/universities?country=Kazakhstan" className="hover:text-primary transition-colors">MBBS in Kazakhstan</Link></li>
-              <li><Link href="/universities?country=Bangladesh" className="hover:text-primary transition-colors">MBBS in Bangladesh</Link></li>              <li><Link href="/universities?country=Egypt" className="hover:text-primary transition-colors">MBBS in Egypt</Link></li>
+              <li><Link href="/universities?country=Bangladesh" className="hover:text-primary transition-colors">MBBS in Bangladesh</Link></li>
+              <li><Link href="/universities?country=Egypt" className="hover:text-primary transition-colors">MBBS in Egypt</Link></li>
             </ul>
           </div>
 
@@ -128,31 +129,35 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* COPYRIGHT BAR */}
-      <div className="bg-[#1b2f45] py-4">
-        <div className="container mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-[#AEC6CF]/80 gap-3">
-          <p>© {new Date().getFullYear()} The Career Advisors. All rights reserved.</p>
+      {/* COPYRIGHT & DEVELOPER BAR */}
+      <div className="bg-[#1b2f45] py-5 border-t border-[#AEC6CF]/10">
+        <div className="container mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-5 md:gap-4">
           
-          <div className="flex gap-6 mt-1 md:mt-0 items-center">
-            <div className="flex gap-4">
-              <Link href="/legal/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link href="/legal/terms-conditions" className="hover:text-white transition-colors">Terms & Conditions</Link>
-            </div>
-            <div className="hidden md:block w-px h-3 bg-[#AEC6CF]/30"></div>
-            
-            {/* DEVELOPER CREDIT */}
-            <p className="font-bold text-white hover:text-emerald-400 transition-colors gap-1.5">
-              Developed by
+          {/* LEFT: Copyright Info */}
+          <div className="order-3 md:order-1 w-full md:w-1/3 text-center md:text-left text-xs md:text-sm text-[#AEC6CF]/80">
+            <p>© {new Date().getFullYear()} The Career Advisors. All rights reserved.</p>
+          </div>
+          
+          {/* CENTER: Highly Visible Developer Tag */}
+          <div className="order-1 md:order-2 w-full md:w-1/3 text-center">
+            <p className="text-sm font-medium text-[#AEC6CF]">
+              Designed and Developed by{" "}
               <a 
-                href="http://haadi.publicvm.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="font-bold text-white hover:text-emerald-400 transition-colors"
+                href="mailto:officialhaadi81@gmail.com" 
+                className="inline-block font-bold text-white hover:text-emerald-400 underline decoration-emerald-400/30 underline-offset-4 transition-all duration-300"
               >
-                   H Studio
+                Team Haadi
               </a>
             </p>
           </div>
+
+          {/* RIGHT: Legal Links */}
+          <div className="order-2 md:order-3 w-full md:w-1/3 flex justify-center md:justify-end gap-4 text-xs md:text-sm text-[#AEC6CF]/80">
+            <Link href="/legal/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <div className="w-px h-4 bg-[#AEC6CF]/30 mt-0.5"></div>
+            <Link href="/legal/terms-conditions" className="hover:text-white transition-colors">Terms & Conditions</Link>
+          </div>
+
         </div>
       </div>
     </footer>

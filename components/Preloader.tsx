@@ -21,8 +21,29 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
     const startTime = Date.now();
     const minLoadTime = 2500; 
     const CACHE_KEY = "tca_preloader_timestamp";
-    const CACHE_EXPIRY_HOURS = 2;
+    const CACHE_EXPIRY_HOURS = 10; // Set to 10 hours as requested
 
+    // 1. CACHE LOGIC CHECK (Run this before anything else)
+    const cachedTime = localStorage.getItem(CACHE_KEY);
+    const hasCachedData = localStorage.getItem("tca_universities_cache");
+    let shouldRunFullPreload = true;
+
+    if (cachedTime && hasCachedData) {
+      const hoursPassed = (Date.now() - parseInt(cachedTime, 10)) / (1000 * 60 * 60);
+      if (hoursPassed < CACHE_EXPIRY_HOURS) {
+        shouldRunFullPreload = false;
+      }
+    }
+
+    // 2. INSTANT BYPASS: If cache is valid, skip video and skip loading entirely
+    if (!shouldRunFullPreload) {
+      setIsLoading(false);
+      onLoadingComplete();
+      window.dispatchEvent(new Event("app-ready"));
+      return; // Forcefully exit the useEffect so no timers are started
+    }
+
+    // 3. FULL PRELOAD ROUTE (For new users or expired cache)
     const finishLoading = () => {
       if (!isMounted) return;
       const elapsedTime = Date.now() - startTime;
@@ -50,7 +71,6 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
           "/logo.png"
         ];
 
-        // Safely extract thumbnails, limited to 3 to prevent mobile crashing
         if (Array.isArray(data)) {
           data.slice(0, 3).forEach((uni: any) => {
             if (uni.thumbnail) imageUrlsToPreload.push(uni.thumbnail);
@@ -71,23 +91,9 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
       }
     };
 
-    const cachedTime = localStorage.getItem(CACHE_KEY);
-    const hasCachedData = localStorage.getItem("tca_universities_cache");
-    let shouldRunFullPreload = true;
-
-    if (cachedTime && hasCachedData) {
-      const hoursPassed = (Date.now() - parseInt(cachedTime, 10)) / (1000 * 60 * 60);
-      if (hoursPassed < CACHE_EXPIRY_HOURS) {
-        shouldRunFullPreload = false;
-      }
-    }
-
-    if (shouldRunFullPreload) {
-      localStorage.setItem(CACHE_KEY, Date.now().toString());
-      executeHeavyPreload();
-    } else {
-      finishLoading();
-    }
+    // Since we didn't bypass, run the heavy preload and reset the cache timer
+    localStorage.setItem(CACHE_KEY, Date.now().toString());
+    executeHeavyPreload();
 
     const fallbackTimeout = setTimeout(finishLoading, 7000); 
 
@@ -97,6 +103,7 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
     };
   }, [onLoadingComplete]);
 
+  // Hide component entirely if loading is done
   if (!isLoading) return null; 
 
   return (
@@ -109,10 +116,7 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
         className="w-80 md:w-[400px] lg:w-[500px] h-auto pointer-events-none"
         style={{ mixBlendMode: "multiply", filter: "contrast(1.05) brightness(1.02)" }}
       >
-        {/* WebM fallback with updated parameters for Chrome/Android */}
         <source src="https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1779277883/mp__wdjltm.webm" type="video/webm" />
-        
-        {/* Your exact optimized MP4 URL for Safari/iOS */}
         <source src="https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1779277883/mp__wdjltm.mp4" type="video/mp4" />
       </video>
     </div>

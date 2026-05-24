@@ -100,10 +100,16 @@ export default function Navbar() {
         <div className="w-full mx-auto flex h-16 md:h-24 items-center justify-between px-4 md:px-8 xl:px-12 relative z-50">
           
           {/* LOGO */}
-          <Link href="/" className="flex items-center active:scale-95 transition-transform duration-200 shrink-0 z-50">
-            <div className="scale-[1.05] md:scale-[1.4] origin-left">
-              <Image src="/logo.png" alt="The Career Advisors" width={300} height={100} className="h-10 md:h-16 w-auto object-contain" priority />
-            </div>
+          <Link href="/" className="flex items-center active:scale-95 transition-transform duration-200 shrink-0 z-50 mr-4 lg:mr-8">
+            <Image 
+              src="/logo.png" 
+              alt="The Career Advisors" 
+              width={300} 
+              height={100} 
+              // Smooth, layout-aware scaling based on breakpoints
+              className="w-auto h-10 md:h-12 lg:h-14 xl:h-16 object-contain" 
+              priority 
+            />
           </Link>
 
           {/* DESKTOP NAV */}

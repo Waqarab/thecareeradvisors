@@ -6,6 +6,7 @@ import LiveChat from "@/components/LiveChat";
 import { AuthProvider } from "@/context/AuthContext";
 import "flag-icons/css/flag-icons.min.css";
 import { Toaster } from "@/components/ui/sonner";
+import SplashCursorEffect from "@/components/SplashCursorEffect";
 
 // 1. EXTENSIVE SEO METADATA
 export const metadata: Metadata = {
@@ -99,6 +100,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className="antialiased min-h-screen flex flex-col bg-background">
+        
+        {/* GLOBAL SPLASH CURSOR EFFECT */}
+        <SplashCursorEffect />
+
         <AuthProvider>
           <ConditionalLayout>
             <NotificationManager />

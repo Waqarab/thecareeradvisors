@@ -379,7 +379,7 @@ export default function AdminSettings() {
                   value={teamEmail} 
                   onChange={(e) => setTeamEmail(e.target.value)} 
                   required 
-                  placeholder="e.g. rohan@thecareeradvisors.com"
+                  placeholder="e.g. rohan@thecareeradvisors.in"
                   className="w-full bg-background border border-border/50 rounded-xl p-3.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-foreground/30" 
                 />
               </div>

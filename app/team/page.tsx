@@ -173,7 +173,7 @@ export default function TeamPage() {
                   
                   {/* Quick Mail Button */}
                   <a 
-                    href="mailto:contact@thecareeradvisors.com" 
+                    href="mailto:info@thecareeradvisors.in" 
                     className="w-10 h-10 shrink-0 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-200 transition-colors"
                     aria-label="Send Email"
                   >

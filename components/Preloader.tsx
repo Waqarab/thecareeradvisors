@@ -54,9 +54,10 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
           "/logo.png"
         ];
 
-        // Safely extract thumbnails from the database (Limit to top 15 to prevent network choking)
+        // Safely extract thumbnails from the database 
+        // FIX: Reduced limit to top 3 to prevent mobile RAM crashes
         if (Array.isArray(data)) {
-          data.slice(0, 15).forEach((uni: any) => {
+          data.slice(0, 3).forEach((uni: any) => {
             if (uni.thumbnail) imageUrlsToPreload.push(uni.thumbnail);
             else if (uni.image) imageUrlsToPreload.push(uni.image);
             else if (uni.logo) imageUrlsToPreload.push(uni.logo);

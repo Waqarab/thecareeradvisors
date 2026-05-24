@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://www.thecareeradvisors.com", // Replace with your actual domain
+    url: "https://www.thecareeradvisors.in", // Replace with your actual domain
     title: "The Career Advisors | Best Educational Consultancy in JK",
     description: "Leading as top education consultancy in JK, founded by Waqar Abdullah in 2016. Get free counselling today.",
     siteName: "The Career Advisors",
@@ -71,8 +71,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     "@type": "EducationalOrganization",
     "name": "The Career Advisors",
     "alternateName": "TheCareerAdvisors",
-    "url": "https://www.thecareeradvisors.com",
-    "logo": "https://www.thecareeradvisors.com/logo.png",
+    "url": "https://www.thecareeradvisors.in",
+    "logo": "https://www.thecareeradvisors.in/logo.png",
     "foundingDate": "2016",
     "founder": {
       "@type": "Person",

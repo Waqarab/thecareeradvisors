@@ -12,8 +12,8 @@ interface University {
   country: string;
   location: string;
   fees: string;
-  established?: string; // Replaced 'placed' with 'established'
-  image: string;
+  established?: string;
+  image?: string; 
   isHidden?: boolean;
 }
 
@@ -86,17 +86,19 @@ export default function CountriesSection() {
               {filteredUniversities.map((uni) => (
                 <div
                   key={uni.id} 
-                  className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-all group flex flex-col"
+                  className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-shadow group flex flex-col"
                 >
                   <Link href={`/universities/${uni.id}`} className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center block">
-                    <div className="absolute inset-0 bg-[#1b2f45]/20 z-10 group-hover:bg-transparent transition-colors"></div>
+                    {/* OPTIMIZATION: Removed heavy background transitions */}
+                    <div className="absolute inset-0 bg-[#1b2f45]/10 z-10"></div>
                     
-                    {uni.image && uni.image.trim() !== "" ? (
+                    {uni.image && typeof uni.image === 'string' && uni.image.trim() !== "" ? (
                       <img 
                         src={uni.image} 
                         alt={uni.name} 
                         loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                        /* OPTIMIZATION: Image scale hover ONLY on desktop (md:) to save mobile GPU */
+                        className="w-full h-full object-cover md:group-hover:scale-110 transition-transform duration-500" 
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-[#F2F3F4] text-[#AEC6CF] z-0">
@@ -105,27 +107,27 @@ export default function CountriesSection() {
                       </div>
                     )}
 
-                    {/* Left Tag: Country */}
+                    {/* OPTIMIZATION: Removed GPU-heavy `backdrop-blur`. Using solid color. */}
                     <div className="absolute top-4 left-4 z-20">
-                      <span className="bg-[#FFFFF0]/90 backdrop-blur text-[#22354a] px-3 py-1 rounded-full text-xs font-bold shadow-sm">{uni.country}</span>
+                      <span className="bg-[#FFFFF0] text-[#22354a] px-3 py-1 rounded-full text-xs font-bold shadow-sm">{uni.country}</span>
                     </div>
 
-                    {/* Right Tag: WHO Approved */}
+                    {/* OPTIMIZATION: Removed GPU-heavy `backdrop-blur`. Using solid color. */}
                     <div className="absolute top-4 right-4 z-20">
-                      <span className="bg-green-600/90 backdrop-blur text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 border border-green-400/30">
+                      <span className="bg-[#16a34a] text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 border border-[#15803d]">
                         <ShieldCheck className="w-3.5 h-3.5" /> WHO Approved
                       </span>
                     </div>
 
                     <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 text-white">
-                      <MapPin className="w-4 h-4 text-[#AEC6CF]" />
-                      <span className="text-sm font-medium drop-shadow-md">{uni.location}</span>
+                      <MapPin className="w-4 h-4 text-[#FFFFF0]" />
+                      <span className="text-sm font-semibold drop-shadow-lg">{uni.location}</span>
                     </div>
                   </Link>
                   
                   <div className="p-6 flex-1 flex flex-col">
                     <Link href={`/universities/${uni.id}`}>
-                      <h3 className="text-xl font-bold font-heading mb-4 text-[#22354a] leading-tight group-hover:text-[#6082B6] transition-colors">{uni.name}</h3>
+                      <h3 className="text-xl font-bold font-heading mb-4 text-[#22354a] leading-tight hover:text-[#6082B6] transition-colors">{uni.name}</h3>
                     </Link>
                     
                     <div className="grid grid-cols-2 gap-4 mb-6 mt-auto">
@@ -147,13 +149,14 @@ export default function CountriesSection() {
                     
                     <div className="w-full">
                       <InquiryModal>
-                        <Button variant="outline" size="sm" className="w-full h-10 border-[#E67E22]/30 bg-[#E67E22]/5 backdrop-blur-md hover:bg-[#E67E22]/15 text-[#E67E22] font-bold group-hover:border-[#E67E22]/60 transition-all duration-300 cursor-pointer text-sm shadow-sm">
+                        {/* OPTIMIZATION: Removed backdrop blur from the button */}
+                        <Button variant="outline" size="sm" className="w-full h-10 border-[#E67E22]/30 bg-[#FFF5EC] hover:bg-[#FFE8D6] text-[#E67E22] font-bold hover:border-[#E67E22]/60 transition-colors cursor-pointer text-sm shadow-sm">
                           Check Eligibility & Know More
                         </Button>
                       </InquiryModal>
                     </div>
                   </div>
-            </div>
+                </div>
               ))}
           </div>
         )}

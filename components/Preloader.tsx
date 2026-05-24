@@ -9,7 +9,7 @@ const preloadImage = (src: string) => {
     const img = new window.Image();
     img.src = src;
     img.onload = () => resolve(true);
-    img.onerror = () => resolve(true); // Always resolve to prevent hanging the site
+    img.onerror = () => resolve(true);
   });
 };
 
@@ -19,9 +19,9 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
   useEffect(() => {
     let isMounted = true;
     const startTime = Date.now();
-    const minLoadTime = 2500; // Minimum time to show your branding video
+    const minLoadTime = 2500; 
     const CACHE_KEY = "tca_preloader_timestamp";
-    const CACHE_EXPIRY_HOURS = 2; // Reduced to 2 hours for fresher data
+    const CACHE_EXPIRY_HOURS = 2;
 
     const finishLoading = () => {
       if (!isMounted) return;
@@ -37,25 +37,20 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
 
     const executeHeavyPreload = async () => {
       try {
-        // 1. PREFETCH DATA FIRST
         const res = await fetch("/api/universities");
         const data = await res.json();
         
-        // Save to LocalStorage (NOT sessionStorage) so it survives tab closes
         if (data && data.length > 0) {
           localStorage.setItem("tca_universities_cache", JSON.stringify(data));
         }
 
-        // 2. EXTRACT & PRELOAD CRITICAL IMAGES
         const imageUrlsToPreload: string[] = [
-          // Hardcode Hero Images so the top of the page is buttery smooth
           "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto,f_auto,w_800/v1779545094/copy_of_img-20250920-wa0013jpg_nar0fd.webp",
           "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto,f_auto,w_800/v1779551416/20251110_151107.jpg_tca5p1.jpg",
           "/logo.png"
         ];
 
-        // Safely extract thumbnails from the database 
-        // FIX: Reduced limit to top 3 to prevent mobile RAM crashes
+        // Safely extract thumbnails, limited to 3 to prevent mobile crashing
         if (Array.isArray(data)) {
           data.slice(0, 3).forEach((uni: any) => {
             if (uni.thumbnail) imageUrlsToPreload.push(uni.thumbnail);
@@ -64,7 +59,6 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
           });
         }
 
-        // 3. FIRE ALL REQUESTS IN PARALLEL
         const fontPromise = document.fonts ? document.fonts.ready : Promise.resolve();
         const imagePromises = imageUrlsToPreload.filter(Boolean).map(preloadImage);
 
@@ -77,7 +71,6 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
       }
     };
 
-    // CACHE LOGIC: Only skip preload if time hasn't expired AND data actually exists in storage
     const cachedTime = localStorage.getItem(CACHE_KEY);
     const hasCachedData = localStorage.getItem("tca_universities_cache");
     let shouldRunFullPreload = true;
@@ -93,11 +86,9 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
       localStorage.setItem(CACHE_KEY, Date.now().toString());
       executeHeavyPreload();
     } else {
-      // Data is cached and fresh. Just wait out the video timer.
       finishLoading();
     }
 
-    // Safety Fallback: NEVER trap the user on the loading screen for more than 7 seconds
     const fallbackTimeout = setTimeout(finishLoading, 7000); 
 
     return () => {
@@ -118,8 +109,11 @@ export default function Preloader({ onLoadingComplete }: { onLoadingComplete: ()
         className="w-80 md:w-[400px] lg:w-[500px] h-auto pointer-events-none"
         style={{ mixBlendMode: "multiply", filter: "contrast(1.05) brightness(1.02)" }}
       >
-        <source src="https://res.cloudinary.com/drytpdpx3/video/upload/v1/mp__wdjltm.webm" type="video/webm" />
-        <source src="https://res.cloudinary.com/drytpdpx3/video/upload/v1/mp__wdjltm.mp4" type="video/mp4" />
+        {/* WebM fallback with updated parameters for Chrome/Android */}
+        <source src="https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1779277883/mp__wdjltm.webm" type="video/webm" />
+        
+        {/* Your exact optimized MP4 URL for Safari/iOS */}
+        <source src="https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1779277883/mp__wdjltm.mp4" type="video/mp4" />
       </video>
     </div>
   );

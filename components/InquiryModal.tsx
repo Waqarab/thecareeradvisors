@@ -35,7 +35,8 @@ type FormValues = z.infer<typeof formSchema>;
 const neetRanges = ["Below 200", "200 - 300", "300 - 400", "400 - 500", "500 - 600", "600+", "Yet to appear"];
 const countryOptions = ["Russia", "Kazakhstan", "Bangladesh", "Kyrgyzstan", "Georgia", "Uzbekistan", "Nepal", "Egypt"];
 
-export default function InquiryModal({ children }: { children: React.ReactNode }) {
+// ADDED "source" PROP TO TAG INQUIRIES
+export default function InquiryModal({ children, source = "General Inquiry" }: { children: React.ReactNode, source?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -57,23 +58,10 @@ export default function InquiryModal({ children }: { children: React.ReactNode }
     setIsSubmitting(true);
     
     try {
-      // 1. Fetch Approximate Location via IP
-      let ipLocation = "Unknown Location";
-      try {
-        const res = await fetch("https://ipapi.co/json/");
-        const data = await res.json();
-        if (data.city && data.country_name) {
-          ipLocation = `${data.city}, ${data.country_name} (IP: ${data.ip})`;
-        }
-      } catch (e) {
-        console.log("Could not fetch IP location");
-      }
-
-      // 2. Save to Firestore
       await addDoc(collection(db, "inquiries"), {
         ...values,
-        ipLocation, // Captured Location
         status: "New",
+        source: source, // <-- THIS SAVES THE TAG (e.g. "Scholarship Application") TO FIREBASE
         createdAt: serverTimestamp(),
       });
 

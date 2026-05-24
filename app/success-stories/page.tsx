@@ -96,30 +96,30 @@ const stories = [
   // --- DUMMY PLACEHOLDERS ---
   {
     id: 2,
-    student: "Coming Soon",
-    university: "International Medical University",
-    currentStatus: "Student Success Story",
-    titlePrefix: "Another Journey Towards",
-    titleHighlight: "Global Success",
+    student: "Anzila Tariq",
+    university: "AMU Astana, Kazakhstan",
+    currentStatus: "5th Year Student & Future Doctor",
+    titlePrefix: "Guided Toward Success:",
+    titleHighlight: "My Study Abroad Experience",
     highlightType: "box",
     image:
-      "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?q=80&w=1200&auto=format&fit=crop",
+      "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779610868/Anzila_Tariq_ajhjtc.jpg",
     story:
-      "A new inspiring success story will be featured here soon. Stay connected to discover how students are achieving their dreams of studying abroad with expert guidance and support."
+      "“Choosing to study abroad was one of the biggest decisions of my life. I wanted a university that could provide quality education, good clinical exposure, and an affordable fee structure, but finding the right guidance was very difficult in the beginning. That’s when I connected with The Career Advisors. Their team guided me throughout the complete process with honesty and professionalism. They explained different country options, universities, fee structures, and future opportunities in detail, which helped me make the right decision with confidencee. The Career Advisors assisted me in every step including counseling, documentation, admission process, visa guidance, and travel preparation. Their support made the entire journey smooth and stress-free for me and my family. With their guidance, I successfully secured admission at AMU Astana, Kazakhstan. Today, I am proudly pursuing my 5th year of studies and moving closer to achieving my dream careerr. I’m truly thankful to The Career Advisors for their continuous support, genuine guidance, and for helping me take such an important step toward my future.”"
   },
 
   {
     id: 3,
-    student: "Coming Soon",
-    university: "Top Ranked Medical University",
+    student: "Tehreem",
+    university: "East West Medical College, Dhaka, Bangladesh",
     currentStatus: "Future Doctor",
-    titlePrefix: "Turning Ambition Into",
-    titleHighlight: "Real Achievement",
+    titlePrefix: "Guidance That Changed ",
+    titleHighlight: "My Life",
     highlightType: "fill",
     image:
-      "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=1200&auto=format&fit=crop",
+      "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779615176/photo_2026-05-24_15-02-40_klov7b.jpg",
     story:
-      "More real student journeys are on the way. Learn how students from different backgrounds transformed uncertainty into successful international medical careers."
+      "“Before planning to study abroad, I had many doubts regarding safety, education quality, and whether I would be able to adjust to a completely new country and environment. My family was also concerned about choosing the right college and finding genuine guidance. After meeting the team at The Career Advisors, things became much clearer and more comfortable for us. They patiently answered all our questions and helped us understand every part of the process in a very practical and transparent way. What impressed me the most was how supportive they were even after my admission was completed. From documentation and visa procedures to travel guidance and settling in Bangladesh, they stayed connected and helped me whenever needed. With their support, I successfully got admission at East West Medical College, Dhaka, and today I am happily continuing my studies there with confidence. Studying abroad felt challenging at first, but The Career Advisors made the entire journey simple and manageable for me. I’m thankful for their support, honesty, and the trust they built with my family.” "
   }
 ];
 
@@ -199,7 +199,13 @@ export default function SuccessStoriesPage() {
                   <Quote className="absolute -top-4 -left-4 w-12 h-12 text-primary/10 rotate-180" />
                   {story.story.split('\n\n').map((paragraph, i) => (
                     <p key={i} className="text-base md:text-lg text-foreground/70 leading-relaxed mb-4 relative z-10 font-medium">
-                      {paragraph}
+                      {paragraph.split(/(The Career Advisors)/g).map((part, index) => 
+                        part === "The Career Advisors" ? (
+                          <strong key={index} className="font-extrabold italic text-foreground">{part}</strong>
+                        ) : (
+                          part
+                        )
+                      )}
                     </p>
                   ))}
                 </div>

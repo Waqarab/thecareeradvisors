@@ -143,15 +143,15 @@ export default function Footer() {
             <div className="hidden md:block w-px h-3 bg-[#AEC6CF]/30"></div>
             
             {/* DEVELOPER CREDIT */}
-            <p className="flex items-center gap-1.5">
-              Developed by 
+            <p className="font-bold text-white hover:text-emerald-400 transition-colors gap-1.5">
+              Developed by
               <a 
                 href="http://haadi.publicvm.com" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="font-bold text-white hover:text-emerald-400 transition-colors"
               >
-                H Studio
+                   H Studio
               </a>
             </p>
           </div>

@@ -20,25 +20,26 @@ type Resource = {
 const resources: Resource[] = [
   {
     id: "1",
-    title: "NMC Guidelines for FMGs",
-    description: "Official rules and eligibility criteria for Foreign Medical Graduates.",
+    title: "NMC Guidelines",
+    description: "Official rules and eligibility criteria. Updated as of 2021",
     category: "Guidelines",
     type: "PDF",
-    size: "2.4 MB",
-    url: "#", 
+    size: "1.33 MB",
+    url: "https://res.cloudinary.com/drytpdpx3/image/upload/v1779615608/NMC_GUIDELINES_wqaqlo.pdf", 
+    downloadable: true,
+  },
+  
+  {
+    id: "2",
+    title: "NMC Guidelines- Embassy of India [Cairo University]",
+    description: "Cairo University specific guidelines for Indian students. Updated as of 2021",
+    category: "Guidelines",
+    type: "PDF",
+    size: "40 Kb",
+    url: "https://res.cloudinary.com/drytpdpx3/image/upload/v1779616755/Cairo_jm6tmh.pdf",
     downloadable: true,
   },
   /*
-  {
-    id: "2",
-    title: "WHO Recognized Universities",
-    description: "World Health Organization list of approved medical institutions.",
-    category: "Guidelines",
-    type: "PDF",
-    size: "1.1 MB",
-    url: "#",
-    downloadable: true,
-  },
   {
     id: "3",
     title: "Scholarship Application",

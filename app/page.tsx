@@ -339,6 +339,7 @@ export default function Home() {
         <SectionDivider />
         <FaqSection />
         <SectionDivider />
+        <SectionDivider/>
         
       </div>
     </>

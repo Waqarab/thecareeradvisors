@@ -8,27 +8,36 @@ import { Star, BadgeCheck, Quote, ChevronLeft, ChevronRight } from "lucide-react
 const textTestimonials = [
   {
     id: 1,
-    name: "Wahid Bilal",
-    handle: "ayesha_med",
-    text: "Got my admission in Kazan effortlessly. The transparency is real! They handled all my visa stress and documentation without any hidden charges.",
-    img: "https://t4.ftcdn.net/jpg/15/76/52/35/360_F_1576523519_BU2SZ2IkojaMKhfk3SOvCllcBueZbMSD.jpg",
+    name: "Rounak Showkat",
+    handle: "rounak.showkat",
+    text: "I recommend The Career Advisors for any type of guidance, because they helped me at the every step of my MBBS journey.",
+    img: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779608772/Rounak_mq8nuv.jpg",
     initials: "AM"
   },
   {
     id: 2,
-    name: "Imran Nazir",
-    handle: "rohit.doc",
-    text: "Guided me 1-on-1 for my MBBS journey. I'm now in my 3rd year and the support is still there. Highly recommend their expert counselors.",
-    img: "https://t4.ftcdn.net/jpg/15/76/52/35/360_F_1576523519_BU2SZ2IkojaMKhfk3SOvCllcBueZbMSD.jpg",
+    name: "Zoha Zahid",
+    handle: "zoha",
+    text: "I honestly didn’t know where to start, but The Career Advisors helped me at every single step patiently.",
+    img: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779614310/Zoha_dyibtn.jpg",
     initials: "RS"
   },
   {
     id: 3,
-    name: "Sania Rashid",
-    handle: "sania_r",
-    text: "Zero hidden charges. They didn't just help me with admission; they ensured I reached my hostel safely and settled in properly.",
-    img: "https://t4.ftcdn.net/jpg/15/76/52/35/360_F_1576523519_BU2SZ2IkojaMKhfk3SOvCllcBueZbMSD.jpg",
-    initials: "SR"
+    name: "Mudabir",
+    handle: "mudabir",
+    text: "I’m thankful to The Career Advisors for helping me choose the right university according to my budget and goals.",
+    img: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779614309/Mudabir_yojhit.jpg",
+    initials: "MR"
+  },
+  {
+    id: 4,
+    name: "Muskan",
+    handle: "muskan",
+    text: "What I liked most was their honest guidance. They explained everything clearly without making false promises.",
+    img: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779614310/Muskan_w6t3qf.jpg",
+    initials: "MT"
+
   }
 ];
 

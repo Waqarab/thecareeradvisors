@@ -71,7 +71,7 @@ export default function Navbar() {
     }
   };
 
-  const navLinks = ["Home", "Universities", "Success Stories", "About", "FAQ"];
+  const navLinks = ["Home", "Universities", "Success Stories", "About", "FAQ", "Resources"];
 
   // --- LIGHTNING FAST HARDWARE-ACCELERATED VARIANTS ---
   // We use "x" (translate3d) instead of heavy blurs for absolute maximum framerate

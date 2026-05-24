@@ -236,7 +236,7 @@ export default function LiveChat() {
               className="absolute right-[80px] bg-card px-4 py-2 rounded-xl shadow-lg border border-border/50 whitespace-nowrap hidden sm:block"
             >
               <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-card border-t border-r border-border/50 rotate-45"></div>
-              <p className="text-sm font-bold font-heading text-foreground relative z-10">Live AI Chat 👋</p>
+              <p className="text-sm font-bold font-heading text-foreground relative z-10">Chat</p>
             </motion.div>
           )}
         </AnimatePresence>

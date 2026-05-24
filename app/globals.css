@@ -1,67 +1,140 @@
 @import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700,900&display=swap');
 @import "tailwindcss";
+@import "flag-icons/css/flag-icons.min.css";
+
 
 @plugin "tailwindcss-animate";
 
 @theme {
   /* BRAND PALETTE */
-  --color-glaucous: #6082B6;    /* Primary Action */
-  --color-spicy-paprika: #D85C34; /* Destructive/Urgent */
-  --color-porcelain: #F4F7F8;   /* Main Background (Cooler/Crisper) */
-  --color-ivory: #FFFFFF;       /* Card Background (Pure White for Contrast) */
-  --color-dusk-blue: #2F4A70;   /* Accent */
-  --color-slate-cool: #3F4652;  /* Text Main */
+  --color-brand-blue: #2F4A70;     /* Deep Dusk Blue */
+  --color-brand-light: #6082B6;    /* Glaucous Primary */
+  --color-brand-orange: #ff7a00;   /* Vibrant Orange (From Hero) */
+  --color-brand-orange-dark: #ff5e00; 
+  
+  --color-porcelain: #F4F7F8;      /* Cooler/Crisper Background */
+  --color-ivory: #FFFFFF;          /* Pure White */
+  --color-slate-cool: #334155;     /* Text Main (Slate 700) */
+  --color-slate-dark: #0f172a;     /* Headings (Slate 900) */
 
-  /* SHADCN CORE VARIABLES (Fixed Contrast) */
+  /* SHADCN CORE VARIABLES */
   --color-background: var(--color-porcelain);
   --color-foreground: var(--color-slate-cool);
 
-  --color-card: var(--color-ivory); /* Cards are now Pure White */
+  --color-card: var(--color-ivory);
   --color-card-foreground: var(--color-slate-cool);
 
   --color-popover: var(--color-ivory);
   --color-popover-foreground: var(--color-slate-cool);
 
-  --color-primary: var(--color-glaucous);
+  --color-primary: var(--color-brand-light);
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: #e2e8f0;
-  --color-secondary-foreground: var(--color-slate-cool);
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: var(--color-brand-blue);
 
-  --color-destructive: var(--color-spicy-paprika);
-  --color-destructive-foreground: #ffffff;
-
-  --color-muted: #e2e8f0;
+  --color-muted: #f8fafc;
   --color-muted-foreground: #64748b;
 
-  --color-accent: var(--color-dusk-blue);
+  --color-accent: var(--color-brand-blue);
   --color-accent-foreground: #ffffff;
 
-  --color-border: #cbd5e1;
-  --color-input: #cbd5e1;
-  --color-ring: var(--color-glaucous);
+  --color-destructive: #D85C34;    /* Spicy Paprika */
+  --color-destructive-foreground: #ffffff;
 
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: var(--color-brand-light);
+
+  /* BORDER RADIUS */
+  --radius-xl: 1rem;
   --radius-lg: 0.75rem;
   --radius-md: 0.5rem;
   --radius-sm: 0.25rem;
 
+  /* TYPOGRAPHY */
   --font-sans: 'Satoshi', sans-serif;
   --font-heading: 'Clash Display', sans-serif;
+
+  /* PREMIUM SAAS SHADOWS (To reuse across cards & buttons) */
+  --shadow-premium: 0 20px 40px -10px rgba(0,0,0,0.08);
+  --shadow-premium-hover: 0 30px 50px -15px rgba(0,0,0,0.12);
+  --shadow-glow-orange: 0 8px 25px -6px rgba(255,122,0,0.4);
+
+  /* CUSTOM ANIMATIONS */
+  --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
 }
 
 @layer base {
-  * {
+  *, ::before, ::after {
     @apply border-border;
   }
+  
+  html {
+    scroll-behavior: smooth;
+    /* Font smoothing for that crisp Apple/SaaS feel */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans overflow-x-hidden;
   }
-  /* Ensure Headings are dark enough for high contrast */
+
+  /* Custom Selection Color */
+  ::selection {
+    @apply bg-brand-light/20 text-brand-blue;
+  }
+
+  /* Premium Typography Hierarchy */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading text-[#121212];
+    /* text-balance prevents awkward single words on the last line of headings */
+    @apply font-heading text-slate-900 tracking-tight text-balance;
   }
-  /* Force dark text for readability */
+
   p {
-    @apply text-slate-700;
+    /* text-pretty makes paragraph rags look much cleaner */
+    @apply text-slate-600 leading-relaxed text-pretty;
+  }
+
+  /* Modern Webkit Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-porcelain);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand-light);
+  }
+}
+
+@layer utilities {
+  /* Reusable Premium Utilities so you don't have to write long classes */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r;
+  }
+  
+  .glassmorphism {
+    @apply bg-white/90 backdrop-blur-md border border-white/40 shadow-sm;
+  }
+  
+  .glassmorphism-dark {
+    @apply bg-slate-900/85 backdrop-blur-md border border-slate-700/50 shadow-lg;
   }
 }

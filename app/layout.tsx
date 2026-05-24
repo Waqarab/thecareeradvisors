@@ -4,6 +4,7 @@ import ConditionalLayout from "@/components/ConditionalLayout";
 import NotificationManager from "@/components/NotificationManager";
 import LiveChat from "@/components/LiveChat";
 import { AuthProvider } from "@/context/AuthContext";
+import "flag-icons/css/flag-icons.min.css"; // Add this line!
 
 // ADD THIS IMPORT
 import { Toaster } from "@/components/ui/sonner";

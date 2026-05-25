@@ -188,13 +188,22 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
                       </div>
                     </div>
                     
-                    <div className="mt-auto">
+                    <div className="mt-auto space-y-3">
+                      {/* New Explore University Button */}
+                      <Link href={`/universities/${uni.id}`} className="block w-full">
+                        <Button className="w-full bg-[#3A5F8B] hover:bg-[#22354a] text-white font-bold transition-colors shadow-sm">
+                          Explore University
+                        </Button>
+                      </Link>
+                      
+                      {/* Existing Inquiry Button */}
                       <InquiryModal>
                         <Button variant="outline" className="w-full border-[#6082B6]/30 hover:bg-[#6082B6]/10 text-[#6082B6] font-bold group-hover:border-[#6082B6] transition-colors cursor-pointer">
                           Check Eligibility & Know More
                         </Button>
                       </InquiryModal>
                     </div>
+
                   </div>
                 </motion.div>
               ))}

@@ -171,6 +171,7 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
                       <h3 className="text-xl font-bold font-heading mb-4 text-[#22354a] leading-tight group-hover:text-[#6082B6] transition-colors">{uni.name}</h3>
                     </Link>
                     
+                    {/* INFO GRID: Average Fees & Established Date */}
                     <div className="grid grid-cols-2 gap-4 mb-6 mt-auto">
                       <div>
                         <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Avg Fees</p>
@@ -183,22 +184,23 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
                         <p className="text-xs text-[#3A5F8B]/60 uppercase tracking-wider font-semibold mb-1">Established</p>
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-[#6082B6]" />
-                          <span className="font-bold text-sm text-[#22354a]">{uni.established || "N/A"}</span>
+                          <span className="font-bold text-sm text-[#22354a] truncate" title={uni.established || "N/A"}>
+                            {uni.established || "N/A"}
+                          </span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="mt-auto space-y-3">
-                      {/* New Explore University Button */}
+                    {/* BUTTONS: Explore & Inquiry */}
+                    <div className="w-full mt-auto space-y-3">
                       <Link href={`/universities/${uni.id}`} className="block w-full">
-                        <Button className="w-full bg-[#3A5F8B] hover:bg-[#22354a] text-white font-bold transition-colors shadow-sm">
+                        <Button className="w-full bg-[#3A5F8B] hover:bg-[#22354a] text-white font-bold transition-colors shadow-sm h-10">
                           Explore University
                         </Button>
                       </Link>
                       
-                      {/* Existing Inquiry Button */}
                       <InquiryModal>
-                        <Button variant="outline" className="w-full border-[#6082B6]/30 hover:bg-[#6082B6]/10 text-[#6082B6] font-bold group-hover:border-[#6082B6] transition-colors cursor-pointer">
+                        <Button variant="outline" className="w-full border-[#6082B6]/30 hover:bg-[#6082B6]/10 text-[#6082B6] font-bold group-hover:border-[#6082B6] transition-colors cursor-pointer h-10">
                           Check Eligibility & Know More
                         </Button>
                       </InquiryModal>

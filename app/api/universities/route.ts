@@ -3,7 +3,6 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { unstable_cache } from "next/cache";
 
-// 1. Wrap the Firebase call in a tagged cache
 const getCachedUniversities = unstable_cache(
   async () => {
     const querySnapshot = await getDocs(collection(db, "universities"));
@@ -13,12 +12,24 @@ const getCachedUniversities = unstable_cache(
       const uni: any = { id: doc.id, ...doc.data() };
       if (!uni.isHidden) data.push(uni);
     });
+
+    // EXACT SAME SORTING LOGIC HERE
+    data.sort((a, b) => {
+      const orderA = a.featuredOrder ? Number(a.featuredOrder) : 999;
+      const orderB = b.featuredOrder ? Number(b.featuredOrder) : 999;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
     return data;
   },
-  ["universities-cache-key"], // Internal cache key
+  ["universities-cache-key"],
   {
-    revalidate: 86400, // Background refresh every 24 hours
-    tags: ["universities"], // <-- THIS TAG CONNECTS TO YOUR REVALIDATE API
+    revalidate: 86400,
+    tags: ["universities"],
   }
 );
 

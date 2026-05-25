@@ -330,10 +330,10 @@ export default function AboutPage() {
             className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-12 mb-20 md:mb-24"
           >
             {[
-              { label: "Students Counselled", value: "50,000+", icon: Users },
-              { label: "Placed Abroad", value: "10,000+", icon: GraduationCap },
-              { label: "Universities Supported", value: "50+", icon: Globe2 },
-              { label: "Years of Excellence", value: "8+", icon: Award },
+              { label: "Students Counselled", value: "5,000+", icon: Users },
+              { label: "Placed Abroad", value: "500+", icon: GraduationCap },
+              { label: "Universities Supported", value: "56+", icon: Globe2 },
+              { label: "Years of Excellence", value: "10+", icon: Award },
             ].map((stat, i) => (
               <motion.div key={i} variants={smoothReveal} className="text-center group">
                 <stat.icon className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-4 md:mb-6 text-[#AEC6CF] group-hover:text-[#FFFFF0] group-hover:scale-110 transition-all duration-500" />

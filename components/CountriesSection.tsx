@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { MapPin, Banknote, ArrowRight, Loader2, Image as ImageIcon, ShieldCheck, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -83,13 +84,40 @@ export default function CountriesSection() {
           <div className="flex justify-center py-12"><Loader2 className="w-10 h-10 animate-spin text-[#6082B6]" /></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {filteredUniversities.map((uni) => (
-                <div
+              {filteredUniversities.map((uni, idx) => (
+                <motion.div
                   key={uni.id} 
+                  custom={idx}
+                  viewport={{ once: true, margin: "0px 0px -50px 0px" }}
+                  initial="hidden"
+                  whileInView="visible"
+                  // DYNAMIC ANIMATION: Center placed first, edges crash in fast with motion blur traces
+                  variants={{
+                    hidden: (i) => {
+                      const col = i % 3;
+                      if (col === 0) return { opacity: 0, x: -250, filter: "blur(12px)", scaleX: 1.15 }; // Left edge
+                      if (col === 2) return { opacity: 0, x: 250, filter: "blur(12px)", scaleX: 1.15 };  // Right edge
+                      return { opacity: 0, y: 30, filter: "blur(0px)", scaleX: 1 }; // Center (Already placed, just fades up)
+                    },
+                    visible: (i) => ({
+                      opacity: 1,
+                      x: 0,
+                      y: 0,
+                      scaleX: 1,
+                      filter: "blur(0px)",
+                      transition: {
+                        duration: 0.5,
+                        // Snappy physics-like curve: starts lightning fast, brakes hard at the end
+                        ease: [0.25, 1, 0.3, 1], 
+                        // Center card appears instantly (0s delay), edges slide in right after (0.1s delay)
+                        delay: (i % 3 === 1) ? 0 : 0.1 
+                      }
+                    })
+                  }}
+                  style={{ willChange: "transform, opacity, filter" }}
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-shadow group flex flex-col"
                 >
                   <Link href={`/universities/${uni.id}`} className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center block">
-                    {/* OPTIMIZATION: Removed heavy background transitions */}
                     <div className="absolute inset-0 bg-[#1b2f45]/10 z-10"></div>
                     
                     {uni.image && typeof uni.image === 'string' && uni.image.trim() !== "" ? (
@@ -97,7 +125,6 @@ export default function CountriesSection() {
                         src={uni.image} 
                         alt={uni.name} 
                         loading="lazy"
-                        /* OPTIMIZATION: Image scale hover ONLY on desktop (md:) to save mobile GPU */
                         className="w-full h-full object-cover md:group-hover:scale-110 transition-transform duration-500" 
                       />
                     ) : (
@@ -107,12 +134,10 @@ export default function CountriesSection() {
                       </div>
                     )}
 
-                    {/* OPTIMIZATION: Removed GPU-heavy `backdrop-blur`. Using solid color. */}
                     <div className="absolute top-4 left-4 z-20">
                       <span className="bg-[#FFFFF0] text-[#22354a] px-3 py-1 rounded-full text-xs font-bold shadow-sm">{uni.country}</span>
                     </div>
 
-                    {/* OPTIMIZATION: Removed GPU-heavy `backdrop-blur`. Using solid color. */}
                     <div className="absolute top-4 right-4 z-20">
                       <span className="bg-[#16a34a] text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 border border-[#15803d]">
                         <ShieldCheck className="w-3.5 h-3.5" /> WHO Approved
@@ -147,23 +172,28 @@ export default function CountriesSection() {
                       </div>
                     </div>
                     
-                    <div className="w-full">
+                    <div className="w-full mt-auto space-y-3">
+                      <Link href={`/universities/${uni.id}`} className="block w-full">
+                        <Button className="w-full bg-[#3A5F8B] hover:bg-[#22354a] text-white font-bold transition-colors shadow-sm h-10">
+                          Explore University
+                        </Button>
+                      </Link>
+                      
                       <InquiryModal>
-                        {/* OPTIMIZATION: Removed backdrop blur from the button */}
                         <Button variant="outline" size="sm" className="w-full h-10 border-[#E67E22]/30 bg-[#FFF5EC] hover:bg-[#FFE8D6] text-[#E67E22] font-bold hover:border-[#E67E22]/60 transition-colors cursor-pointer text-sm shadow-sm">
                           Check Eligibility & Know More
                         </Button>
                       </InquiryModal>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
           </div>
         )}
 
         <div className="mt-12 text-center">
           <Link href="/universities">
-            <Button size="lg" className="bg-[#3A5F8B] text-white hover:bg-[#2F4A70] rounded-full px-8 active:scale-95 transition-all">
+            <Button size="lg" className="bg-[#3A5F8B] text-white hover:bg-[#2F4A70] rounded-full px-8 active:scale-95 transition-all shadow-md">
               View All {universities.length} Universities <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>

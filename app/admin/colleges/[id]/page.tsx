@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import { Loader2, ArrowLeft, Save, Building2, Trophy, Stethoscope, GraduationCap, History, MapPin } from "lucide-react";
+import { Loader2, ArrowLeft, Save, Building2, Trophy, Stethoscope, GraduationCap, History, MapPin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +26,8 @@ export default function UniversityDetailsPage() {
     country: "",
     location: "",
     fees: "",
-    established: "", // Added the established field
+    established: "",
+    featuredOrder: "", // Added for Homepage ordering
     // Deep Details (New Fields)
     history: "",
     rankingGlobal: "",
@@ -119,6 +120,27 @@ export default function UniversityDetailsPage() {
 
       <form className="space-y-8" onSubmit={handleSave}>
         
+        {/* SECTION 0: Featured Display Settings */}
+        <div className="bg-white p-6 md:p-8 rounded-2xl border border-blue-200 shadow-sm bg-blue-50/30">
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-6">
+            <Star className="w-5 h-5 text-blue-600" /> Display & Visibility
+          </h2>
+          <div className="space-y-2 max-w-sm">
+            <label className="text-sm font-semibold text-slate-700">Featured Order (e.g., 1 to 6)</label>
+            <Input 
+              type="number" 
+              name="featuredOrder" 
+              value={formData.featuredOrder || ""} 
+              onChange={handleInputChange} 
+              placeholder="Leave blank for alphabetical" 
+              className="bg-white"
+            />
+            <p className="text-xs text-slate-500">
+              Universities with a number here bypass alphabetical sorting and stick to the very top of the universities list.
+            </p>
+          </div>
+        </div>
+
         {/* SECTION 1: Rankings */}
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-6">
@@ -146,7 +168,6 @@ export default function UniversityDetailsPage() {
             <History className="w-5 h-5 text-blue-500" /> University History & Legacy
           </h2>
           <div className="space-y-6">
-            {/* Added Established Input */}
             <div className="space-y-1">
               <label className="text-sm font-semibold text-slate-700">Established Year</label>
               <Input 

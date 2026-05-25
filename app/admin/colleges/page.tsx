@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, MapPin, Banknote, Users, Globe2, ExternalLink, Search, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, MapPin, Banknote, Users, Globe2, ExternalLink, Search, Filter, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ interface College {
   placed: string;
   image: string;
   isHidden: boolean;
+  featuredOrder?: string | number | null; // Used for Top 6
 }
 
 const initialFormState = {
@@ -45,7 +46,15 @@ export default function CollegesPage() {
   const [countryFilter, setCountryFilter] = useState("All");
   const [visibleCount, setVisibleCount] = useState(15);
 
-  // Reset pagination when filters change so users don't get stuck on empty pages
+  // --- FEATURED (TOP 6) MODAL STATES ---
+  const [isFeaturedModalOpen, setIsFeaturedModalOpen] = useState(false);
+  const [featuredSelections, setFeaturedSelections] = useState<{country: string, collegeId: string}[]>(
+    Array(6).fill({ country: "All", collegeId: "" })
+  );
+  const [isSavingFeatured, setIsSavingFeatured] = useState(false);
+
+  const uniqueCountries = ["All", ...Array.from(new Set(colleges.map(c => c.country)))];
+
   useEffect(() => {
     setVisibleCount(15);
   }, [searchQuery, statusFilter, countryFilter]);
@@ -59,6 +68,18 @@ export default function CollegesPage() {
       querySnapshot.forEach((doc) => {
         data.push({ id: doc.id, ...doc.data() } as College);
       });
+
+      // Sort: Featured 1-6 first, then alphabetical
+      data.sort((a, b) => {
+        const orderA = a.featuredOrder ? Number(a.featuredOrder) : 999;
+        const orderB = b.featuredOrder ? Number(b.featuredOrder) : 999;
+
+        if (orderA !== orderB) {
+          return orderA - orderB; 
+        }
+        return a.name.localeCompare(b.name);
+      });
+
       setColleges(data);
     } catch (error) {
       console.error("Error fetching colleges:", error);
@@ -72,13 +93,10 @@ export default function CollegesPage() {
     fetchColleges();
   }, []);
 
-  // --- 2. THE MASTER REVALIDATION TRIGGER ---
+  // --- 2. REVALIDATION ---
   const triggerCacheRevalidation = async () => {
     try {
       const secret = process.env.NEXT_PUBLIC_REVALIDATION_TOKEN;
-      if (!secret) {
-        console.warn("Revalidation token is missing in environment variables!");
-      }
       await fetch(`/api/revalidate?tag=universities&secret=${secret}`, { method: "POST" });
       sessionStorage.removeItem("tca_universities_cache");
     } catch (error) {
@@ -86,11 +104,67 @@ export default function CollegesPage() {
     }
   };
 
-  // --- 3. HANDLE FORM SUBMIT (ADD / UPDATE) ---
+  // --- 3. HANDLE TOP 6 FEATURED SAVING ---
+  const openFeaturedModal = () => {
+    const newSelections = Array(6).fill({ country: "All", collegeId: "" });
+    colleges.forEach(c => {
+      if (c.featuredOrder) {
+        const order = Number(c.featuredOrder);
+        if (order >= 1 && order <= 6) {
+          newSelections[order - 1] = { country: c.country, collegeId: c.id };
+        }
+      }
+    });
+    setFeaturedSelections(newSelections);
+  };
+
+  const handleFeaturedCountryChange = (index: number, country: string) => {
+    const newSelections = [...featuredSelections];
+    newSelections[index] = { ...newSelections[index], country, collegeId: "" };
+    setFeaturedSelections(newSelections);
+  };
+
+  const handleFeaturedCollegeChange = (index: number, collegeId: string) => {
+    const newSelections = [...featuredSelections];
+    newSelections[index] = { ...newSelections[index], collegeId };
+    setFeaturedSelections(newSelections);
+  };
+
+  const handleSaveFeatured = async () => {
+    setIsSavingFeatured(true);
+    try {
+      // 1. Find all currently featured colleges and clear their status
+      const currentlyFeatured = colleges.filter(c => c.featuredOrder);
+      const clearPromises = currentlyFeatured.map(c =>
+        updateDoc(doc(db, "universities", c.id), { featuredOrder: null })
+      );
+      await Promise.all(clearPromises);
+
+      // 2. Set the new featured orders for the selected slots
+      const setPromises = featuredSelections.map((sel, idx) => {
+        if (sel.collegeId) {
+          return updateDoc(doc(db, "universities", sel.collegeId), { featuredOrder: idx + 1 });
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(setPromises);
+
+      toast.success("Top 6 Universities updated successfully!");
+      await triggerCacheRevalidation();
+      fetchColleges();
+      setIsFeaturedModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save Top 6");
+    } finally {
+      setIsSavingFeatured(false);
+    }
+  };
+
+  // --- 4. HANDLE ADD/EDIT/DELETE ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    
     try {
       if (editingId) {
         await updateDoc(doc(db, "universities", editingId), formData);
@@ -99,37 +173,30 @@ export default function CollegesPage() {
         await addDoc(collection(db, "universities"), formData);
         toast.success("University added successfully");
       }
-
       await triggerCacheRevalidation();
-      
       setIsModalOpen(false);
       setEditingId(null);
       setFormData(initialFormState);
       fetchColleges();
     } catch (error) {
-      console.error("Error saving university:", error);
       toast.error("Failed to save university");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // --- 4. HANDLE DELETE ---
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this university? This action cannot be undone.")) return;
-
+    if (!confirm("Are sure you want to delete this university?")) return;
     try {
       await deleteDoc(doc(db, "universities", id));
       toast.success("University deleted successfully");
       await triggerCacheRevalidation();
       fetchColleges();
     } catch (error) {
-      console.error("Error deleting university:", error);
       toast.error("Failed to delete university");
     }
   };
 
-  // --- 5. HANDLE VISIBILITY TOGGLE ---
   const handleToggleHidden = async (id: string, currentStatus: boolean) => {
     try {
       await updateDoc(doc(db, "universities", id), { isHidden: !currentStatus });
@@ -137,21 +204,14 @@ export default function CollegesPage() {
       await triggerCacheRevalidation();
       fetchColleges();
     } catch (error) {
-      console.error("Error toggling visibility:", error);
       toast.error("Failed to update visibility");
     }
   };
 
-  // --- 6. MODAL HANDLERS ---
   const openEditModal = (college: College) => {
     setFormData({
-      name: college.name,
-      country: college.country,
-      location: college.location,
-      fees: college.fees,
-      placed: college.placed,
-      image: college.image,
-      isHidden: college.isHidden,
+      name: college.name, country: college.country, location: college.location,
+      fees: college.fees, placed: college.placed, image: college.image, isHidden: college.isHidden,
     });
     setEditingId(college.id);
     setIsModalOpen(true);
@@ -161,9 +221,7 @@ export default function CollegesPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- 7. FILTER & PAGINATION LOGIC ---
-  const uniqueCountries = ["All", ...Array.from(new Set(colleges.map(c => c.country)))];
-
+  // --- 5. FILTERING ---
   const filteredColleges = colleges.filter(college => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = 
@@ -187,67 +245,129 @@ export default function CollegesPage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full pb-24">
       
-      {/* Header & Add Button */}
+      {/* Header & Buttons */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Universities Database</h1>
           <p className="text-slate-500 mt-1">Manage global medical universities, fees, and details.</p>
         </div>
         
-        <Dialog open={isModalOpen} onOpenChange={(open) => {
-          setIsModalOpen(open);
-          if (!open) {
-            setEditingId(null);
-            setFormData(initialFormState);
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-slate-900 text-white hover:bg-slate-800 shadow-md">
-              <Plus className="w-4 h-4 mr-2" /> Add University
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] bg-white">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">{editingId ? "Quick Edit Details" : "Add New University"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">University Name</label>
-                <Input name="name" value={formData.name} onChange={handleInputChange} required placeholder="e.g. Tashkent Medical Academy" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Country</label>
-                  <Input name="country" value={formData.country} onChange={handleInputChange} required placeholder="e.g. Uzbekistan" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">City / Location</label>
-                  <Input name="location" value={formData.location} onChange={handleInputChange} required placeholder="e.g. Tashkent" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Average Fees</label>
-                  <Input name="fees" value={formData.fees} onChange={handleInputChange} required placeholder="e.g. $3,500/yr" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Students Placed</label>
-                  <Input name="placed" value={formData.placed} onChange={handleInputChange} required placeholder="e.g. 1,200+" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <LinkIcon className="w-4 h-4" /> Image URL (Cloudinary)
-                </label>
-                <Input name="image" value={formData.image} onChange={handleInputChange} required placeholder="https://res.cloudinary.com/..." />
-              </div>
-              <Button type="submit" disabled={isSaving} className="w-full mt-4 bg-slate-900 text-white hover:bg-slate-800">
-                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                {editingId ? "Save Quick Edits" : "Create University"}
+        <div className="flex gap-3">
+          {/* MANAGE TOP 6 BUTTON & MODAL */}
+          <Dialog open={isFeaturedModalOpen} onOpenChange={(open) => {
+            if (open) openFeaturedModal();
+            setIsFeaturedModalOpen(open);
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold shadow-sm">
+                <Star className="w-4 h-4 mr-2 fill-blue-700" /> Manage Top 6
               </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] bg-white">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">Manage Featured Universities</DialogTitle>
+                <p className="text-sm text-slate-500 mt-1">Select the 6 universities you want to feature at the top of the site. Filter by country first to find them easily.</p>
+              </DialogHeader>
+              
+              <div className="space-y-3 mt-4">
+                {featuredSelections.map((sel, idx) => {
+                  // Filter colleges by the selected country for this specific slot
+                  const availableColleges = sel.country === "All" 
+                    ? colleges 
+                    : colleges.filter(c => c.country === sel.country);
+
+                  return (
+                    <div key={idx} className="flex flex-col sm:flex-row gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+                      <span className="font-bold text-slate-400 w-6 hidden sm:block">{idx + 1}.</span>
+                      
+                      {/* Country Filter Dropdown */}
+                      <select 
+                        value={sel.country}
+                        onChange={(e) => handleFeaturedCountryChange(idx, e.target.value)}
+                        className="w-full sm:w-1/3 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      >
+                        <option value="All">Filter by Country</option>
+                        {uniqueCountries.filter(c => c !== "All").map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+
+                      {/* College Selection Dropdown */}
+                      <select 
+                        value={sel.collegeId}
+                        onChange={(e) => handleFeaturedCollegeChange(idx, e.target.value)}
+                        className="w-full sm:flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      >
+                        <option value="">-- Select a University --</option>
+                        {availableColleges.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <Button onClick={handleSaveFeatured} disabled={isSavingFeatured} className="w-full mt-6 bg-blue-600 text-white hover:bg-blue-700 py-6 text-lg font-bold rounded-xl">
+                {isSavingFeatured ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
+                Save Top 6 Order
+              </Button>
+            </DialogContent>
+          </Dialog>
+
+          {/* ADD UNIVERSITY BUTTON & MODAL */}
+          <Dialog open={isModalOpen} onOpenChange={(open) => {
+            setIsModalOpen(open);
+            if (!open) { setEditingId(null); setFormData(initialFormState); }
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-slate-900 text-white hover:bg-slate-800 shadow-md">
+                <Plus className="w-4 h-4 mr-2" /> Add University
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px] bg-white">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">{editingId ? "Quick Edit Details" : "Add New University"}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-slate-700">University Name</label>
+                  <Input name="name" value={formData.name} onChange={handleInputChange} required placeholder="e.g. Tashkent Medical Academy" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-slate-700">Country</label>
+                    <Input name="country" value={formData.country} onChange={handleInputChange} required placeholder="e.g. Uzbekistan" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-slate-700">City / Location</label>
+                    <Input name="location" value={formData.location} onChange={handleInputChange} required placeholder="e.g. Tashkent" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-slate-700">Average Fees</label>
+                    <Input name="fees" value={formData.fees} onChange={handleInputChange} required placeholder="e.g. $3,500/yr" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-slate-700">Students Placed</label>
+                    <Input name="placed" value={formData.placed} onChange={handleInputChange} required placeholder="e.g. 1,200+" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <LinkIcon className="w-4 h-4" /> Image URL (Cloudinary)
+                  </label>
+                  <Input name="image" value={formData.image} onChange={handleInputChange} required placeholder="https://res.cloudinary.com/..." />
+                </div>
+                <Button type="submit" disabled={isSaving} className="w-full mt-4 bg-slate-900 text-white hover:bg-slate-800">
+                  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  {editingId ? "Save Quick Edits" : "Create University"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* --- SEARCH & FILTERS BAR --- */}
@@ -335,7 +455,16 @@ export default function CollegesPage() {
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 leading-tight">{college.name}</p>
+                          <p className="font-bold text-slate-900 leading-tight flex items-center gap-2">
+                            {college.name}
+                            {/* BADGE SHOWING FEATURED ORDER IF IT EXISTS */}
+                            {college.featuredOrder && (
+                              <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                <Star className="w-3 h-3 fill-blue-700" />
+                                Top {college.featuredOrder}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-xs text-slate-400 mt-1 font-mono">{college.id}</p>
                         </div>
                       </div>

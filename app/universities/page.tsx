@@ -13,6 +13,7 @@ interface UniversityData {
   fees: string;
   placed: string;
   image: string;
+  featuredOrder?: string | number; // Added featuredOrder
   [key: string]: any; // Accepts any additional fields without throwing errors
 }
 
@@ -30,8 +31,18 @@ const getCachedUniversities = unstable_cache(
       }
     });
     
-    // Sort universities alphabetically by name for a better user experience
-    data.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort logic: Featured universities (e.g., 1-6) come first, the rest are alphabetical
+    data.sort((a, b) => {
+      // If a university doesn't have a featuredOrder, assign it a high number (999) so it goes to the bottom
+      const orderA = a.featuredOrder ? Number(a.featuredOrder) : 999;
+      const orderB = b.featuredOrder ? Number(b.featuredOrder) : 999;
+
+      if (orderA !== orderB) {
+        return orderA - orderB; // Sort by featured order (1 comes before 2)
+      }
+      // If both have the same order (e.g., both are 999), sort alphabetically
+      return a.name.localeCompare(b.name);
+    });
     
     return data;
   },

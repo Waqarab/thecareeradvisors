@@ -35,7 +35,6 @@ type FormValues = z.infer<typeof formSchema>;
 const neetRanges = ["Below 200", "200 - 300", "300 - 400", "400 - 500", "500 - 600", "600+", "Yet to appear"];
 const countryOptions = ["Russia", "Kazakhstan", "Bangladesh", "Kyrgyzstan", "Georgia", "Uzbekistan", "Nepal", "Egypt"];
 
-// ADDED "source" PROP TO TAG INQUIRIES
 export default function InquiryModal({ children, source = "General Inquiry" }: { children: React.ReactNode, source?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,10 +57,17 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
     setIsSubmitting(true);
     
     try {
+      // Pull the real traffic source saved by the TrafficTracker component
+      let userSource = "Direct / Other";
+      if (typeof window !== "undefined") {
+        userSource = localStorage.getItem("tca_user_source") || "Direct / Other";
+      }
+
       await addDoc(collection(db, "inquiries"), {
         ...values,
         status: "New",
-        source: source, // <-- THIS SAVES THE TAG (e.g. "Scholarship Application") TO FIREBASE
+        source: userSource, // REAL TRACKING: "Meta Ads", "Instagram", etc.
+        formLocation: source, // Tells you which button/page they used to open the form
         createdAt: serverTimestamp(),
       });
 

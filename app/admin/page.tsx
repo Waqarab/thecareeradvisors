@@ -1,237 +1,216 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { db, app } from "@/firebase/config";
-import { Users, Loader2, CheckCircle2, ChevronRight, Activity, Eye, Globe, LineChart } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import { Users, MousePointerClick, Activity, Globe, ArrowRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
-interface Inquiry {
-  id: string;
-  name: string;
-  phone: string;
-  countries: string[];
-  neetScore: string;
-  status: string;
-  createdAt: any;
-}
+const parseDate = (val: any) => {
+  if (!val) return new Date();
+  if (val.toDate) return val.toDate();
+  return new Date(val);
+};
 
 export default function AdminDashboard() {
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [recentLeads, setRecentLeads] = useState<any[]>([]);
+  const [visits, setVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Realtime DB Metrics
-  const [totalVisits, setTotalVisits] = useState(0);
-  const [dailyVisits, setDailyVisits] = useState(0);
-  const [respondedCount, setRespondedCount] = useState(0);
-  const [seenPendingCount, setSeenPendingCount] = useState(0);
+  const [dailyData, setDailyData] = useState<any[]>([]);
 
   useEffect(() => {
-    async function loadDashboard() {
-      // 1. Fetch Inquiries from Firestore
-      const q = query(collection(db, "inquiries"), orderBy("createdAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const data: Inquiry[] = [];
-      querySnapshot.forEach((docSnap) => {
-        data.push({ id: docSnap.id, ...docSnap.data() } as Inquiry);
-      });
-      setInquiries(data);
-      setLoading(false);
+    let inquiriesLoaded = false;
+    let visitsLoaded = false;
 
-      // 2. Connect to Free Realtime Database for Metrics
-      const rtdb = getDatabase(app);
-      
-      // Fetch ALL visits to calculate Total and Today
-      const visitsRef = ref(rtdb, `stats/visits`);
-      onValue(visitsRef, (snapshot) => {
-        const visitData = snapshot.val();
-        if (!visitData) return;
-        
-        let total = 0;
-        let todayCount = 0;
-        const todayStr = new Date().toISOString().split('T')[0];
+    // 1. FETCH ALL INQUIRIES (For Totals)
+    const qAll = query(collection(db, "inquiries"));
+    const unsubAll = onSnapshot(qAll, (snapshot) => {
+      const rawInquiries: any[] = [];
+      snapshot.forEach((doc) => rawInquiries.push({ id: doc.id, ...doc.data() }));
+      setInquiries(rawInquiries);
+      inquiriesLoaded = true;
+      if (visitsLoaded) setLoading(false);
+    });
 
-        Object.entries(visitData).forEach(([date, ips]: [string, any]) => {
-          const count = Object.keys(ips).length;
-          total += count;
-          if (date === todayStr) todayCount = count;
+    // 2. FETCH LATEST 5 INQUIRIES (For Recent Activity)
+    const qRecent = query(collection(db, "inquiries"), orderBy("createdAt", "desc"), limit(5));
+    const unsubRecent = onSnapshot(qRecent, (snapshot) => {
+      const recent: any[] = [];
+      snapshot.forEach((doc) => recent.push({ id: doc.id, ...doc.data() }));
+      setRecentLeads(recent);
+    });
+
+    // 3. FETCH REAL VISITS (RTDB)
+    const rtdb = getDatabase(app);
+    const unsubVisits = onValue(ref(rtdb, 'stats/visits'), (snapshot) => {
+      const rawVisits: any[] = [];
+      if (snapshot.exists()) {
+        snapshot.forEach((child) => {
+          rawVisits.push({ id: child.key, ...(child.val() as any) });
         });
+      }
+      setVisits(rawVisits);
+      visitsLoaded = true;
+      if (inquiriesLoaded) setLoading(false);
+    });
 
-        setTotalVisits(total);
-        setDailyVisits(todayCount);
-      });
-
-      // Fetch "Responded" and "Seen" metrics and CROSS-REFERENCE with active Firestore data
-      const validInquiryIds = new Set(data.map(i => i.id)); // Ensures we don't count deleted leads
-      const metaRef = ref(rtdb, 'inquiry_meta');
-      
-      onValue(metaRef, (snapshot) => {
-        const metaData = snapshot.val();
-        if (!metaData) return;
-        
-        let responded = 0;
-        let seenPending = 0;
-        
-        Object.entries(metaData).forEach(([id, meta]: [string, any]) => {
-          if (!validInquiryIds.has(id)) return; // Ignore deleted leads
-          if (meta.responded) responded++;
-          else if (meta.seen && !meta.responded) seenPending++;
-        });
-        
-        setRespondedCount(responded);
-        setSeenPendingCount(seenPending);
-      });
-    }
-
-    loadDashboard();
+    return () => { unsubAll(); unsubRecent(); unsubVisits(); };
   }, []);
 
+  useEffect(() => {
+    if (inquiries.length > 0 || visits.length > 0) {
+      const last7Days = Array.from({length: 7}, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return { label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) };
+      });
+
+      const aggregatedData = last7Days.map(day => {
+        const leadsOnDate = inquiries.filter(lead => parseDate(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) === day.label).length;
+        const visitsOnDate = visits.filter(visit => parseDate(visit.timestamp || visit.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) === day.label).length;
+        
+        return { name: day.label, Visits: visitsOnDate, Leads: leadsOnDate };
+      });
+
+      setDailyData(aggregatedData);
+    }
+  }, [inquiries, visits]);
+
+  const conversionRate = visits.length > 0 ? ((inquiries.length / visits.length) * 100).toFixed(1) : "0.0";
+
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center pt-20">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <Activity className="w-10 h-10 text-blue-600 animate-bounce" />
+          <p className="text-gray-500 font-medium">Syncing Real-Time Data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10 max-w-7xl mx-auto">
       
-      {/* ======================================================== */}
-      {/* PREMIUM METRIC CARDS                                     */}
-      {/* ======================================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
-        
-        {/* Total Visits (All Time) */}
-        <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Total Views</p>
-            <h3 className="text-4xl font-extrabold font-heading text-foreground">{totalVisits}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform relative z-10">
-            <LineChart className="w-5 h-5" />
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">System Overview</h1>
+          <p className="text-gray-500 mt-1">Brief summary of recent activity and traffic.</p>
+        </div>
+        <Link href="/admin/analytics" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+          View Detailed Analytics <ArrowRight className="w-4 h-4 text-gray-400" />
+        </Link>
+      </div>
+
+      {/* KPI CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Traffic</p>
+              <h3 className="text-4xl font-black text-gray-900 mt-2">{visits.length}</h3>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-xl text-blue-600"><Globe className="w-6 h-6" /></div>
           </div>
         </div>
 
-        {/* Visits Today */}
-        <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Visits Today</p>
-            <h3 className="text-4xl font-extrabold font-heading text-foreground">{dailyVisits}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform relative z-10">
-            <Globe className="w-5 h-5" />
-          </div>
-        </div>
-        
-        {/* Total Leads */}
-        <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Total Leads</p>
-            <h3 className="text-4xl font-extrabold font-heading text-foreground">{inquiries.length}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-110 transition-transform relative z-10">
-            <Users className="w-5 h-5" />
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Leads</p>
+              <h3 className="text-4xl font-black text-gray-900 mt-2">{inquiries.length}</h3>
+            </div>
+            <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Users className="w-6 h-6" /></div>
           </div>
         </div>
 
-        {/* Responded */}
-        <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Responded</p>
-            <h3 className="text-4xl font-extrabold font-heading text-green-600">{respondedCount}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform relative z-10">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
-        
-        {/* Seen but Pending */}
-        <div className="bg-card p-6 rounded-2xl border-l-4 border-l-amber-500 border-t border-r border-b border-border/50 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider mb-1">Pending</p>
-            <h3 className="text-4xl font-extrabold font-heading text-amber-600">{seenPendingCount}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform relative z-10">
-            <Eye className="w-5 h-5" />
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Conversion Rate</p>
+              <h3 className="text-4xl font-black text-gray-900 mt-2">{conversionRate}%</h3>
+            </div>
+            <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MousePointerClick className="w-6 h-6" /></div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* LOWER SECTION: CHART & RECENT ACTIVITY */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* LEFT COLUMN: Quick Actions Table */}
-        <div className="lg:col-span-2 bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-border/50 bg-background flex justify-between items-center">
-            <h2 className="text-lg font-bold font-heading">Recent Inquiries</h2>
-            <Link href="/admin/inquiries" className="text-sm font-bold text-primary hover:underline flex items-center">
-              View Full CRM <ChevronRight className="w-4 h-4" />
-            </Link>
+        {/* BRIEF CHART */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-gray-900">Last 7 Days Traffic</h3>
+            <p className="text-sm text-gray-500">Visits vs Submitted Inquiries.</p>
           </div>
-          
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border/50 text-xs font-semibold text-foreground/60 uppercase tracking-wider">
-                  <th className="p-4">Name</th>
-                  <th className="p-4">Phone</th>
-                  <th className="p-4">Score</th>
-                  <th className="p-4">Firestore Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>
-                ) : inquiries.slice(0, 6).map((inquiry) => (
-                  <tr key={inquiry.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors text-sm">
-                    <td className="p-4 font-bold">{inquiry.name}</td>
-                    <td className="p-4 text-foreground/80">{inquiry.phone}</td>
-                    <td className="p-4">
-                      <span className="px-2.5 py-1 bg-background border border-border/50 rounded-md text-xs font-bold shadow-sm">
-                        {inquiry.neetScore}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className={`text-xs rounded-full px-3 py-1 font-bold ${
-                        inquiry.status === 'New' ? 'bg-destructive/10 text-destructive' : 
-                        inquiry.status === 'Contacted' ? 'bg-amber-500/10 text-amber-700' : 'bg-green-500/10 text-green-700'
-                      }`}>
-                        {inquiry.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex-1 min-h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dailyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
+                <RechartsTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                <Area type="monotone" dataKey="Visits" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
+                <Area type="monotone" dataKey="Leads" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Live Activity Feed */}
-        <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden flex flex-col h-[500px]">
-          <div className="p-6 border-b border-border/50 bg-background flex items-center gap-2">
-            <Activity className="w-5 h-5 text-accent" />
-            <h2 className="text-lg font-bold font-heading">Activity Feed</h2>
+        {/* RECENT ACTIVITY LIST */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
+              <p className="text-sm text-gray-500">Latest form submissions.</p>
+            </div>
+            <Link href="/admin/inquiries" className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1">
+              All Leads <ExternalLink className="w-4 h-4" />
+            </Link>
           </div>
           
-          <div className="p-6 overflow-y-auto flex-1 relative">
-            <div className="absolute top-6 bottom-6 left-9 w-px bg-border/80"></div>
-            
-            {loading ? (
-              <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-            ) : inquiries.slice(0, 8).map((inquiry, idx) => (
-              <div key={inquiry.id} className="relative pl-10 mb-8 last:mb-0 group">
-                <div className={`absolute left-0 w-6 h-6 rounded-full border-4 border-card flex items-center justify-center top-0 transition-transform group-hover:scale-125 ${
-                  inquiry.status === 'New' ? 'bg-destructive' : 'bg-primary'
-                }`}></div>
-                
-                <p className="text-sm text-foreground/60 mb-0.5">
-                  {inquiry.createdAt?.toDate ? inquiry.createdAt.toDate().toLocaleDateString() : 'Just now'}
-                </p>
-                <div className="bg-background border border-border/50 p-3 rounded-xl shadow-sm">
-                  <p className="text-sm text-foreground leading-tight">
-                    <span className="font-bold">{inquiry.name}</span> submitted an inquiry for <span className="font-semibold text-primary">{inquiry.countries[0]}</span>.
-                  </p>
+          <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+            {recentLeads.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No recent leads found.</p>
+            ) : (
+              recentLeads.map((lead) => (
+                <div key={lead.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm">{lead.name}</h4>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {lead.countries?.[0] || 'Undecided'} • <span className="font-medium text-gray-700">{lead.source || 'Direct'}</span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${
+                      lead.status === 'New' ? 'bg-blue-100 text-blue-700' :
+                      lead.status === 'Converted' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-200 text-gray-700'
+                    }`}>
+                      {lead.status || 'New'}
+                    </span>
+                    <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
+                      {parseDate(lead.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

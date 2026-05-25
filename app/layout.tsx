@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import NotificationManager from "@/components/NotificationManager";
@@ -7,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import "flag-icons/css/flag-icons.min.css";
 import { Toaster } from "@/components/ui/sonner";
 import SplashCursorEffect from "@/components/SplashCursorEffect";
+import TrafficTracker from "@/components/TrafficTracker"; // <-- IMPORTED HERE
 
 // 1. EXTENSIVE SEO METADATA
 export const metadata: Metadata = {
@@ -60,7 +62,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   
-  // 3. ORGANIZATION SCHEMA FOR GOOGLE SEARCH (This creates the "Company" profile on Google)
+  // 3. ORGANIZATION SCHEMA FOR GOOGLE SEARCH
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
@@ -80,7 +82,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       "addressCountry": "IN"
     },
     "sameAs": [
-      // Update these with your actual social media URLs later
       "https://www.facebook.com/yourpage",
       "https://www.instagram.com/yourpage"
     ]
@@ -93,7 +94,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
-        {/* Inject JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -103,6 +103,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         
         {/* GLOBAL SPLASH CURSOR EFFECT */}
         <SplashCursorEffect />
+
+        {/* SILENT TRAFFIC TRACKER (Wrapped in Suspense because it uses useSearchParams) */}
+        <Suspense fallback={null}>
+          <TrafficTracker />
+        </Suspense>
 
         <AuthProvider>
           <ConditionalLayout>

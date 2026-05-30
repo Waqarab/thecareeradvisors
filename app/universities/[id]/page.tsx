@@ -2,82 +2,100 @@
 
 import { useEffect, useState, use } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { 
   MapPin, Banknote, Calendar, CheckCircle2, ShieldAlert, 
   Building2, GraduationCap, ArrowLeft, Phone,
   FileText, Coffee, HeartPulse, Loader2, Landmark, HelpCircle
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import InquiryModal from "@/components/InquiryModal";
-import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
-// 1. Expanded Interface to support new bulk data fields
+// --- EXPANDED INTERFACE ---
 interface UniversityData {
   name: string;
   country: string;
   location: string;
   fees: string;
   established?: string;
-  image: string;
-  description?: string; // Used for "About the University"
+  image?: string; // Made optional to prevent strict type errors
+  description?: string; 
   courseDuration?: string;
   medium?: string;
-  recognition?: string[]; // Used for "Rankings & Recognition"
-  hostelFees?: string; // Used for "Hostel & Mess"
-  historicalBackground?: string; // NEW
-  hospitalFacilities?: string; // NEW
-  whyChoose?: string[]; // NEW
+  recognition?: string[]; 
+  hostelFees?: string; 
+  historicalBackground?: string; 
+  hospitalFacilities?: string; 
+  whyChoose?: string[]; 
 }
 
 export default function UniversityDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const id = resolvedParams.id;
+  // 1. Next.js 15+ correct standard for unwrapping dynamic params
+  const { id } = use(params);
 
   const [university, setUniversity] = useState<UniversityData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // 2. Optimized Fetch with memory-leak prevention (Cleanup Function)
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+    if (!id) return;
 
-  useEffect(() => {
+    let isMounted = true; // Prevents state updates if component unmounts quickly
+
     async function fetchUniversityDetails() {
       try {
+        setLoading(true);
+        setError(null);
+        
         const docRef = doc(db, "universities", id);
         const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          setUniversity(docSnap.data() as UniversityData);
-        } else {
-          console.error("No such university document found!");
+        if (isMounted) {
+          if (docSnap.exists()) {
+            setUniversity(docSnap.data() as UniversityData);
+          } else {
+            setError("No such university document found!");
+            setUniversity(null);
+          }
         }
-      } catch (error) {
-        console.error("Error fetching university details:", error);
+      } catch (err) {
+        console.error("Error fetching university details:", err);
+        if (isMounted) setError("Failed to load university data. Please try again.");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
+
     fetchUniversityDetails();
+
+    return () => {
+      isMounted = false; // Cleanup to prevent race conditions & crashes
+    };
   }, [id]);
 
+  // --- LOADING STATE ---
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+        <p className="text-foreground/60 font-medium animate-pulse">Loading university details...</p>
       </div>
     );
   }
 
-  if (!university) {
+  // --- ERROR / NOT FOUND STATE ---
+  if (error || !university) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-center px-4">
         <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
         <h2 className="text-3xl font-bold font-heading mb-2">University Not Found</h2>
-        <p className="text-foreground/60 mb-6">The requested institution profile could not be loaded or doesn't exist.</p>
+        <p className="text-foreground/60 mb-6">{error || "The requested institution profile could not be loaded."}</p>
         <Link href="/universities">
-          <Button className="bg-primary text-primary-foreground rounded-full">
+          <Button className="bg-primary text-primary-foreground rounded-full active:scale-95 transition-transform">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Directory
           </Button>
         </Link>
@@ -85,26 +103,32 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
     );
   }
 
+  // --- SAFE DATA FALLBACKS (Prevents Undefined Crashes) ---
   const duration = university.courseDuration || "6 Years (Including Internship)";
   const instructionMedium = university.medium || "100% English Medium";
-  const recognitions = university.recognition && university.recognition.length > 0 
+  const recognitions = university.recognition?.length 
     ? university.recognition 
     : ["WHO Recognized", "NMC / MCI Approved", "Ministry of Education Approved"];
   const aboutText = university.description || `${university.name} is a premier institution offering world-class medical education.`;
   const hostelCost = university.hostelFees || "Standard Hostel Facilities Available";
 
+  // Safe image check to prevent .trim() crash
+  const hasValidImage = typeof university.image === 'string' && university.image.trim() !== "";
+
   return (
     <div className="min-h-screen bg-porcelain pb-24 font-sans">
       
-      {/* HERO BANNER */}
+      {/* HERO BANNER - High Priority LCP Optimized */}
       <section className="relative h-[45vh] min-h-[350px] bg-gray-950 overflow-hidden flex items-end">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent z-10" />
-            {university?.image && university.image.trim() !== "" ? (
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/50 to-transparent z-10" />
+            {hasValidImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img 
                 src={university.image} 
                 alt={university.name || "University"} 
+                fetchPriority="high" // Force browser to prioritize this image for incredible speed
+                decoding="async"
                 className="w-full h-full object-cover opacity-60 scale-105"
               />
             ) : (
@@ -115,23 +139,23 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <div className="container mx-auto px-4 md:px-8 pb-10 relative z-20 text-white">
-          <Link href="/universities" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6 text-sm font-bold bg-white/10 backdrop-blur-md px-4 py-2 rounded-full active:scale-95 transition-all shadow-sm">
+          <Link href="/universities" className="inline-flex items-center gap-2 text-white/90 hover:text-white mb-6 text-sm font-bold bg-white/10 backdrop-blur-md px-4 py-2 rounded-full active:scale-95 transition-all shadow-sm">
             <ArrowLeft className="w-4 h-4" /> Back to Catalog
           </Link>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4, ease: "easeOut" }} // Optimized easing for smoother perceived performance
           >
             <span className="bg-destructive text-destructive-foreground px-4 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-3 inline-block shadow-md">
-              {university.country}
+              {university.country || "Global"}
             </span>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black font-heading leading-tight tracking-tight max-w-4xl text-ivory">
               {university.name}
             </h1>
             <p className="flex items-center gap-2 text-white/80 font-medium text-sm md:text-base mt-3">
-              <MapPin className="w-4 h-4 text-destructive" /> {university.location}
+              <MapPin className="w-4 h-4 text-destructive shrink-0" /> {university.location || "Location not specified"}
             </p>
           </motion.div>
         </div>
@@ -146,15 +170,15 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
             
             {/* Quick Summary Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="bg-card p-5 rounded-2xl border border-border/40 shadow-sm flex items-center gap-4">
+              <div className="bg-card p-5 rounded-2xl border border-border/40 shadow-sm flex items-center gap-4 hover:border-primary/30 transition-colors">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0"><Banknote className="w-6 h-6" /></div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase font-bold text-foreground/40 tracking-wider">Tuition Fee</p>
-                  <p className="font-bold text-sm text-foreground">{university.fees}</p>
+                  <p className="font-bold text-sm text-foreground truncate">{university.fees || "Contact for fees"}</p>
                 </div>
               </div>
               
-              <div className="bg-card p-5 rounded-2xl border border-border/40 shadow-sm flex items-center gap-4">
+              <div className="bg-card p-5 rounded-2xl border border-border/40 shadow-sm flex items-center gap-4 hover:border-accent/30 transition-colors">
                 <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent shrink-0"><Calendar className="w-6 h-6" /></div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-foreground/40 tracking-wider">Established</p>
@@ -162,9 +186,9 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
                 </div>
               </div>
 
-              <div className="bg-card p-5 rounded-2xl border border-border/40 shadow-sm col-span-2 md:col-span-1 flex items-center gap-4">
+              <div className="bg-card p-5 rounded-2xl border border-border/40 shadow-sm col-span-2 md:col-span-1 flex items-center gap-4 hover:border-destructive/30 transition-colors">
                 <div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center text-destructive shrink-0"><GraduationCap className="w-6 h-6" /></div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase font-bold text-foreground/40 tracking-wider">Instruction</p>
                   <p className="font-bold text-sm text-foreground truncate">{instructionMedium.split(" ")[1] || instructionMedium}</p>
                 </div>
@@ -180,7 +204,7 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
               </p>
             </div>
 
-            {/* Historical Background Card (Conditionally Rendered) */}
+            {/* Historical Background Card */}
             {university.historicalBackground && (
               <div className="bg-card p-8 rounded-3xl border border-border/40 shadow-sm space-y-4">
                 <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
@@ -193,7 +217,7 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
               </div>
             )}
 
-            {/* Hospital & Clinical Facilities (Conditionally Rendered) */}
+            {/* Hospital & Clinical Facilities */}
             {university.hospitalFacilities && (
               <div className="bg-card p-8 rounded-3xl border border-border/40 shadow-sm space-y-4">
                 <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-3">
@@ -238,7 +262,7 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
 
-            {/* Why Choose This University (Conditionally Rendered) */}
+            {/* Why Choose This University */}
             {university.whyChoose && university.whyChoose.length > 0 && (
               <div className="bg-[#f0f4f8] p-8 rounded-3xl border border-[#6082B6]/30 shadow-sm space-y-6">
                 <h2 className="text-2xl font-bold font-heading text-[#22354a] flex items-center gap-3">
@@ -264,12 +288,12 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
           <div className="space-y-6 sticky top-28">
             
             {/* The Direct Action Conversion Box */}
-            <div className="bg-card p-8 rounded-3xl border border-border/40 shadow-xl space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-destructive" />
+            <div className="bg-card p-8 rounded-3xl border border-border/40 shadow-xl space-y-6 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-destructive transition-all duration-300 group-hover:h-2" />
               
               <div>
                 <p className="text-xs font-bold text-foreground/40 uppercase tracking-wider mb-1">Approximate Tuition Fee</p>
-                <h3 className="text-3xl font-black font-heading text-primary">{university.fees}</h3>
+                <h3 className="text-3xl font-black font-heading text-primary">{university.fees || "TBD"}</h3>
                 <p className="text-xs text-foreground/50 font-medium mt-1">Direct official fee structured payments</p>
               </div>
 
@@ -281,7 +305,7 @@ export default function UniversityDetailPage({ params }: { params: Promise<{ id:
                 </InquiryModal>
                 
                 <a href="tel:+916005152350" className="block w-full">
-                  <Button variant="outline" className="w-full border-primary/30 text-primary font-bold py-6 rounded-xl active:scale-95 transition-transform bg-background">
+                  <Button variant="outline" className="w-full border-primary/30 text-primary font-bold py-6 rounded-xl hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all bg-background">
                     <Phone className="w-4 h-4 mr-2" /> Call Academic Expert
                   </Button>
                 </a>

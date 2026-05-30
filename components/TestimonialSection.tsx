@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, BadgeCheck, Quote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, BadgeCheck, Quote, ChevronLeft, ChevronRight, Play } from "lucide-react";
 
 // --- DUMMY DATA ---
 const textTestimonials = [
@@ -37,7 +37,6 @@ const textTestimonials = [
     text: "What I liked most was their honest guidance. They explained everything clearly without making false promises.",
     img: "https://res.cloudinary.com/drytpdpx3/image/upload/q_auto/f_auto/v1779614310/Muskan_w6t3qf.jpg",
     initials: "MT"
-
   }
 ];
 
@@ -45,27 +44,31 @@ const textTestimonials = [
 const videoTestimonials = [
   { 
     id: 1, 
-    studentName: "Ayesha Mir", 
-    collegeName: "Kazan State Medical University",
-    videoUrl: "https://videos.pexels.com/video-files/7490421/7490421-uhd_2560_1440_25fps.mp4" 
+    studentName: "Anzila Tariq", 
+    collegeName: "AMU Astana. Kazakhstan",
+    videoUrl: "https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1780111369/Vid01_wq194s.mp4" 
   },
   { 
     id: 2, 
-    studentName: "Khalid Bhat", 
-    collegeName: "Tashkent Medical Academy",
-    videoUrl: "https://videos.pexels.com/video-files/20132264/20132264-uhd_2560_1440_60fps.mp4" 
+    studentName: "Azhar Bashir", 
+    collegeName: "Cairo University, Egypt",
+    videoUrl: "https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1780111378/Vid03_ztayqp.mp4" 
   },
   { 
     id: 3, 
-    studentName: "Faisal Rashid", 
-    collegeName: "Dhaka National Medical College",
-    videoUrl: "https://videos.pexels.com/video-files/7092229/7092229-hd_1920_1080_30fps.mp4" 
+    studentName: "Rounak Showkat", 
+    collegeName: "Astana Kazakhstan",
+    videoUrl: "https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1780111365/Vis02_sogqi6.mp4" 
   },
 ];
 
 export default function TestimonialSection() {
   const [textIndex, setTextIndex] = useState(0);
   const [vidIndex, setVidIndex] = useState(0);
+  
+  // --- VIDEO CONTROLS STATE ---
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // --- NAVIGATION CONTROLS ---
   const nextText = () => setTextIndex((prev) => (prev === textTestimonials.length - 1 ? 0 : prev + 1));
@@ -79,6 +82,24 @@ export default function TestimonialSection() {
     const timer = setTimeout(nextText, 7000);
     return () => clearTimeout(timer);
   }, [textIndex]);
+
+  // Reset video state when switching slides
+  useEffect(() => {
+    setIsPlaying(false);
+  }, [vidIndex]);
+
+  // Video play/pause handler
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
 
   return (
     <section id="testimonials" className="py-24 md:py-32 bg-background relative overflow-hidden border-t border-border/40">
@@ -202,7 +223,7 @@ export default function TestimonialSection() {
             </button>
 
             {/* Flexible Video Frame */}
-            <div className="relative flex-1 w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border border-border/50 bg-black group max-h-[75vh] flex items-center justify-center aspect-[9/16] md:aspect-video">
+            <div className="relative flex-1 w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border border-border/50 bg-black group max-h-[75vh] flex items-center justify-center aspect-[9/16] md:aspect-video cursor-pointer" onClick={togglePlay}>
               
               <AnimatePresence mode="wait">
                 <motion.div
@@ -213,13 +234,24 @@ export default function TestimonialSection() {
                   transition={{ duration: 0.3 }}
                   className="w-full h-full relative flex items-center justify-center"
                 >
-                  {/* REAL AUTOPLAY VIDEO (No Controls, Muted to allow autoplay) */}
+                  
+                  {/* PLAY BUTTON OVERLAY */}
+                  {!isPlaying && (
+                    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 pointer-events-none transition-all duration-300">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-2xl scale-100 group-hover:scale-110 transition-transform duration-300">
+                        <Play className="w-8 h-8 md:w-10 md:h-10 ml-1 fill-current" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* USER CONTROLLED VIDEO (Removed AutoPlay & Muted) */}
                   <video 
+                    ref={videoRef}
                     src={videoTestimonials[vidIndex].videoUrl}
-                    autoPlay
                     loop
-                    muted
                     playsInline
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
                     className="w-full h-full max-h-[75vh] object-cover md:object-contain"
                   />
 

@@ -50,9 +50,9 @@ const videoTestimonials = [
   },
   { 
     id: 2, 
-    studentName: "Azhar Bashir", 
-    collegeName: "Cairo University, Egypt",
-    videoUrl: "https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1780111378/Vid03_ztayqp.mp4" 
+    studentName: "Qasim Shamim", 
+    collegeName: "Alexandria University, Egypt",
+    videoUrl: "https://res.cloudinary.com/drytpdpx3/video/upload/q_auto/f_auto/v1780234554/qasim_xhwdnx.mp4" 
   },
   { 
     id: 3, 

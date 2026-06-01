@@ -68,6 +68,10 @@ const faqs = [
 
 export default function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [showAll, setShowAll] = useState(false);
+
+  const initialCount = 7;
+  const displayedFaqs = showAll ? faqs : faqs.slice(0, initialCount);
 
   return (
     <section id="faq" className="py-20 bg-card/50">
@@ -77,7 +81,7 @@ export default function FaqSection() {
         </h2>
         
         <div className="space-y-4">
-          {faqs.map((faq, index) => (
+          {displayedFaqs.map((faq, index) => (
             <div key={index} className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm">
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
@@ -103,7 +107,19 @@ export default function FaqSection() {
               </AnimatePresence>
             </div>
           ))}
-        </div>     
+        </div>
+
+        {/* View More / View Less Button */}
+        {faqs.length > initialCount && (
+          <div className="mt-10 flex justify-center">
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all duration-300 shadow-sm"
+            >
+              {showAll ? "View Less" : `View ${faqs.length - initialCount} More FAQs`}
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

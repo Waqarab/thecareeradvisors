@@ -34,12 +34,19 @@ export default function AnalyticsPage() {
       if (visitsLoaded) setLoading(false);
     });
 
-    // Fetch Visits
+    // Fetch Visits (FIXED: Flattening the nested Date -> IP Hash structure)
     const unsubVisits = onValue(ref(getDatabase(app), 'stats/visits'), (snapshot) => {
       const rawVisits: any[] = [];
       if (snapshot.exists()) {
-        snapshot.forEach((child) => {
-          rawVisits.push({ id: child.key, ...(child.val() as any) });
+        // Loop through each date folder (e.g., "2026-06-01")
+        snapshot.forEach((dateNode) => {
+          // Loop through each unique visitor IP hash inside that date
+          dateNode.forEach((visitorNode) => {
+            rawVisits.push({ 
+              id: `${dateNode.key}-${visitorNode.key}`, 
+              ...(visitorNode.val() as any) 
+            });
+          });
         });
       }
       setVisits(rawVisits);
@@ -62,7 +69,8 @@ export default function AnalyticsPage() {
 
     const cutoff = cutoffs[timeRange];
     const filteredInquiries = inquiries.filter(i => (now - parseDate(i.createdAt).getTime()) <= cutoff);
-    const filteredVisits = visits.filter(v => (now - parseDate(v.timestamp || v.createdAt).getTime()) <= cutoff);
+    // Uses the timestamp saved by the tracker
+    const filteredVisits = visits.filter(v => (now - parseDate(v.timestamp).getTime()) <= cutoff);
 
     const COLORS = {
       'Instagram': '#e1306c', 'Facebook': '#1877f2', 'WhatsApp': '#25d366', 
@@ -98,7 +106,7 @@ export default function AnalyticsPage() {
 
     return {
       leads: filteredInquiries.length,
-      traffic: filteredVisits.length,
+      traffic: filteredVisits.length, // This will now accurately reflect unique visitors
       leadSources: groupSources(filteredInquiries),
       visitSources: groupSources(filteredVisits),
       funnel: [
@@ -127,7 +135,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Advanced Analytics</h1>
-          <p className="text-gray-500 mt-1">Deep dive into traffic sources and conversion data.</p>
+          <p className="text-gray-500 mt-1">Deep dive into unique traffic sources and conversion data.</p>
         </div>
 
         <div className="bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm inline-flex overflow-x-auto">
@@ -150,7 +158,7 @@ export default function AnalyticsPage() {
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Visits ({timeRange})</p>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Unique Visits ({timeRange})</p>
               <h3 className="text-4xl font-black text-gray-900 mt-2">{filteredData.traffic}</h3>
             </div>
             <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Globe className="w-6 h-6" /></div>

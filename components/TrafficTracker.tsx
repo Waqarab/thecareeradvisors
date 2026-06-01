@@ -7,7 +7,7 @@ export default function TrafficTracker() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Only run this once per session
+    // Only run this once per session to avoid duplicate pings on page refresh
     if (sessionStorage.getItem("tca_source_tracked")) return;
 
     let source = "Direct / Other";
@@ -27,14 +27,20 @@ export default function TrafficTracker() {
     else if (referrer.includes("google.")) source = "Google Search";
     else if (referrer.includes("wa.me") || referrer.includes("whatsapp")) source = "WhatsApp";
 
-    // Save to localStorage so it survives page navigation
+    // Save to localStorage so it survives page navigation (e.g., for attaching to a Lead form later)
     localStorage.setItem("tca_user_source", source);
     sessionStorage.setItem("tca_source_tracked", "true"); // Prevent running twice
 
-    // Optional: If you have an API route to track visits to RTDB, call it here!
-    // fetch('/api/track-visit', { method: 'POST', body: JSON.stringify({ source }) });
+    // Send the data to your Realtime Database invisibly
+    fetch('/api/track-visit', { 
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source }) 
+    }).catch(err => console.error("Tracking failed:", err));
 
   }, [searchParams]);
 
-  return null; // This component is invisible
+  return null; // This component remains completely invisible
 }

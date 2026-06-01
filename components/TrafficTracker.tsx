@@ -1,46 +1,60 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
+import { getDatabase, ref, push, set } from "firebase/database";
+import { app } from "@/firebase/config";
 
 export default function TrafficTracker() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Only run this once per session to avoid duplicate pings on page refresh
-    if (sessionStorage.getItem("tca_source_tracked")) return;
+    // 1. DO NOT track if the user is in the admin panel
+    if (pathname?.startsWith("/admin")) return;
+
+    // 2. Check if this specific device has already been tracked
+    // This will persist even if they close tabs or refresh, until cache is cleared.
+    if (localStorage.getItem("tca_device_tracked") === "true") return;
 
     let source = "Direct / Other";
     const utmSource = searchParams.get("utm_source")?.toLowerCase();
     const refParam = searchParams.get("ref")?.toLowerCase();
-    const referrer = document.referrer.toLowerCase();
+    const referrer = document.referrer.toLowerCase() || "";
 
-    // 1. Check Explicit URL Tags (Meta Ads, WhatsApp links you share)
     if (utmSource?.includes("meta") || utmSource?.includes("fb") || utmSource?.includes("facebook")) source = "Meta Ads";
     else if (utmSource?.includes("instagram") || utmSource?.includes("ig")) source = "Instagram Ads";
     else if (utmSource?.includes("google")) source = "Google Ads";
     else if (refParam?.includes("whatsapp") || utmSource?.includes("whatsapp")) source = "WhatsApp";
-    
-    // 2. Check Organic Referrer (They clicked a link on a website naturally)
     else if (referrer.includes("instagram.com")) source = "Instagram";
     else if (referrer.includes("facebook.com")) source = "Facebook";
     else if (referrer.includes("google.")) source = "Google Search";
     else if (referrer.includes("wa.me") || referrer.includes("whatsapp")) source = "WhatsApp";
 
-    // Save to localStorage so it survives page navigation (e.g., for attaching to a Lead form later)
+    // Save source locally in case you want to attach it to a lead form submission later
     localStorage.setItem("tca_user_source", source);
-    sessionStorage.setItem("tca_source_tracked", "true"); // Prevent running twice
 
-    // Send the data to your Realtime Database invisibly
-    fetch('/api/track-visit', { 
-      method: 'POST', 
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ source }) 
-    }).catch(err => console.error("Tracking failed:", err));
+    try {
+      const rtdb = getDatabase(app);
+      const today = new Date().toISOString().split("T")[0];
+      
+      const newVisitRef = push(ref(rtdb, `stats/page_views/${today}`));
+      
+      set(newVisitRef, {
+        source: source,
+        timestamp: new Date().toISOString(),
+        userAgent: window.navigator.userAgent,
+        landingPage: pathname
+      }).then(() => {
+        // 3. ONLY mark as tracked after successfully writing to the database
+        localStorage.setItem("tca_device_tracked", "true");
+      });
 
-  }, [searchParams]);
+    } catch (error) {
+      console.error("Traffic tracking failed:", error);
+    }
 
-  return null; // This component remains completely invisible
+  }, [searchParams, pathname]);
+
+  return null;
 }

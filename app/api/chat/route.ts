@@ -6,6 +6,40 @@ export const runtime = "nodejs";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function sanitizeHistory(rawHistory: any[]) {
+  if (!Array.isArray(rawHistory)) return [];
+
+  // Map to SDK shape, drop invalid entries
+  const mapped = rawHistory
+    .filter((m) => m && typeof m.content === "string" && m.content.trim().length > 0)
+    .map((m) => ({
+      role: m.role === "user" ? "user" : "model",
+      parts: [{ text: m.content }],
+    }));
+
+  // 1) Drop everything until the first "user" message appears
+  while (mapped.length > 0 && mapped[0].role !== "user") {
+    mapped.shift();
+  }
+
+  // 2) Remove consecutive duplicates of the same role
+  const cleaned: typeof mapped = [];
+  for (const msg of mapped) {
+    if (cleaned.length === 0 || cleaned[cleaned.length - 1].role !== msg.role) {
+      cleaned.push(msg);
+    }
+  }
+
+  // 3) History must END with a "model" message (SDK requirement: the
+  //    new user message is appended on top of a completed turn).
+  //    If it ends with "user", drop the last one.
+  while (cleaned.length > 0 && cleaned[cleaned.length - 1].role === "user") {
+    cleaned.pop();
+  }
+
+  return cleaned;
+}
+
 const SYSTEM_INSTRUCTION = `
         You are the official AI Academic Counsellor for 'The Career Advisors'.
         
@@ -234,14 +268,9 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const models = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-2.5-flash"];
+    const models = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-flash-lite"];
 
-    const validHistory = (history || [])
-      .filter((msg: any) => msg.content !== "Hi! I'm the AI Assistant for The Career Advisors. How can I help you with your MBBS journey today?")
-      .map((msg: any) => ({
-        role: msg.role === "user" ? "user" : "model",
-        parts: [{ text: msg.content }],
-      }));
+    const validHistory = sanitizeHistory(history || []);
 
     let parts: any[] = [{ text: message || "Please review this image." }];
     if (image) {
@@ -259,7 +288,14 @@ export async function POST(req: Request) {
     }
 
     // 5. Fallback Chain and Backoff logic
+    const OVERALL_TIMEOUT_MS = 12_000;
+    const startTime = Date.now();
+
     for (let i = 0; i < models.length; i++) {
+      if (Date.now() - startTime > OVERALL_TIMEOUT_MS) {
+        break;
+      }
+
       const modelName = models[i];
       const model = genAI.getGenerativeModel({ 
         model: modelName,
@@ -267,45 +303,45 @@ export async function POST(req: Request) {
       });
       const chat = model.startChat({ history: validHistory });
       
-      let attempts = 0;
-      while (attempts < 2) {
-        try {
-          const result = await chat.sendMessage(parts);
-          const response = await result.response;
-          const text = response.text();
-          
-          await rateLimit.commit(browserId, "chat_5min", 5 * 60 * 1000);
-          await rateLimit.commit(browserId, "chat_1hour", 60 * 60 * 1000);
-          await rateLimit.commit(browserId, "chat_24hour", 24 * 60 * 60 * 1000);
+      try {
+        const result = await chat.sendMessage(parts);
+        const response = await result.response;
+        const text = response.text();
+        
+        await rateLimit.commit(browserId, "chat_5min", 5 * 60 * 1000);
+        await rateLimit.commit(browserId, "chat_1hour", 60 * 60 * 1000);
+        await rateLimit.commit(browserId, "chat_24hour", 24 * 60 * 60 * 1000);
 
-          return NextResponse.json({ reply: text }, {
-            headers: {
-              "Cache-Control": "no-store",
-              "X-RateLimit-Limit": "50",
-              "X-RateLimit-Remaining": rateLimitRemaining,
-              ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {})
-            }
-          });
-        } catch (err: any) {
-          const msg = String(err?.message || "").toLowerCase();
-          const status = err?.status || err?.code || 0;
-          const is429 = status === 429 || msg.includes("resource_exhausted")
-                     || msg.includes("rate limit") || msg.includes("quota");
-          const is403 = status === 403 || msg.includes("permission_denied")
-                     || msg.includes("api key") || msg.includes("forbidden");
-          const is5xx = status >= 500 || msg.includes("500") || msg.includes("503")
-                     || msg.includes("unavailable") || msg.includes("overloaded");
-
-          if (is429 || is403) {
-            break; // move to next model
-          } else if (is5xx) {
-            if (attempts === 0) { attempts++; await delay(1000); continue; }
-            break;
-          } else {
-            // Unknown error — log full details and move to next model instead of throwing
-            console.error(`[GEMINI-UNKNOWN] ${modelName}`, { status, message: err?.message, err });
-            break;
+        return NextResponse.json({ reply: text }, {
+          headers: {
+            "Cache-Control": "no-store",
+            "X-RateLimit-Limit": "50",
+            "X-RateLimit-Remaining": rateLimitRemaining,
+            ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {})
           }
+        });
+      } catch (err: any) {
+        console.error(`[MODEL-FAIL] ${modelName}`, {
+          status: err?.status,
+          code: err?.code,
+          message: err?.message,
+          stack: err?.stack?.split("\n").slice(0, 3).join("\n"),
+        });
+        const msg = String(err?.message || "").toLowerCase();
+        const status = err?.status || err?.code || 0;
+        const is429 = status === 429 || msg.includes("resource_exhausted")
+                   || msg.includes("rate limit") || msg.includes("quota");
+        const is403 = status === 403 || msg.includes("permission_denied")
+                   || msg.includes("api key") || msg.includes("forbidden");
+        const is5xx = status >= 500 || msg.includes("500") || msg.includes("503")
+                   || msg.includes("unavailable") || msg.includes("overloaded");
+
+        if (is429 || is403 || is5xx) {
+          continue; // move to next model
+        } else {
+          // Unknown error — log full details and move to next model instead of throwing
+          console.error(`[GEMINI-UNKNOWN] ${modelName}`, { status, message: err?.message, err });
+          continue;
         }
       }
     }

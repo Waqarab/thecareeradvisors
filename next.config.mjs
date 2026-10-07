@@ -17,18 +17,18 @@ const nextConfig = {
     const isDev = process.env.NODE_ENV !== "production";
     
     const scriptSrc = isDev
-      ? "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.gstatic.com"
-      : "'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com";
+      ? "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://vercel.live"
+      : "'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://vercel.live";
       
     const csp = [
       "default-src 'self'",
       `script-src ${scriptSrc}`,
       "style-src 'self' 'unsafe-inline' https://api.fontshare.com",
-      "font-src 'self' https://api.fontshare.com https://cdn.fontshare.com",
-      "img-src 'self' data: https://res.cloudinary.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://i.pravatar.cc https://cdn.vectorstock.com https://www.transparenttextures.com https://upload.wikimedia.org",
+      "font-src 'self' https://api.fontshare.com https://cdn.fontshare.com https://vercel.live",
+      "img-src 'self' data: https://res.cloudinary.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://i.pravatar.cc https://cdn.vectorstock.com https://www.transparenttextures.com https://upload.wikimedia.org https://vercel.com",
       "media-src 'self' https://res.cloudinary.com https://videos.pexels.com",
-      "connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://accounts.google.com https://apis.google.com",
-      "frame-src 'self' https://maps.google.com https://www.google.com/maps/ https://*.firebaseapp.com https://thecareer-advisors.firebaseapp.com https://accounts.google.com https://apis.google.com https://content.googleapis.com",
+      "connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://accounts.google.com https://apis.google.com https://vercel.live wss://ws-us3.pusher.com",
+      "frame-src 'self' https://maps.google.com https://www.google.com/maps/ https://*.firebaseapp.com https://thecareer-advisors.firebaseapp.com https://accounts.google.com https://apis.google.com https://content.googleapis.com https://vercel.live",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",

@@ -16,7 +16,7 @@ export default function AdminSettings() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { cache: "no-store", headers: { 'Cache-Control': 'no-cache' } })
       .then(r => r.ok ? r.json() : { role: "admin" })
       .then(data => {
         if (!cancelled) setIsSuperAdmin(data.role === "super-admin");

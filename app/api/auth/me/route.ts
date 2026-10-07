@@ -5,7 +5,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
-  console.log("[ME] SUPER_ADMIN_EMAIL set:", !!SUPER_ADMIN_EMAIL);
   if (!SUPER_ADMIN_EMAIL) {
     return NextResponse.json(
       { role: "unknown", email: null },
@@ -15,16 +14,13 @@ export async function GET(req: Request) {
 
   // Read session cookie using the same logic as middleware
   const cookieHeader = req.headers.get("cookie") || "";
-  console.log("[ME] cookie header present:", !!cookieHeader);
   const cookieName = process.env.NODE_ENV === "production"
     ? "__Host-tca_session"
     : "tca_session";
-  console.log("[ME] cookieName:", cookieName);
   const match = cookieHeader.match(
     new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
   );
   const sessionCookie = match ? match[1] : null;
-  console.log("[ME] sessionCookie found:", !!sessionCookie);
 
   if (!sessionCookie) {
     return NextResponse.json(
@@ -37,7 +33,6 @@ export async function GET(req: Request) {
     const { admin } = await import("@/lib/firebase-admin");
     const decoded = await admin.auth().verifySessionCookie(sessionCookie, true);
     const isSuper = decoded.email === SUPER_ADMIN_EMAIL;
-    console.log("[ME] decoded email matches:", isSuper);
     return NextResponse.json({
       role: isSuper ? "super-admin" : "admin",
       // Do NOT return the email here — that would defeat the purpose

@@ -40,7 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { cache: "no-store", headers: { 'Cache-Control': 'no-cache' } })
       .then(r => r.ok ? r.json() : { role: "admin" })
       .then(data => {
         if (!cancelled) setRole(data.role === "super-admin" ? "super-admin" : "admin");
@@ -296,7 +296,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="hidden sm:block">
                 <p className="text-sm font-bold text-gray-900 leading-tight">
-                  {role === "super-admin" ? "Super Admin" : "Admin"}
+                  {role === "unknown" ? "Loading..." : role === "super-admin" ? "Super Admin" : "Admin"}
                 </p>
                 <p className="text-xs text-gray-500 truncate max-w-[120px]">{user.email}</p>
               </div>

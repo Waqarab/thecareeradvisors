@@ -17,8 +17,8 @@ const nextConfig = {
     const isDev = process.env.NODE_ENV !== "production";
     
     const scriptSrc = isDev
-      ? "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://vercel.live"
-      : "'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://vercel.live";
+      ? "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://vercel.live https://*.firebaseio.com"
+      : "'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://vercel.live https://*.firebaseio.com";
       
     const csp = [
       "default-src 'self'",

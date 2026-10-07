@@ -145,8 +145,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         localStorage.removeItem("admin_session_id");
       }
       
-      const auth = getAuth(app);
-      await signOut(auth);
+      await fetch("/api/auth/session", { method: "DELETE" });
+      await signOut(getAuth(app));
     } catch (error) {
       console.error("Error during logout:", error);
     } finally {

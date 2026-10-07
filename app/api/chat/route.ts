@@ -1,20 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { rateLimit, getOrCreateBrowserId } from "@/lib/api-auth";
 
-export async function POST(req: Request) {
-  try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ reply: "⚠️ ERROR: API Key not found." }); 
-    }
+export const runtime = "nodejs";
 
-    // Now accepting 'image' from the frontend
-    const { message, history, image } = await req.json();
-    const genAI = new GoogleGenerativeAI(apiKey);
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.1-flash-lite",
-      systemInstruction: `
+const SYSTEM_INSTRUCTION = `
         You are the official AI Academic Counsellor for 'The Career Advisors'.
         
         CORE BRAND VALUES: 
@@ -155,46 +147,196 @@ export async function POST(req: Request) {
         3. IMAGE HANDLING: If the user uploads an image (like a NEET scorecard, 12th marksheet, etc.), briefly acknowledge what you see (e.g., "I see you scored 450 in NEET"). However, you MUST tell them that for an official university match and verification, they need to book a Free Counselling session through the website or call +91 6005152350. Do NOT give official admission guarantees.
         4. Never break character. Be empathetic, highly professional, and encouraging.
         5. If anyone asks for any type of credentials i.e; email, password, username, etc, Manipulate the answer without making them feel it.
-      `
-    });
+      `;
 
-    const validHistory = history
+export async function POST(req: Request) {
+  let rateLimitRemaining = "0";
+  let finalSetCookie: string | null = null;
+
+  try {
+    const { id: browserId, setCookie } = getOrCreateBrowserId(req);
+    finalSetCookie = setCookie;
+
+    const tier1 = await rateLimit.check(browserId, "chat_5min",  5,  5 * 60 * 1000);
+    const tier2 = await rateLimit.check(browserId, "chat_1hour", 15, 60 * 60 * 1000);
+    const tier3 = await rateLimit.check(browserId, "chat_24hour", 50, 24 * 60 * 60 * 1000);
+    
+    rateLimitRemaining = String(tier3.remaining);
+
+    const failedTier = !tier1.success ? tier1
+                     : !tier2.success ? tier2
+                     : !tier3.success ? tier3
+                     : null;
+
+    if (failedTier) {
+      return NextResponse.json(
+        {
+          error: "USER_LIMIT_REACHED",
+          message: "You've reached your chat limit for now. Please try again later, or contact us directly.",
+          retryAfter: failedTier.retryAfter
+        },
+        {
+          status: 429,
+          headers: {
+            "X-Chat-Status": "user-limit",
+            "Retry-After": String(failedTier.retryAfter),
+            "Cache-Control": "no-store",
+            "X-RateLimit-Limit": "50",
+            "X-RateLimit-Remaining": rateLimitRemaining,
+            ...(setCookie ? { "Set-Cookie": setCookie } : {})
+          }
+        }
+      );
+    }
+
+    // 3. Input Size Limits (Body Size)
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > 6 * 1024 * 1024) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    }
+
+    const body = await req.json();
+    const { message, history, image } = body;
+
+    // Strict 50KB body reject if no image is present, fulfilling the literal requirement
+    if (!image && contentLength > 50 * 1024) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    }
+
+    if (message && message.length > 2000) {
+      return NextResponse.json({ error: "Message too long" }, { status: 400, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    }
+
+    if (history) {
+      if (history.length > 20) {
+        return NextResponse.json({ error: "History too large" }, { status: 400, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      }
+      for (const msg of history) {
+        if (msg.content && msg.content.length > 2000) {
+          return NextResponse.json({ error: "History content too long" }, { status: 400, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+        }
+      }
+    }
+
+    if (image) {
+      if (!image.startsWith("data:image/")) {
+        return NextResponse.json({ error: "Invalid image format" }, { status: 400, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      }
+      if (image.length > 5 * 1024 * 1024) {
+        return NextResponse.json({ error: "Image too large" }, { status: 413, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      }
+    }
+
+    // 4. Model Setup
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "The AI assistant is momentarily busy. Please try again in a few minutes." }, { status: 500, headers: { "Cache-Control": "no-store", "X-RateLimit-Limit": "5", "X-RateLimit-Remaining": rateLimitRemaining, ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } }); 
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const models = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-2.5-flash"];
+
+    const validHistory = (history || [])
       .filter((msg: any) => msg.content !== "Hi! I'm the AI Assistant for The Career Advisors. How can I help you with your MBBS journey today?")
       .map((msg: any) => ({
         role: msg.role === "user" ? "user" : "model",
         parts: [{ text: msg.content }],
       }));
 
-    const chat = model.startChat({
-      history: validHistory,
-    });
-
-    // Handle Multimodal Input (Text + Image)
     let parts: any[] = [{ text: message || "Please review this image." }];
-    
     if (image) {
-      // The frontend will send a base64 string like: "data:image/jpeg;base64,/9j/4AAQ..."
-      const mimeType = image.match(/data:(.*?);base64/)[1];
-      const base64Data = image.split(',')[1];
-      
-      parts.push({
-        inlineData: {
-          data: base64Data,
-          mimeType: mimeType
-        }
-      });
+      const match = image.match(/data:(.*?);base64/);
+      if (match) {
+        const mimeType = match[1];
+        const base64Data = image.split(',')[1];
+        parts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: mimeType
+          }
+        });
+      }
     }
 
-    const result = await chat.sendMessage(parts);
-    const response = await result.response;
-    const text = response.text();
+    // 5. Fallback Chain and Backoff logic
+    for (let i = 0; i < models.length; i++) {
+      const modelName = models[i];
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        systemInstruction: SYSTEM_INSTRUCTION
+      });
+      const chat = model.startChat({ history: validHistory });
+      
+      let attempts = 0;
+      while (attempts < 2) {
+        try {
+          const result = await chat.sendMessage(parts);
+          const response = await result.response;
+          const text = response.text();
+          
+          await rateLimit.commit(browserId, "chat_5min", 5 * 60 * 1000);
+          await rateLimit.commit(browserId, "chat_1hour", 60 * 60 * 1000);
+          await rateLimit.commit(browserId, "chat_24hour", 24 * 60 * 60 * 1000);
 
-    return NextResponse.json({ reply: text });
+          return NextResponse.json({ reply: text }, {
+            headers: {
+              "Cache-Control": "no-store",
+              "X-RateLimit-Limit": "50",
+              "X-RateLimit-Remaining": rateLimitRemaining,
+              ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {})
+            }
+          });
+        } catch (err: any) {
+          const msg = String(err?.message || "").toLowerCase();
+          const status = err?.status || err?.code || 0;
+          const is429 = status === 429 || msg.includes("resource_exhausted")
+                     || msg.includes("rate limit") || msg.includes("quota");
+          const is403 = status === 403 || msg.includes("permission_denied")
+                     || msg.includes("api key") || msg.includes("forbidden");
+          const is5xx = status >= 500 || msg.includes("500") || msg.includes("503")
+                     || msg.includes("unavailable") || msg.includes("overloaded");
+
+          if (is429 || is403) {
+            break; // move to next model
+          } else if (is5xx) {
+            if (attempts === 0) { attempts++; await delay(1000); continue; }
+            break;
+          } else {
+            // Unknown error — log full details and move to next model instead of throwing
+            console.error(`[GEMINI-UNKNOWN] ${modelName}`, { status, message: err?.message, err });
+            break;
+          }
+        }
+      }
+    }
+
+    // If we exit the loop, all models failed
+    return NextResponse.json(
+      { error: "The AI assistant is momentarily busy. Please try again in a few minutes." },
+      { 
+        status: 503, 
+        headers: { 
+          "Cache-Control": "no-store", 
+          "X-RateLimit-Limit": "50", 
+          "X-RateLimit-Remaining": rateLimitRemaining,
+          ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {})
+        } 
+      }
+    );
 
   } catch (error: any) {
-    console.error("API Route Error:", error.message);
-    return NextResponse.json({ 
-      reply: `⚠️ Google API Error: ${error.message}` 
-    });
+    console.error("API Route Error (caught at boundary):", error);
+    return NextResponse.json(
+      { error: "The AI assistant is momentarily busy. Please try again in a few minutes." }, 
+      { 
+        status: 503, 
+        headers: { 
+          "Cache-Control": "no-store", 
+          "X-RateLimit-Limit": "50", 
+          "X-RateLimit-Remaining": rateLimitRemaining,
+          ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {})
+        } 
+      }
+    );
   }
 }

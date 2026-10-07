@@ -14,6 +14,28 @@ const nextConfig = {
   },
   
   async headers() {
+    const isDev = process.env.NODE_ENV !== "production";
+    
+    const scriptSrc = isDev
+      ? "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.gstatic.com"
+      : "'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com";
+      
+    const csp = [
+      "default-src 'self'",
+      `script-src ${scriptSrc}`,
+      "style-src 'self' 'unsafe-inline' https://api.fontshare.com",
+      "font-src 'self' https://api.fontshare.com https://cdn.fontshare.com",
+      "img-src 'self' data: https://res.cloudinary.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://i.pravatar.cc https://cdn.vectorstock.com https://www.transparenttextures.com https://upload.wikimedia.org",
+      "media-src 'self' https://res.cloudinary.com https://videos.pexels.com",
+      "connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://accounts.google.com https://apis.google.com",
+      "frame-src 'self' https://maps.google.com https://www.google.com/maps/ https://*.firebaseapp.com https://thecareer-advisors.firebaseapp.com https://accounts.google.com https://apis.google.com https://content.googleapis.com",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+
     return [
       {
         source: '/(.*)',
@@ -22,12 +44,8 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
-          { 
-            // UPDATED CONTENT SECURITY POLICY
-            // Added https://securetoken.googleapis.com and https://*.googleapis.com to connect-src
-            key: 'Content-Security-Policy', 
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://*.firebaseio.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://res.cloudinary.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://i.pravatar.cc https://cdn.vectorstock.com https://www.transparenttextures.com https://upload.wikimedia.org; media-src 'self' https://res.cloudinary.com https://videos.pexels.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://content-firebaseappcheck.googleapis.com https://securetoken.googleapis.com https://*.googleapis.com https://www.google.com https://*.firebaseio.com wss://*.firebaseio.com; frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://maps.google.com https://www.google.com/maps/ http://googleusercontent.com https://*.firebaseio.com;" 
-          }
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+          { key: 'Content-Security-Policy', value: csp }
         ],
       },
     ];

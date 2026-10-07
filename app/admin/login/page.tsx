@@ -17,31 +17,58 @@ export default function AdminLogin() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
-  // If Firebase sees they are already securely logged in, push them to admin
-  useEffect(() => {
-    if (!loading && user) {
-      router.push("/admin");
-    }
-  }, [user, loading, router]);
+  // Removed the useEffect that redirects based on client-side 'user' state.
+  // It was causing a redirect loop:
+  // 1. Firebase client auth is valid -> pushes to /admin
+  // 2. Middleware sees no session cookie -> redirects to /admin/login
+  // 3. Repeat.
 
   const handleLogin = async (e: React.FormEvent) => {
+    console.log("A: handleLogin fired");
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
       const auth = getAuth(app);
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/admin");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("B: firebase login ok, uid:", userCredential.user.uid);
+      
+      const idToken = await userCredential.user.getIdToken();
+      
+      console.log("C: calling /api/auth/session");
+      const res = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken })
+      });
+
+      console.log("D: response status:", res.status);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.error("[LOGIN] server said:", body);
+        throw new Error(body.detail || body.error || "Session failed");
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const redirectParam = params.get("redirect");
+      
+      const safeRedirect = (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//"))
+        ? redirectParam
+        : "/admin";
+
+      router.replace(safeRedirect);
     } catch (err: any) {
       console.error("Login error:", err);
-      setError("Invalid admin credentials. Please try again.");
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   if (loading) return null; // Prevent flicker while checking auth
+
+  console.log("LOGIN PAGE RENDERED");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-gray-100 to-gray-200 p-4">

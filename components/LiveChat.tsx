@@ -38,6 +38,19 @@ export default function LiveChat() {
   }, []);
 
   useEffect(() => {
+    if (isOpen) {
+      const noticeShown = localStorage.getItem("tca_chat_notice_shown");
+      if (!noticeShown) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "ai", content: "Hi! For your privacy, please don't share phone numbers, emails, or addresses here. For a personalized plan, tap 'Free Counselling' above." }
+        ]);
+        localStorage.setItem("tca_chat_notice_shown", "true");
+      }
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, selectedImage]);
 
@@ -85,15 +98,31 @@ export default function LiveChat() {
         }),
       });
 
+      if (!response.ok) {
+        if (response.status === 429 && response.headers.get("X-Chat-Status") === "user-limit") {
+          throw new Error("USER_LIMIT_REACHED");
+        } else if (response.status === 503 || response.status === 500) {
+          throw new Error("CAPACITY_ERROR");
+        } else {
+          throw new Error("GENERIC_ERROR");
+        }
+      }
+
       const data = await response.json();
       
       if (data.reply) {
         setMessages((prev) => [...prev, { role: "ai", content: data.reply }]);
       } else {
-        throw new Error("No reply received");
+        throw new Error("GENERIC_ERROR");
       }
-    } catch (error) {
-      setMessages((prev) => [...prev, { role: "ai", content: "I'm having trouble connecting to my servers right now. Please try calling us directly at 916005152350." }]);
+    } catch (error: any) {
+      if (error.message === "USER_LIMIT_REACHED") {
+        setMessages((prev) => [...prev, { role: "ai", content: "You've reached your chat limit for now. Please try again later, or contact us directly at {PHONE}." }]);
+      } else if (error.message === "CAPACITY_ERROR") {
+        setMessages((prev) => [...prev, { role: "ai", content: "We're currently unable to handle this request. For immediate assistance, please contact us directly at {PHONE}." }]);
+      } else {
+        setMessages((prev) => [...prev, { role: "ai", content: "We're having a temporary issue. Please try again in a moment, or contact us directly at {PHONE}." }]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -130,6 +159,12 @@ export default function LiveChat() {
               </button>
             </div>
 
+            {/* Privacy Warning Banner */}
+            <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/50 dark:border-amber-900/50 p-2.5 px-4 flex gap-2 items-start text-[11px] leading-tight text-amber-800 dark:text-amber-400 shrink-0">
+              <span className="shrink-0 text-sm mt-0.5">⚠️</span>
+              <p>Please don't share personal info (phone, email, address, Aadhaar) in this chat. For personalized guidance, use the Free Counselling form.</p>
+            </div>
+
             {/* Message Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30">
               {messages.map((msg, idx) => (
@@ -148,7 +183,21 @@ export default function LiveChat() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={msg.image} alt="Uploaded" className="max-w-full rounded-xl object-contain border border-black/10" />
                     )}
-                    {msg.content && <p>{msg.content}</p>}
+                    {msg.content && (
+                      <div className="whitespace-pre-wrap">
+                        {msg.content.includes("{PHONE}") && process.env.NEXT_PUBLIC_SUPPORT_PHONE ? (
+                          <>
+                            {msg.content.split("{PHONE}")[0]}
+                            <a href={`tel:${process.env.NEXT_PUBLIC_SUPPORT_PHONE}`} className="underline font-medium hover:text-primary transition-colors">
+                              {process.env.NEXT_PUBLIC_SUPPORT_PHONE}
+                            </a>
+                            {msg.content.split("{PHONE}")[1]}
+                          </>
+                        ) : (
+                          msg.content
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -189,28 +238,33 @@ export default function LiveChat() {
             </AnimatePresence>
 
             {/* Input Form */}
-            <form onSubmit={sendMessage} className="p-3 bg-card border-t border-border/50 flex gap-2 items-end">
-              <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
-              <button 
-                type="button" 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-10 h-10 rounded-full bg-muted/50 text-foreground/60 hover:text-primary hover:bg-primary/10 flex items-center justify-center shrink-0 transition-colors"
-                title="Attach Document"
-              >
-                <Paperclip className="w-5 h-5" />
-              </button>
+            <form onSubmit={sendMessage} className="p-3 bg-card border-t border-border/50 flex flex-col gap-2 shrink-0">
+              <div className="flex gap-2 items-end w-full">
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
+                <button 
+                  type="button" 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-10 h-10 rounded-full bg-muted/50 text-foreground/60 hover:text-primary hover:bg-primary/10 flex items-center justify-center shrink-0 transition-colors"
+                  title="Attach Document"
+                >
+                  <Paperclip className="w-5 h-5" />
+                </button>
 
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask any question..."
-                className="flex-1 bg-muted/50 border border-border/50 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
-              />
-              
-              <Button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="rounded-full w-10 h-10 p-0 bg-primary text-primary-foreground shrink-0 active:scale-95">
-                <Send className="w-4 h-4 ml-0.5" />
-              </Button>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask about MBBS abroad… (no personal info, please)"
+                  className="flex-1 bg-muted/50 border border-border/50 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
+                />
+                
+                <Button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="rounded-full w-10 h-10 p-0 bg-primary text-primary-foreground shrink-0 active:scale-95">
+                  <Send className="w-4 h-4 ml-0.5" />
+                </Button>
+              </div>
+              <p className="text-[10px] text-center text-muted-foreground/70 w-full mt-0.5">
+                AI responses are informational. Verify with a counsellor before deciding.
+              </p>
             </form>
           </motion.div>
         )}

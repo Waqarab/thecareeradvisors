@@ -80,8 +80,7 @@ export default function UniversityDetailsPage() {
       await updateDoc(docRef, formData);
       
       // FIRE THE REVALIDATOR TO UPDATE LIVE SITE INSTANTLY
-      const secret = process.env.NEXT_PUBLIC_REVALIDATION_TOKEN;
-      await fetch(`/api/revalidate?tag=universities&secret=${secret}`, { method: "POST" });
+      await fetch(`/api/revalidate?tag=universities`, { method: "POST" });
       sessionStorage.removeItem("tca_universities_cache");
       
       toast.success("University details updated successfully!");

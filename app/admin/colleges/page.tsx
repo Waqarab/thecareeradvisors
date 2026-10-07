@@ -96,8 +96,7 @@ export default function CollegesPage() {
   // --- 2. REVALIDATION ---
   const triggerCacheRevalidation = async () => {
     try {
-      const secret = process.env.NEXT_PUBLIC_REVALIDATION_TOKEN;
-      await fetch(`/api/revalidate?tag=universities&secret=${secret}`, { method: "POST" });
+      await fetch(`/api/revalidate?tag=universities`, { method: "POST" });
       sessionStorage.removeItem("tca_universities_cache");
     } catch (error) {
       console.error("Failed to revalidate cache", error);

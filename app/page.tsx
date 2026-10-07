@@ -67,10 +67,6 @@ export default function Home() {
     setIsLoaded(true);
   }, []);
 
-  useEffect(() => {
-    fetch('/api/track-visit').catch(() => {});
-  }, []);
-
   // Image Slider Timer
   useEffect(() => {
     if (!isLoaded) return;

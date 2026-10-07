@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function: Hardcoded single Admin email
+    function isAdmin() {
+      return request.auth != null && 
+             request.auth.token.email == 'superadmintcagroup786@gmail.com';
+    }
+
+    // 1. Universities & Colleges (Public Read, Admin Write)
+    match /universities/{uniId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /colleges/{collegeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 2. Testimonials (Public Read, Admin Write)
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 3. Notifications (Public Read, Admin Write)
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 4. CRM Inquiries (Public Create <= 15 fields, Admin Read/Update/Delete)
+    match /inquiries/{inquiryId} {
+      allow create: if request.resource.data.size() <= 15;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // 5. FCM Tokens (Public Create/Update <= 5 fields, Admin Read/Delete)
+    match /fcm_tokens/{tokenId} {
+      allow create, update: if request.resource.data.size() <= 5;
+      allow read, delete: if isAdmin();
+    }
+
+    // 6. Global Catch-All: DENIED for everyone
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

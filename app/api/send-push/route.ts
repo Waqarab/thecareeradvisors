@@ -1,26 +1,31 @@
 import { NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-
-// 1. Initialize Firebase Admin (Only once)
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      // Fixes the newline formatting issue in environment variables
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-}
+import { admin } from "@/lib/firebase-admin";
+import { requireSuperAdmin, rateLimit, getOrCreateBrowserId } from "@/lib/api-auth";
 
 export async function POST(req: Request) {
+  let finalSetCookie: string | null = null;
   try {
-    const body = await req.json();
-    const { title, message, linkUrl } = body;
+    const auth = await requireSuperAdmin(req);
+    if (auth instanceof NextResponse) return auth;
 
-    if (!title || !message) {
-      return NextResponse.json({ error: "Missing title or message" }, { status: 400 });
+    const { id: browserId, setCookie } = getOrCreateBrowserId(req);
+    finalSetCookie = setCookie;
+    
+    const rl = await rateLimit.check(browserId, "send_push_1min", 5, 60 * 1000);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
     }
+    await rateLimit.commit(browserId, "send_push_1min", 60 * 1000);
+
+    const body = await req.json();
+    let { title, message, linkUrl } = body;
+
+    if (!title || !message || typeof title !== "string" || typeof message !== "string") {
+      return NextResponse.json({ error: "Missing or invalid title or message" }, { status: 400, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    }
+
+    title = title.replace(/<[^>]*>?/gm, '').substring(0, 200);
+    message = message.replace(/<[^>]*>?/gm, '').substring(0, 200);
 
     const db = admin.firestore();
     
@@ -29,7 +34,7 @@ export async function POST(req: Request) {
     const tokens = tokensSnapshot.docs.map(doc => doc.data().token);
 
     if (tokens.length === 0) {
-      return NextResponse.json({ success: true, message: "No tokens found to notify." });
+      return NextResponse.json({ success: true, message: "No tokens found to notify." }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
     }
 
     // 3. Construct the Push Payload
@@ -53,10 +58,10 @@ export async function POST(req: Request) {
       success: true, 
       successCount: response.successCount,
       failureCount: response.failureCount 
-    });
+    }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
 
   } catch (error) {
     console.error("Error sending push:", error);
-    return NextResponse.json({ error: "Failed to send push notification" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to send push notification" }, { status: 500, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
   }
 }

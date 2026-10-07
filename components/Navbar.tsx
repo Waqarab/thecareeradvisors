@@ -28,14 +28,14 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-// Prevent background scrolling when mobile menu is open
+  // Prevent background scrolling when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-    
+
     // --- ADD THIS EXACT LINE HERE ---
     window.dispatchEvent(new CustomEvent('mobileMenuToggle', { detail: isMobileMenuOpen }));
 
@@ -83,13 +83,13 @@ export default function Navbar() {
 
   const drawerVariants: Variants = {
     hidden: { x: "100%" },
-    visible: { 
-      x: 0, 
+    visible: {
+      x: 0,
       transition: { type: "spring", bounce: 0, duration: 0.3 } // Bounce: 0 prevents jitter, keeps it snappy
     },
-    exit: { 
-      x: "100%", 
-      transition: { type: "spring", bounce: 0, duration: 0.3 } 
+    exit: {
+      x: "100%",
+      transition: { type: "spring", bounce: 0, duration: 0.3 }
     }
   };
 
@@ -98,26 +98,26 @@ export default function Navbar() {
       <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-xl saturate-[1.5] border-b border-border/50 shadow-sm transition-all duration-300">
         {/* Changed h-20 to h-16 on mobile for a tighter fit */}
         <div className="w-full mx-auto flex h-16 md:h-24 items-center justify-between px-4 md:px-8 xl:px-12 relative z-50">
-          
+
           {/* LOGO */}
           <Link href="/" className="flex items-center active:scale-95 transition-transform duration-200 shrink-0 z-50 mr-4 lg:mr-8">
-            <Image 
-              src="/logo.png" 
-              alt="The Career Advisors" 
-              width={300} 
-              height={100} 
+            <Image
+              src="/logo.png"
+              alt="The Career Advisors"
+              width={300}
+              height={100}
               // Smooth, layout-aware scaling based on breakpoints
-              className="w-auto h-10 md:h-12 lg:h-14 xl:h-16 object-contain" 
-              priority 
+              className="w-auto h-10 md:h-12 lg:h-14 xl:h-16 object-contain"
+              priority
             />
           </Link>
 
           {/* DESKTOP NAV */}
           <nav className="hidden lg:flex items-center gap-2 font-heading text-sm font-bold tracking-wider text-foreground bg-muted/60 p-1.5 rounded-full border border-border shadow-inner">
             {navLinks.map((item, i) => (
-              <Link 
-                key={i} 
-                href={item === "Home" ? "/" : item === "FAQ" ? "#faq" : `/${item.toLowerCase().replace(" ", "-")}`} 
+              <Link
+                key={i}
+                href={item === "Home" ? "/" : item === "FAQ" ? "#faq" : `/${item.toLowerCase().replace(" ", "-")}`}
                 className="px-5 py-2 rounded-full hover:bg-background hover:text-primary hover:shadow-md transition-all duration-300 active:scale-95"
               >
                 {item}
@@ -127,12 +127,12 @@ export default function Navbar() {
 
           {/* CTA BUTTONS */}
           <div className="flex items-center gap-3 xl:gap-6 shrink-0 z-50">
-            
+
             <a href="tel:+916005152350" className="hidden xl:flex items-center gap-2 text-sm font-extrabold text-foreground hover:text-primary transition-colors">
               <div className="w-9 h-9 rounded-full bg-primary/10 border flex items-center justify-center"><Phone className="h-4 w-4 text-primary" /></div>
               <span className="font-heading">+916005152350</span>
             </a>
-            
+
             {/* NOTIFICATION INBOX */}
             <div className="relative" ref={inboxRef}>
               <button onClick={handleOpenInbox} className={`relative p-2 md:p-3 rounded-full border transition-all duration-200 active:scale-95 ${isInboxOpen ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-muted hover:bg-muted/80 text-foreground/70 hover:text-foreground'}`}>
@@ -179,8 +179,8 @@ export default function Navbar() {
             </InquiryModal>
 
             {/* MOBILE MENU TOGGLE BUTTON */}
-            <button 
-              onClick={() => setIsMobileMenuOpen(true)} 
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
               className="lg:hidden p-2 text-foreground active:scale-90 transition-transform duration-200 bg-muted hover:bg-muted/80 rounded-full border border-border"
             >
               <Menu className="h-5 w-5" />
@@ -196,7 +196,7 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <>
             {/* FAST SOLID OVERLAY (NO BLUR) - Clicks outside close the menu */}
-            <motion.div 
+            <motion.div
               variants={overlayVariants}
               initial="hidden"
               animate="visible"
@@ -206,7 +206,7 @@ export default function Navbar() {
             />
 
             {/* SLEEK 80% WIDTH SIDE DRAWER */}
-            <motion.div 
+            <motion.div
               variants={drawerVariants}
               initial="hidden"
               animate="visible"
@@ -218,7 +218,7 @@ export default function Navbar() {
                 <div className="scale-90 origin-left">
                   <Image src="/logo.png" alt="The Career Advisors" width={150} height={60} className="h-8 w-auto object-contain" priority />
                 </div>
-                <button 
+                <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-2 bg-muted rounded-full text-foreground hover:bg-destructive hover:text-white transition-colors active:scale-90"
                 >
@@ -229,9 +229,9 @@ export default function Navbar() {
               {/* Navigation Links */}
               <nav className="flex-1 overflow-y-auto py-6 px-6 flex flex-col gap-2">
                 {navLinks.map((item, i) => (
-                  <Link 
+                  <Link
                     key={i}
-                    href={item === "Home" ? "/" : item === "FAQ" ? "#faq" : `/${item.toLowerCase().replace(" ", "-")}`} 
+                    href={item === "Home" ? "/" : item === "FAQ" ? "#faq" : `/${item.toLowerCase().replace(" ", "-")}`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center justify-between py-4 border-b border-border/30 text-xl font-black font-heading text-foreground hover:text-primary active:text-primary transition-colors group"
                   >
@@ -246,7 +246,7 @@ export default function Navbar() {
                 <a href="tel:+916005152350" className="flex items-center justify-center gap-2 text-sm font-extrabold text-foreground py-3 border border-border rounded-xl bg-card active:scale-95 transition-transform shadow-sm">
                   <Phone className="h-4 w-4 text-primary" /> +916005152350
                 </a>
-                
+
                 <InquiryModal>
                   <Button className="w-full rounded-xl bg-destructive text-destructive-foreground py-6 text-base font-black shadow-lg shadow-destructive/20 active:scale-95 transition-transform">
                     <Sparkles className="w-4 h-4 mr-2" /> Start Free Process

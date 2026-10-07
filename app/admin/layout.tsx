@@ -26,12 +26,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const isInitialLoad = useRef(true);
+  const [role, setRole] = useState<"super-admin" | "admin" | "unknown">("unknown");
 
   useEffect(() => {
     if (!loading && !user && pathname !== "/admin/login") {
       router.push("/admin/login");
     }
   }, [user, loading, pathname, router]);
+
+  // Super admin role is determined server-side via /api/auth/me.
+  // The real email is never sent to the client.
+  // Set SUPER_ADMIN_EMAIL (not NEXT_PUBLIC_) in Vercel.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then(r => r.ok ? r.json() : { role: "admin" })
+      .then(data => {
+        if (!cancelled) setRole(data.role === "super-admin" ? "super-admin" : "admin");
+      })
+      .catch(() => {
+        if (!cancelled) setRole("admin");
+      });
+    return () => { cancelled = true; };
+  }, [user]);
 
   useEffect(() => {
     if (!user || pathname === "/admin/login") return;
@@ -278,7 +296,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="hidden sm:block">
                 <p className="text-sm font-bold text-gray-900 leading-tight">
-                  {user.email === "superadmintcagroup786@gmail.com" ? "Super Admin" : "Admin"}
+                  {role === "super-admin" ? "Super Admin" : "Admin"}
                 </p>
                 <p className="text-xs text-gray-500 truncate max-w-[120px]">{user.email}</p>
               </div>

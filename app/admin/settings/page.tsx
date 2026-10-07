@@ -9,11 +9,23 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, order
 import { getDatabase, ref, onValue, remove } from "firebase/database";
 import { useAuth } from "@/context/AuthContext";
 
-const SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
-
 export default function AdminSettings() {
   const { user } = useAuth();
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then(r => r.ok ? r.json() : { role: "admin" })
+      .then(data => {
+        if (!cancelled) setIsSuperAdmin(data.role === "super-admin");
+      })
+      .catch(() => {
+        if (!cancelled) setIsSuperAdmin(false);
+      });
+    return () => { cancelled = true; };
+  }, [user]);
 
   const [activeTab, setActiveTab] = useState<"notifications" | "team">("notifications");
   const [notificationsList, setNotificationsList] = useState<any[]>([]);

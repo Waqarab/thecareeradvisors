@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 
-const SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 
 import { admin } from "@/lib/firebase-admin";
 import { requireSuperAdmin, rateLimit, getOrCreateBrowserId } from "@/lib/api-auth";

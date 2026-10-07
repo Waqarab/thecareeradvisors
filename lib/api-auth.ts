@@ -63,7 +63,7 @@ export async function requireSuperAdmin(req: Request) {
 
   try {
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
-    if (decodedClaims.email !== process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL && decodedClaims.email !== process.env.SUPER_ADMIN_EMAIL) {
+    if (decodedClaims.email !== process.env.SUPER_ADMIN_EMAIL) {
       return NextResponse.json({ error: "Forbidden. Super Admin only." }, { status: 403 });
     }
     return decodedClaims;

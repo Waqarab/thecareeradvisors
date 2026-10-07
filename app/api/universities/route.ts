@@ -24,7 +24,33 @@ const getCachedUniversities = unstable_cache(
       return a.name.localeCompare(b.name);
     });
 
-    return data;
+    // WHITELIST MAPPING (after sorting, so featuredOrder is used but not leaked)
+    return data.map((raw) => ({
+      id: raw.id,
+      name: raw.name,
+      country: raw.country,
+      location: raw.location,
+      fees: raw.fees,
+      placed: raw.placed,
+      image: raw.image,
+      established: raw.established,
+      history: raw.history,
+      rankingGlobal: raw.rankingGlobal,
+      rankingNational: raw.rankingNational,
+      rankingQS: raw.rankingQS,
+      facilities: raw.facilities,
+      hospitals: raw.hospitals,
+      infrastructure: raw.infrastructure,
+      eligibility: raw.eligibility,
+      description: raw.description,
+      courseDuration: raw.courseDuration,
+      medium: raw.medium,
+      recognition: raw.recognition,
+      hostelFees: raw.hostelFees,
+      historicalBackground: raw.historicalBackground,
+      hospitalFacilities: raw.hospitalFacilities,
+      whyChoose: raw.whyChoose,
+    }));
   },
   ["universities-cache-key"],
   {

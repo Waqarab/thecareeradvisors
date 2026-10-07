@@ -38,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // The real email is never sent to the client.
   // Set SUPER_ADMIN_EMAIL (not NEXT_PUBLIC_) in Vercel.
   useEffect(() => {
-    if (!user) return;
+    if (!user || pathname === "/admin/login") return;
     let cancelled = false;
     fetch("/api/auth/me", { cache: "no-store", headers: { 'Cache-Control': 'no-cache' } })
       .then(r => r.ok ? r.json() : { role: "admin" })
@@ -49,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (!cancelled) setRole("admin");
       });
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, pathname]);
 
   useEffect(() => {
     if (!user || pathname === "/admin/login") return;

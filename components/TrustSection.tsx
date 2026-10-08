@@ -158,34 +158,34 @@ export default function TrustSection() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 lg:gap-6 mt-12 lg:mt-0"
+            className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 lg:gap-6 mt-12 lg:mt-0"
           >
             {reasons.map((r, i) => (
               <motion.div 
                 key={i} 
                 variants={cardVariants}
-                className="bg-white rounded-[24px] p-6 lg:p-7 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-gray-200 flex flex-col items-center text-center hover:border-blue-400 hover:shadow-[0_15px_40px_-10px_rgba(30,64,175,0.2)] hover:bg-gradient-to-b hover:from-white hover:to-blue-50/50 hover:-translate-y-2 transition-all duration-300 group"
+                className="bg-white rounded-2xl sm:rounded-[24px] p-4 sm:p-6 lg:p-7 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-gray-200 flex flex-col items-center text-center hover:border-blue-400 hover:shadow-[0_15px_40px_-10px_rgba(30,64,175,0.2)] hover:bg-gradient-to-b hover:from-white hover:to-blue-50/50 hover:-translate-y-2 transition-all duration-300 group"
               >
                 {/* Circular Icon Wrapper - Alternating Colors */}
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 ${
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-3 sm:mb-5 transition-transform duration-300 group-hover:scale-110 ${
                   i % 2 === 0 ? 'bg-blue-600' : 'bg-orange-500'
                 }`}>
-                  <div className="relative w-8 h-8">
+                  <div className="relative w-6 h-6 sm:w-8 sm:h-8">
                     <Image 
                       src={r.icon} 
                       alt={r.title} 
                       fill
                       className="object-contain brightness-0 invert" 
-                      sizes="32px"
+                      sizes="(max-width: 640px) 24px, 32px"
                     />
                   </div>
                 </div>
                 
-                <h3 className="text-gray-900 font-bold text-base lg:text-lg mb-3">
+                <h3 className="text-gray-900 font-bold text-sm sm:text-base lg:text-lg mb-1.5 sm:mb-3">
                   {r.title}
                 </h3>
                 
-                <p className="text-gray-500 text-xs lg:text-sm font-medium leading-relaxed">
+                <p className="text-gray-500 text-[10.5px] sm:text-xs lg:text-sm font-medium leading-tight sm:leading-relaxed">
                   {r.desc}
                 </p>
               </motion.div>

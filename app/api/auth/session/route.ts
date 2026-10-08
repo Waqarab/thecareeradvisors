@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
     const decoded = await admin.auth().verifyIdToken(idToken);
     
-    if (!decoded.email || decoded.email.toLowerCase() !== (SUPER_ADMIN_EMAIL || "").toLowerCase()) {
+    if (!decoded.email || (decoded.email !== SUPER_ADMIN_EMAIL && !decoded.admin)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

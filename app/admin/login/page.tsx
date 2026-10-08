@@ -34,7 +34,7 @@ export default function AdminLogin() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("B: firebase login ok, uid:", userCredential.user.uid);
       
-      const idToken = await userCredential.user.getIdToken();
+      const idToken = await userCredential.user.getIdToken(true);
       
       console.log("C: calling /api/auth/session");
       const res = await fetch("/api/auth/session", {
@@ -45,9 +45,11 @@ export default function AdminLogin() {
 
       console.log("D: response status:", res.status);
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        console.error("[LOGIN] server said:", body);
-        throw new Error(body.detail || body.error || "Session failed");
+        const rawBody = await res.text();
+        console.error("[LOGIN] server raw response:", rawBody);
+        let body: any = {};
+        try { body = JSON.parse(rawBody); } catch (e) {}
+        throw new Error(body.detail || body.error || `Session failed: ${res.status}`);
       }
 
       const params = new URLSearchParams(window.location.search);
@@ -60,7 +62,13 @@ export default function AdminLogin() {
       router.replace(safeRedirect);
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message);
+      if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+        setError("Invalid email or password.");
+      } else if (err.code === "auth/too-many-requests") {
+        setError("Too many failed login attempts. Please try again later.");
+      } else {
+        setError(err.message || "An error occurred during login.");
+      }
     } finally {
       setIsLoading(false);
     }

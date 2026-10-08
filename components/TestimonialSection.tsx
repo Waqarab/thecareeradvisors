@@ -102,7 +102,7 @@ export default function TestimonialSection() {
   };
 
   return (
-    <section id="testimonials" className="py-24 md:py-32 bg-background relative overflow-hidden border-t border-border/40">
+    <section id="testimonials" className="py-12 md:py-20 lg:py-28 bg-background relative overflow-hidden border-t border-border/40">
       
       {/* Background Blobs */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10" />
@@ -110,192 +110,198 @@ export default function TestimonialSection() {
 
       <div className="container mx-auto px-4 md:px-8 max-w-7xl relative z-10">
         
-        {/* ========================================= */}
-        {/* TOP SECTION: 2-COLUMN PRO LAYOUT          */}
-        {/* ========================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center mb-32">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* --- LEFT SIDE: Title & Google Trust --- */}
-          <div className="lg:col-span-5 text-center lg:text-left flex flex-col justify-center h-full">
-            <span className="text-destructive font-bold tracking-wider uppercase text-sm mb-4 block">
-              Verified Placements
-            </span>
+          {/* ========================================= */}
+          {/* LEFT SIDE: Content & Text Slider          */}
+          {/* ========================================= */}
+          <div className="lg:col-span-6 flex flex-col justify-center h-full pb-8 lg:pb-0">
             
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black font-heading leading-[1.1] mb-6">
-              Real Students.<br />
-              <span className="text-primary relative inline-block mt-2">
-                Real Results.
-                <motion.span 
-                  initial={{ width: 0 }} 
-                  whileInView={{ width: "100%" }} 
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.7, delay: 0.2 }}
-                  className="absolute left-0 bottom-1 h-2 bg-primary/20 -z-10 rounded-sm"
-                />
+            <div className="text-center lg:text-left mb-8">
+              <span className="text-primary font-bold tracking-wider uppercase text-xs md:text-sm mb-3 block">
+                Verified Placements
               </span>
-            </h2>
-            
-            <p className="text-foreground/70 text-lg leading-relaxed mb-10 max-w-md mx-auto lg:mx-0">
-              Don't just take our word for it. Join hundreds of students who trusted us with their medical careers and are now studying globally.
-            </p>
-
-            {/* Google Professional Badge */}
-            <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow inline-flex flex-col items-center lg:items-start gap-4 max-w-sm mx-auto lg:mx-0">
-              <div className="flex items-center gap-4">
-                <svg viewBox="0 0 24 24" className="w-10 h-10 shrink-0">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                <div>
-                  <div className="flex gap-1 mb-1">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />)}
-                  </div>
-                  <p className="font-extrabold text-foreground font-heading text-lg">
-                    4.9/5 Average Rating
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm font-bold text-foreground/60 tracking-wide uppercase">
-                Based on 25+ Authentic Reviews
+              
+              <h2 className="text-4xl md:text-5xl lg:text-[54px] font-black font-heading leading-[1.1] mb-4">
+                Real Students.<br />
+                <span className="text-primary relative inline-block mt-1">
+                  Real Results.
+                  <motion.span 
+                    initial={{ width: 0 }} 
+                    whileInView={{ width: "100%" }} 
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.7, delay: 0.2 }}
+                    className="absolute left-0 bottom-1 h-2 bg-primary/20 -z-10 rounded-sm"
+                  />
+                </span>
+              </h2>
+              
+              <p className="text-foreground/70 text-base md:text-lg leading-relaxed max-w-md mx-auto lg:mx-0">
+                Don't just take our word for it. Join hundreds of students who trusted us with their medical careers.
               </p>
             </div>
-          </div>
 
-          {/* --- RIGHT SIDE: Text Testimonial Slider --- */}
-          <div className="lg:col-span-7 relative flex items-center group">
-            
-            <button onClick={prevText} className="absolute left-0 -ml-4 md:-ml-6 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background border border-border shadow-md flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90">
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 -ml-0.5" />
-            </button>
+            {/* Text Testimonial Slider */}
+            <div className="relative w-full max-w-xl mx-auto lg:mx-0">
+              <div className="w-full relative">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={textIndex}
+                    initial={{ opacity: 0, x: 15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -15 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full"
+                  >
+                    <div className="bg-card/80 backdrop-blur-sm rounded-3xl shadow-sm hover:shadow-md transition-shadow border border-border/50 flex flex-col p-6 md:p-8 relative overflow-hidden">
+                      <Quote className="absolute -top-2 -right-2 w-20 h-20 text-primary/5 -z-0 rotate-180" />
+                      
+                      <p className="text-base md:text-lg text-foreground/90 font-medium leading-relaxed relative z-10">
+                        "{textTestimonials[textIndex].text}"
+                      </p>
 
-            <div className="w-full relative h-[320px] md:h-[300px]">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={textIndex}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-0 px-4 md:px-8"
-                >
-                  <div className="bg-card rounded-[2rem] shadow-xl border border-border/50 h-full flex flex-col justify-center p-8 md:p-12 relative overflow-hidden">
-                    <Quote className="absolute -top-2 -right-2 w-32 h-32 text-primary/5 -z-0 rotate-180" />
-                    
-                    <p className="text-lg md:text-xl text-foreground/80 italic font-medium leading-relaxed relative z-10 line-clamp-4">
-                      "{textTestimonials[textIndex].text}"
-                    </p>
-
-                    <div className="flex items-center gap-4 mt-8 border-t border-border/50 pt-6 relative z-10">
-                      <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 bg-muted">
-                        <img src={textTestimonials[textIndex].img} alt="Student" className="w-full h-full object-cover blur-[0.5px]" onError={(e) => e.currentTarget.style.display = 'none'} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold font-heading flex items-center gap-1.5 text-lg leading-none">
-                          {textTestimonials[textIndex].name} <BadgeCheck className="w-4 h-4 fill-blue-500 text-white" />
-                        </h4>
-                        <p className="text-xs text-foreground/50 font-medium mt-1">@{textTestimonials[textIndex].handle}</p>
+                      <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/40 relative z-10">
+                        <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-muted border-2 border-background shadow-sm">
+                          <img src={textTestimonials[textIndex].img} alt="Student" className="w-full h-full object-cover blur-[0.5px]" onError={(e) => e.currentTarget.style.display = 'none'} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold font-heading flex items-center gap-1.5 text-base leading-none text-foreground">
+                            {textTestimonials[textIndex].name} <BadgeCheck className="w-4 h-4 fill-blue-500 text-white" />
+                          </h4>
+                          <p className="text-xs text-foreground/60 font-medium mt-1">@{textTestimonials[textIndex].handle}</p>
+                        </div>
                       </div>
                     </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Integrated Controls & Google Badge */}
+              <div className="flex items-center justify-between mt-6 px-1">
+                
+                {/* Google Professional Badge - Compact */}
+                <div className="flex items-center gap-3">
+                  <svg viewBox="0 0 24 24" className="w-7 h-7 shrink-0">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  <div>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
+                    </div>
+                    <p className="text-xs font-bold text-foreground/80 font-heading">
+                      4.9/5 on Google
+                    </p>
                   </div>
-                </motion.div>
-              </AnimatePresence>
+                </div>
+
+                {/* Arrows */}
+                <div className="flex items-center gap-2">
+                  <button onClick={prevText} className="w-9 h-9 rounded-full bg-background border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all active:scale-90">
+                    <ChevronLeft className="w-4 h-4 -ml-0.5" />
+                  </button>
+                  <button onClick={nextText} className="w-9 h-9 rounded-full bg-background border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all active:scale-90">
+                    <ChevronRight className="w-4 h-4 -mr-0.5" />
+                  </button>
+                </div>
+              </div>
+
             </div>
-
-            <button onClick={nextText} className="absolute right-0 -mr-4 md:-mr-6 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background border border-border shadow-md flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90">
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 -mr-0.5" />
-            </button>
           </div>
-        </div>
 
-        {/* ========================================= */}
-        {/* BOTTOM SECTION: FLEXIBLE VIDEO PLAYER     */}
-        {/* ========================================= */}
-        <div className="text-center w-full mx-auto">
-          <h3 className="text-3xl md:text-4xl font-black font-heading mb-10">Watch Their Journeys</h3>
-          
-          <div className="flex items-center justify-center gap-2 md:gap-6">
+          {/* ========================================= */}
+          {/* RIGHT SIDE: Vertical Video Slider         */}
+          {/* ========================================= */}
+          <div className="lg:col-span-6 w-full mx-auto lg:max-w-none text-center mt-12 lg:mt-0 flex flex-col items-center justify-center">
+            <h3 className="text-2xl font-black font-heading mb-6 lg:hidden">Watch Their Journeys</h3>
             
-            {/* Left External Arrow */}
-            <button onClick={prevVid} className="hidden md:flex shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full bg-background border-2 border-border shadow-sm items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 z-20">
-              <ChevronLeft className="w-6 h-6 md:w-8 md:h-8 -ml-0.5" />
-            </button>
-
-            {/* Flexible Video Frame */}
-            <div className="relative flex-1 w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border border-border/50 bg-black group max-h-[75vh] flex items-center justify-center aspect-[9/16] md:aspect-video cursor-pointer" onClick={togglePlay}>
+            {/* 
+              By setting max-w-[300px] or max-w-[340px], the vertical video looks like a sleek phone frame
+              instead of becoming a gigantic 75vh box on desktop.
+            */}
+            <div className="flex items-center justify-center relative w-full max-w-[280px] md:max-w-[340px] mx-auto">
               
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={vidIndex}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full h-full relative flex items-center justify-center"
-                >
-                  
-                  {/* PLAY BUTTON OVERLAY */}
-                  {!isPlaying && (
-                    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 pointer-events-none transition-all duration-300">
-                      <div className="w-16 h-16 md:w-20 md:h-20 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-2xl scale-100 group-hover:scale-110 transition-transform duration-300">
-                        <Play className="w-8 h-8 md:w-10 md:h-10 ml-1 fill-current" />
+              {/* Left Video Arrow */}
+              <button onClick={prevVid} className="absolute -left-12 md:-left-16 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background/90 md:bg-background border border-border shadow-md flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 backdrop-blur-md md:backdrop-blur-none">
+                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 -ml-0.5" />
+              </button>
+
+              {/* Vertical Video Frame */}
+              <div className="relative flex-1 w-full rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 md:border-8 border-black/90 bg-black group aspect-[9/16] cursor-pointer" onClick={togglePlay}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={vidIndex}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full relative flex items-center justify-center"
+                  >
+                    
+                    {/* PLAY BUTTON OVERLAY */}
+                    {!isPlaying && (
+                      <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 pointer-events-none transition-all duration-300">
+                        <div className="w-14 h-14 md:w-16 md:h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-2xl scale-100 group-hover:scale-110 transition-transform duration-300">
+                          <Play className="w-6 h-6 md:w-8 md:h-8 ml-1 fill-current" />
+                        </div>
                       </div>
+                    )}
+
+                    {/* USER CONTROLLED VIDEO */}
+                    <video 
+                      ref={videoRef}
+                      src={videoTestimonials[vidIndex].videoUrl}
+                      loop
+                      playsInline
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
+                      className="w-full h-full object-cover"
+                    />
+
+                    {/* Text Overlay (Bottom Left) */}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent p-4 md:p-6 pt-16 flex flex-col items-start text-left pointer-events-none">
+                      <h4 className="text-white font-black text-base md:text-lg font-heading drop-shadow-lg flex items-center gap-1.5">
+                        {videoTestimonials[vidIndex].studentName}
+                        <BadgeCheck className="w-4 h-4 fill-blue-500 text-white shrink-0" />
+                      </h4>
+                      <p className="text-white/80 font-medium text-xs mt-1 truncate w-full">
+                        📍 {videoTestimonials[vidIndex].collegeName}
+                      </p>
                     </div>
-                  )}
 
-                  {/* USER CONTROLLED VIDEO (Removed AutoPlay & Muted) */}
-                  <video 
-                    ref={videoRef}
-                    src={videoTestimonials[vidIndex].videoUrl}
-                    loop
-                    playsInline
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    className="w-full h-full max-h-[75vh] object-cover md:object-contain"
-                  />
+                    {/* Brand Watermark (Bottom Right) */}
+                    <img 
+                      src="/logo.png" 
+                      alt="TCA Logo" 
+                      className="absolute bottom-4 right-4 h-4 w-auto opacity-[0.8] z-20 pointer-events-none drop-shadow-md brightness-0 invert" 
+                    />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
-                  {/* Text Overlay (Bottom Left) */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 md:p-8 pt-16 md:pt-20 flex flex-col items-start text-left pointer-events-none">
-                    <h4 className="text-white font-black text-lg md:text-3xl font-heading drop-shadow-lg flex items-center gap-1.5 md:gap-2">
-                      {videoTestimonials[vidIndex].studentName}
-                      <BadgeCheck className="w-4 h-4 md:w-6 md:h-6 fill-blue-500 text-white" />
-                    </h4>
-                    <p className="text-white/80 font-medium md:font-bold text-xs md:text-base mt-0.5 md:mt-1 tracking-wide">
-                      📍 {videoTestimonials[vidIndex].collegeName}
-                    </p>
-                  </div>
+              {/* Right Video Arrow */}
+              <button onClick={nextVid} className="absolute -right-12 md:-right-16 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background/90 md:bg-background border border-border shadow-md flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 backdrop-blur-md md:backdrop-blur-none">
+                <ChevronRight className="w-5 h-5 md:w-6 md:h-6 -mr-0.5" />
+              </button>
 
-                  {/* Brand Watermark (Bottom Right) */}
-                  <img 
-                    src="/logo.png" 
-                    alt="TCA Logo" 
-                    className="absolute bottom-4 right-4 md:bottom-6 md:right-6 h-4 md:h-8 w-auto opacity-[0.65] z-20 pointer-events-none drop-shadow-md brightness-0 invert" 
-                  />
-                </motion.div>
-              </AnimatePresence>
             </div>
 
-            {/* Right External Arrow */}
-            <button onClick={nextVid} className="shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full bg-background border-2 border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 z-20">
-              <ChevronRight className="w-6 h-6 md:w-8 md:h-8 -mr-0.5" />
-            </button>
+            {/* Dots Indicator */}
+            <div className="flex justify-center gap-1.5 mt-6">
+              {videoTestimonials.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setVidIndex(idx)}
+                  className={`h-2 rounded-full transition-all duration-300 ${idx === vidIndex ? "w-6 bg-primary" : "w-2 bg-primary/20 hover:bg-primary/50"}`}
+                />
+              ))}
+            </div>
 
-          </div>
-
-          {/* Dots Indicator */}
-          <div className="flex justify-center gap-2 mt-8">
-            {videoTestimonials.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setVidIndex(idx)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${idx === vidIndex ? "w-10 bg-primary" : "w-2.5 bg-primary/20 hover:bg-primary/50"}`}
-              />
-            ))}
           </div>
 
         </div>
-
       </div>
     </section>
   );

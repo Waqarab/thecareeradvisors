@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
@@ -8,7 +9,15 @@ import { AuthProvider } from "@/context/AuthContext";
 import "flag-icons/css/flag-icons.min.css";
 import { Toaster } from "@/components/ui/sonner";
 import SplashCursorEffect from "@/components/SplashCursorEffect";
-import TrafficTracker from "@/components/TrafficTracker"; // <-- IMPORTED HERE
+import TrafficTracker from "@/components/TrafficTracker";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-plus-jakarta",
+});
+
+
 
 // 1. EXTENSIVE SEO METADATA
 export const metadata: Metadata = {
@@ -99,7 +108,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="antialiased min-h-screen flex flex-col bg-background">
+      <body className={`antialiased min-h-screen flex flex-col bg-background ${plusJakartaSans.variable} font-sans`}>
         
         {/* GLOBAL SPLASH CURSOR EFFECT */}
         <SplashCursorEffect />

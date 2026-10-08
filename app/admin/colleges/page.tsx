@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import { collection, getDocs, getDoc, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, MapPin, Banknote, Users, Globe2, ExternalLink, Search, Filter, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useConfirm } from "@/components/ui/use-confirm";
 
 interface College {
   id: string;
@@ -21,24 +23,11 @@ interface College {
   isHidden: boolean;
   featuredOrder?: string | number | null; // Used for Top 6
 }
-
-const initialFormState = {
-  name: "",
-  country: "",
-  location: "",
-  fees: "",
-  placed: "",
-  image: "",
-  isHidden: false,
-};
-
 export default function CollegesPage() {
+  const router = useRouter();
   const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState(initialFormState);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const { ConfirmationDialog, confirmAction } = useConfirm();
 
   // --- SEARCH, FILTER & PAGINATION STATES ---
   const [searchQuery, setSearchQuery] = useState("");
@@ -130,6 +119,14 @@ export default function CollegesPage() {
   };
 
   const handleSaveFeatured = async () => {
+    // 0. Validate for duplicates
+    const selectedIds = featuredSelections.map(s => s.collegeId).filter(id => id !== "");
+    const uniqueIds = new Set(selectedIds);
+    if (selectedIds.length !== uniqueIds.size) {
+      toast.error("Duplicate universities selected. Please ensure each slot has a unique university.");
+      return;
+    }
+
     setIsSavingFeatured(true);
     try {
       // 1. Find all currently featured colleges and clear their status
@@ -161,37 +158,36 @@ export default function CollegesPage() {
   };
 
   // --- 4. HANDLE ADD/EDIT/DELETE ---
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    try {
-      if (editingId) {
-        await updateDoc(doc(db, "universities", editingId), formData);
-        toast.success("University updated successfully");
-      } else {
-        await addDoc(collection(db, "universities"), formData);
-        toast.success("University added successfully");
-      }
-      await triggerCacheRevalidation();
-      setIsModalOpen(false);
-      setEditingId(null);
-      setFormData(initialFormState);
-      fetchColleges();
-    } catch (error) {
-      toast.error("Failed to save university");
-    } finally {
-      setIsSaving(false);
-    }
+  const handleAddUniversity = () => {
+    router.push(`/admin/colleges/new`);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are sure you want to delete this university?")) return;
+    if (!(await confirmAction("Move to Recycle Bin", "Are you sure you want to move this university to the Recycle Bin? (It will be kept for 14 days)", { isDestructive: true, confirmText: "Move to Bin" }))) return;
     try {
-      await deleteDoc(doc(db, "universities", id));
-      toast.success("University deleted successfully");
-      await triggerCacheRevalidation();
-      fetchColleges();
+      // 1. Get the current university data
+      const docRef = doc(db, "universities", id);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const uniData = docSnap.data();
+        
+        // 2. Save it to recycled_universities collection with the SAME ID and a deletedAt timestamp
+        const { setDoc } = await import("firebase/firestore");
+        await setDoc(doc(db, "recycled_universities", id), {
+          ...uniData,
+          deletedAt: new Date().toISOString()
+        });
+        
+        // 3. Delete it from the main universities collection
+        await deleteDoc(docRef);
+        
+        toast.success("Moved to Recycle Bin (Kept for 14 days)");
+        await triggerCacheRevalidation();
+        fetchColleges();
+      }
     } catch (error) {
+      console.error("Delete Error: ", error);
       toast.error("Failed to delete university");
     }
   };
@@ -205,19 +201,6 @@ export default function CollegesPage() {
     } catch (error) {
       toast.error("Failed to update visibility");
     }
-  };
-
-  const openEditModal = (college: College) => {
-    setFormData({
-      name: college.name, country: college.country, location: college.location,
-      fees: college.fees, placed: college.placed, image: college.image, isHidden: college.isHidden,
-    });
-    setEditingId(college.id);
-    setIsModalOpen(true);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   // --- 5. FILTERING ---
@@ -242,9 +225,11 @@ export default function CollegesPage() {
   const hasMore = visibleCount < filteredColleges.length;
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full pb-24">
-      
-      {/* Header & Buttons */}
+    <>
+      <ConfirmationDialog />
+      <div className="p-6 md:p-8 max-w-7xl mx-auto w-full pb-24">
+        
+        {/* Header & Buttons */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Universities Database</h1>
@@ -298,9 +283,14 @@ export default function CollegesPage() {
                         className="w-full sm:flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                       >
                         <option value="">-- Select a University --</option>
-                        {availableColleges.map(c => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
+                        {availableColleges.map(c => {
+                          const isSelectedElsewhere = featuredSelections.some((s, sIdx) => sIdx !== idx && s.collegeId === c.id);
+                          return (
+                            <option key={c.id} value={c.id} disabled={isSelectedElsewhere}>
+                              {c.name} {isSelectedElsewhere ? "(Already Selected)" : ""}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                   );
@@ -314,58 +304,10 @@ export default function CollegesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* ADD UNIVERSITY BUTTON & MODAL */}
-          <Dialog open={isModalOpen} onOpenChange={(open) => {
-            setIsModalOpen(open);
-            if (!open) { setEditingId(null); setFormData(initialFormState); }
-          }}>
-            <DialogTrigger asChild>
-              <Button className="bg-slate-900 text-white hover:bg-slate-800 shadow-md">
-                <Plus className="w-4 h-4 mr-2" /> Add University
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] bg-white">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold">{editingId ? "Quick Edit Details" : "Add New University"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">University Name</label>
-                  <Input name="name" value={formData.name} onChange={handleInputChange} required placeholder="e.g. Tashkent Medical Academy" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-slate-700">Country</label>
-                    <Input name="country" value={formData.country} onChange={handleInputChange} required placeholder="e.g. Uzbekistan" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-slate-700">City / Location</label>
-                    <Input name="location" value={formData.location} onChange={handleInputChange} required placeholder="e.g. Tashkent" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-slate-700">Average Fees</label>
-                    <Input name="fees" value={formData.fees} onChange={handleInputChange} required placeholder="e.g. $3,500/yr" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-slate-700">Students Placed</label>
-                    <Input name="placed" value={formData.placed} onChange={handleInputChange} required placeholder="e.g. 1,200+" />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4" /> Image URL (Cloudinary)
-                  </label>
-                  <Input name="image" value={formData.image} onChange={handleInputChange} required placeholder="https://res.cloudinary.com/..." />
-                </div>
-                <Button type="submit" disabled={isSaving} className="w-full mt-4 bg-slate-900 text-white hover:bg-slate-800">
-                  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  {editingId ? "Save Quick Edits" : "Create University"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+          {/* ADD UNIVERSITY BUTTON */}
+          <Button onClick={handleAddUniversity} className="bg-slate-900 text-white hover:bg-slate-800 shadow-md">
+            <Plus className="w-4 h-4 mr-2" /> Add University
+          </Button>
         </div>
       </div>
 
@@ -403,9 +345,18 @@ export default function CollegesPage() {
             className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer min-w-[120px]"
           >
             <option value="All">All Statuses</option>
-            <option value="Visible">Visible Only</option>
-            <option value="Hidden">Hidden Only</option>
+            <option value="Visible">Published</option>
+            <option value="Hidden">Draft (Hidden)</option>
           </select>
+          
+          <Button 
+            variant={statusFilter === "Hidden" ? "default" : "outline"}
+            onClick={() => setStatusFilter(statusFilter === "Hidden" ? "All" : "Hidden")}
+            size="sm"
+            className="hidden lg:flex text-xs h-9"
+          >
+            {statusFilter === "Hidden" ? "Clear Filter" : "View Drafts"}
+          </Button>
         </div>
 
       </div>
@@ -478,22 +429,18 @@ export default function CollegesPage() {
                     </td>
                     <td className="p-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${college.isHidden ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {college.isHidden ? "Hidden" : "Visible"}
+                        {college.isHidden ? "Draft" : "Published"}
                       </span>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">
                         
                         {/* 1. Toggle Visibility */}
-                        <Button variant="outline" size="icon" title={college.isHidden ? "Publish to Site" : "Hide from Site"} onClick={() => handleToggleHidden(college.id, college.isHidden)}>
+                        <Button variant="outline" size="icon" title={college.isHidden ? "Publish" : "Move to Draft"} onClick={() => handleToggleHidden(college.id, college.isHidden)}>
                           {college.isHidden ? <EyeOff className="w-4 h-4 text-amber-500" /> : <Eye className="w-4 h-4 text-emerald-500" />}
                         </Button>
                         
-                        {/* 2. Quick Edit Modal */}
-                        <Button variant="outline" size="icon" title="Quick Edit Basic Info" onClick={() => openEditModal(college)}>
-                          <Edit className="w-4 h-4 text-blue-500" />
-                        </Button>
-
+                        {/* 2. Quick Edit removed - Use Deep Details Page instead */}
                         {/* 3. Deep Details Page */}
                         <Link href={`/admin/colleges/${college.id}`}>
                           <Button variant="outline" size="icon" title="Manage Deep Details (History, Rankings, etc.)">
@@ -528,7 +475,7 @@ export default function CollegesPage() {
           </Button>
         </div>
       )}
-
     </div>
+    </>
   );
 }

@@ -44,14 +44,63 @@ export async function POST(req: NextRequest) {
 
     if (userExists) {
       await auth.updateUser(userExists.uid, { password });
+      await auth.setCustomUserClaims(userExists.uid, { admin: true });
       return NextResponse.json({ message: "Password updated successfully!" }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
     } else {
-      await auth.createUser({ email, password, emailVerified: true });
+      const newUser = await auth.createUser({ email, password, emailVerified: true });
+      await auth.setCustomUserClaims(newUser.uid, { admin: true });
       return NextResponse.json({ message: "New team member created successfully!" }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
     }
 
   } catch (error: any) {
     console.error(error);
     return NextResponse.json({ error: "Server Error or Invalid Token" }, { status: 500, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+  }
+}
+
+export async function GET(req: NextRequest) {
+  let finalSetCookie: string | null = null;
+  try {
+    const authSession = await requireSuperAdmin(req);
+    if (authSession instanceof NextResponse) return authSession;
+
+    const { id: browserId, setCookie } = getOrCreateBrowserId(req);
+    finalSetCookie = setCookie;
+
+    const auth = getAuth();
+    const listUsersResult = await auth.listUsers(10);
+    
+    const users = listUsersResult.users
+      .filter(u => u.email !== SUPER_ADMIN_EMAIL)
+      .map(u => ({ uid: u.uid, email: u.email, createdAt: u.metadata.creationTime }));
+
+    return NextResponse.json({ users }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+  } catch (error: any) {
+    console.error(error);
+    return NextResponse.json({ error: "Server Error" }, { status: 500, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  let finalSetCookie: string | null = null;
+  try {
+    const authSession = await requireSuperAdmin(req);
+    if (authSession instanceof NextResponse) return authSession;
+
+    const { id: browserId, setCookie } = getOrCreateBrowserId(req);
+    finalSetCookie = setCookie;
+
+    const { uid } = await req.json();
+    if (!uid) {
+      return NextResponse.json({ error: "UID required." }, { status: 400, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    }
+
+    const auth = getAuth();
+    await auth.deleteUser(uid);
+
+    return NextResponse.json({ message: "Team member removed." }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+  } catch (error: any) {
+    console.error(error);
+    return NextResponse.json({ error: "Server Error" }, { status: 500, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
   }
 }

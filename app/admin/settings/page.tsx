@@ -8,6 +8,7 @@ import { db, app } from "@/firebase/config";
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { getDatabase, ref, onValue, remove } from "firebase/database";
 import { useAuth } from "@/context/AuthContext";
+import { useConfirm } from "@/components/ui/use-confirm";
 
 export default function AdminSettings() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function AdminSettings() {
   const [activeSessions, setActiveSessions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { ConfirmationDialog, confirmAction } = useConfirm();
 
   // Notification Form State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -51,6 +53,19 @@ export default function AdminSettings() {
   const [teamEmail, setTeamEmail] = useState("");
   const [teamPassword, setTeamPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+
+  const fetchTeamMembers = async () => {
+    try {
+      const res = await fetch("/api/admin/team");
+      if (res.ok) {
+        const data = await res.json();
+        setTeamMembers(data.users || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch team members");
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
@@ -70,6 +85,7 @@ export default function AdminSettings() {
         sessionsArray.sort((a, b) => b.loginTime - a.loginTime);
         setActiveSessions(sessionsArray);
       });
+      fetchTeamMembers();
     }
 
     return () => unsubscribe();
@@ -127,11 +143,13 @@ export default function AdminSettings() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Permanently delete this?")) await deleteDoc(doc(db, "notifications", id));
+    if (await confirmAction("Delete Announcement", "Permanently delete this announcement?", { isDestructive: true, confirmText: "Delete" })) {
+      await deleteDoc(doc(db, "notifications", id));
+    }
   };
 
   const handleRevokeDevice = async (sessionId: string) => {
-    if (!window.confirm("Kick this device out of the admin panel?")) return;
+    if (!(await confirmAction("Revoke Session", "Kick this device out of the admin panel?", { isDestructive: true, confirmText: "Kick out" }))) return;
     try {
       await remove(ref(getDatabase(app), `admin_sessions/${sessionId}`));
       toast.success("Device revoked. They will be logged out instantly.");
@@ -140,9 +158,26 @@ export default function AdminSettings() {
     }
   };
 
+  const handleRevokeAllOtherDevices = async () => {
+    if (!(await confirmAction("Revoke All", "Are you sure you want to kick EVERY OTHER device out of the admin panel? Your current session will remain active.", { isDestructive: true, confirmText: "Revoke All" }))) return;
+    try {
+      const currentSessionId = localStorage.getItem("admin_session_id");
+      const rtdb = getDatabase(app);
+      
+      const promises = activeSessions
+        .filter(session => session.id !== currentSessionId)
+        .map(session => remove(ref(rtdb, `admin_sessions/${session.id}`)));
+        
+      await Promise.all(promises);
+      toast.success("All other devices have been revoked.");
+    } catch (error) {
+      toast.error("Failed to revoke some devices.");
+    }
+  };
+
   const handleCreateSubAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamEmail || teamPassword.length < 6) return toast.error("Email required and password must be 6+ chars.");
+    if (!teamEmail || teamPassword.length < 8) return toast.error("Email required and password must be 8+ chars.");
     setIsSubmitting(true);
 
     try {
@@ -160,6 +195,7 @@ export default function AdminSettings() {
       if (res.ok) {
         toast.success(data.message || "Team member account created/updated!");
         setTeamEmail(""); setTeamPassword(""); setShowPassword(false);
+        fetchTeamMembers();
       } else {
         toast.error(data.error || "Failed to create user. You can only have 3 sub-admins.");
       }
@@ -167,6 +203,30 @@ export default function AdminSettings() {
       toast.error("Network error. Could not reach server.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveTeamMember = async (uid: string) => {
+    if (!(await confirmAction("Remove Member", "Are you sure you want to permanently remove this team member?", { isDestructive: true, confirmText: "Remove" }))) return;
+    try {
+      const idToken = await user?.getIdToken();
+      const res = await fetch("/api/admin/team", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ uid })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        fetchTeamMembers();
+      } else {
+        toast.error(data.error || "Failed to remove member.");
+      }
+    } catch (error) {
+      toast.error("Network error.");
     }
   };
 
@@ -187,6 +247,7 @@ export default function AdminSettings() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto font-sans">
+      <ConfirmationDialog />
       <h1 className="text-3xl font-extrabold font-heading mb-8">System Settings</h1>
 
       <div className="flex gap-4 mb-8 border-b border-border/50 pb-4 overflow-x-auto">
@@ -218,15 +279,6 @@ export default function AdminSettings() {
               
               <form onSubmit={handleDeploy} className="space-y-5">
                 <div>
-                  <label className="text-sm font-bold mb-1 block">Color Theme</label>
-                  <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full bg-muted/50 border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-primary">
-                    <option value="primary">Brand Blue (Info)</option>
-                    <option value="destructive">Red (Urgent)</option>
-                    <option value="success">Green (Success)</option>
-                  </select>
-                </div>
-
-                <div>
                   <label className="text-sm font-bold mb-1 block">Heading</label>
                   <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full bg-muted/50 border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-primary" />
                 </div>
@@ -240,65 +292,6 @@ export default function AdminSettings() {
                   <div className="col-span-2 text-xs font-bold text-foreground/60 uppercase flex items-center gap-1"><LinkIcon className="w-3 h-3"/> Document Hyperlink (Optional)</div>
                   <input type="text" placeholder="Button Text (e.g. View PDF)" value={linkText} onChange={(e) => setLinkText(e.target.value)} className="w-full border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-primary" />
                   <input type="url" placeholder="URL (https://...)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} className="w-full border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-primary" />
-                </div>
-
-                {/* ADVANCED AUDIO CONTROLS */}
-                <div className="flex flex-col gap-4 bg-primary/5 p-5 rounded-xl border border-primary/20">
-                  
-                  {/* Master Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <input type="checkbox" id="soundToggle" checked={playSound} onChange={(e) => setPlaySound(e.target.checked)} className="w-4 h-4 rounded text-primary cursor-pointer" />
-                        <label htmlFor="soundToggle" className="text-sm font-bold cursor-pointer flex items-center gap-1">
-                          Play Alert Sound {playSound ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-foreground/40" />}
-                        </label>
-                      </div>
-                      <p className="text-[10px] text-foreground/60 ml-6">Plays a sound on the user's device when this pops up.</p>
-                    </div>
-                  </div>
-                  
-                  {/* Expanded Audio Settings */}
-                  {playSound && (
-                    <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-primary/10">
-                      {/* Sound Selector */}
-                      <div className="flex-1">
-                        <label className="text-xs font-bold text-foreground/60 mb-1 flex items-center gap-1"><Music className="w-3 h-3"/> Choose Sound</label>
-                        <div className="flex items-center gap-2">
-                          <select value={soundFile} onChange={(e) => {
-                            setSoundFile(e.target.value);
-                            previewSound(e.target.value); // Preview on change
-                          }} className="w-full bg-background border border-border rounded-lg p-2 text-sm outline-none focus:ring-1 focus:ring-primary cursor-pointer">
-                            <option value="/notificationtca.mp3">TCA Default</option>
-                            <option value="/chime.mp3">Gentle Chime</option>
-                            <option value="/bell.mp3">Classic Bell</option>
-                            <option value="/alert.mp3">Urgent Alert</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Ping Count */}
-                      <div className="shrink-0">
-                        <label className="text-xs font-bold text-foreground/60 mb-1 block">Number of Pings</label>
-                        <div className="flex items-center gap-2 bg-background p-1.5 rounded-lg border">
-                          {[1, 2, 3].map((num) => (
-                            <button 
-                              key={num} 
-                              type="button" 
-                              onClick={() => {
-                                setSoundCount(num as 1|2|3);
-                                previewSound(soundFile); // Preview when clicked
-                              }}
-                              className={`w-7 h-7 rounded-md text-xs font-bold transition-all ${soundCount === num ? 'bg-primary text-white shadow-sm' : 'hover:bg-muted text-foreground/60'}`}
-                            >
-                              {num}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                 </div>
 
                 <div className="flex items-center gap-2 pt-2 cursor-pointer" onClick={() => setIsPinned(!isPinned)}>
@@ -319,10 +312,7 @@ export default function AdminSettings() {
               {notificationsList.map((notif) => (
                 <div key={notif.id} className={`p-4 rounded-xl border relative ${notif.isActive ? 'bg-background' : 'bg-muted/50 opacity-60'}`}>
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] font-bold uppercase bg-muted px-2 py-1 rounded-md flex items-center gap-1">
-                      {notif.playSound !== false ? <Volume2 className="w-3 h-3 text-primary" /> : <VolumeX className="w-3 h-3" />}
-                      {notif.playSound !== false ? `${notif.soundCount || 2} PINGS` : 'MUTED'}
-                    </span>
+                    <div></div>
                     <div className="flex gap-2">
                       <button onClick={() => toggleActive(notif.id, notif.isActive)} title={notif.isActive ? "Hide" : "Publish"}>
                         {notif.isActive ? <PauseCircle className="w-4 h-4 text-orange-500" /> : <PlayCircle className="w-4 h-4 text-green-500" />}
@@ -345,12 +335,18 @@ export default function AdminSettings() {
           <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm h-fit">
             <h2 className="text-xl font-bold mb-6 flex items-center justify-between">
               <span className="flex items-center gap-2"><Smartphone className="w-5 h-5 text-primary" /> Active Logins</span>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-bold">{activeSessions.length} Devices</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-bold">{activeSessions.length} Devices</span>
+                {activeSessions.length > 1 && (
+                  <button onClick={handleRevokeAllOtherDevices} className="text-xs font-bold text-destructive bg-destructive/10 hover:bg-destructive hover:text-white px-3 py-1 rounded-lg transition-all ml-2">Revoke All Others</button>
+                )}
+              </div>
             </h2>
             <div className="space-y-4">
               {activeSessions.map((session) => {
                 const deviceName = parseDevice(session.device);
                 const isMobile = deviceName.includes("Phone") || deviceName.includes("iPhone");
+                const isCurrentSession = session.id === (typeof window !== "undefined" ? localStorage.getItem("admin_session_id") : null);
                 
                 return (
                   <div key={session.id} className="p-4 rounded-xl border border-border/50 bg-background flex items-center justify-between group hover:border-primary/50 transition-colors">
@@ -359,7 +355,10 @@ export default function AdminSettings() {
                         {isMobile ? <Smartphone className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm leading-tight text-foreground">{session.email}</h4>
+                        <h4 className="font-bold text-sm leading-tight text-foreground flex items-center gap-2">
+                          {session.email}
+                          {isCurrentSession && <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Current Device</span>}
+                        </h4>
                         <p className="text-xs text-foreground/60">{deviceName}</p>
                         <p className="text-[10px] text-foreground/40 mt-1 uppercase font-semibold">
                           Logged in: {new Date(session.loginTime).toLocaleString()}
@@ -367,12 +366,14 @@ export default function AdminSettings() {
                       </div>
                     </div>
                     
-                    <button 
-                      onClick={() => handleRevokeDevice(session.id)}
-                      className="text-xs font-bold text-destructive bg-destructive/10 hover:bg-destructive hover:text-white px-3 py-1.5 rounded-lg transition-all"
-                    >
-                      Revoke
-                    </button>
+                    {!isCurrentSession && (
+                      <button 
+                        onClick={() => handleRevokeDevice(session.id)}
+                        className="text-xs font-bold text-destructive bg-destructive/10 hover:bg-destructive hover:text-white px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        Revoke
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -404,8 +405,8 @@ export default function AdminSettings() {
                     value={teamPassword} 
                     onChange={(e) => setTeamPassword(e.target.value)} 
                     required 
-                    minLength={6}
-                    placeholder="Minimum 6 characters"
+                    minLength={8}
+                    placeholder="Minimum 8 characters"
                     className="w-full bg-background border border-border/50 rounded-xl p-3.5 pr-12 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-foreground/30" 
                   />
                   <button 
@@ -420,7 +421,7 @@ export default function AdminSettings() {
               </div>
 
               <Button 
-                disabled={isSubmitting || (teamPassword.length > 0 && teamPassword.length < 6)} 
+                disabled={isSubmitting || (teamPassword.length > 0 && teamPassword.length < 8)} 
                 type="submit" 
                 className="w-full py-6 text-base font-bold rounded-xl shadow-md active:scale-[0.98] transition-all disabled:opacity-50"
               >
@@ -431,6 +432,34 @@ export default function AdminSettings() {
                 )}
               </Button>
             </form>
+
+            {teamMembers.length > 0 && (
+              <div className="mt-8 pt-8 border-t border-border/50">
+                <h3 className="text-sm font-bold mb-4 text-foreground/80 uppercase tracking-wider">Existing Team Members</h3>
+                <div className="space-y-3">
+                  {teamMembers.map((member) => (
+                    <div key={member.uid} className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-background hover:border-primary/50 transition-colors">
+                      <div className="flex items-center gap-3 truncate">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold">
+                          {member.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="truncate">
+                          <p className="font-bold text-sm text-foreground truncate">{member.email}</p>
+                          <p className="text-[10px] text-foreground/50">Joined {new Date(member.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleRemoveTeamMember(member.uid)}
+                        className="text-destructive/70 hover:text-destructive hover:bg-destructive/10 p-2 rounded-lg transition-colors shrink-0"
+                        title="Remove member"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>

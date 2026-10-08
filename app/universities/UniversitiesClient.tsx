@@ -69,39 +69,39 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
   });
 
   return (
-    <div className="min-h-screen bg-[#F2F3F4] pt-32 pb-24">
+    <div className="min-h-screen bg-[#F2F3F4] pt-8 md:pt-10 pb-16">
       <div className="container mx-auto px-4 md:px-8 max-w-7xl">
         
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black font-heading text-[#22354a] mb-6 tracking-tight">
+        <div className="text-center max-w-3xl mx-auto mb-4 md:mb-6">
+          <h1 className="text-3xl md:text-5xl font-black font-heading text-[#22354a] mb-2 tracking-tight">
             Explore Global <span className="text-[#6082B6] font-serif italic font-normal">Universities</span>
           </h1>
-          <p className="text-lg text-[#3A5F8B]/80 font-medium">
+          <p className="text-base md:text-lg text-[#3A5F8B]/80 font-medium max-w-2xl mx-auto">
             Discover WHO and NMC approved medical institutions worldwide. Compare fees, locations, and track records.
           </p>
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-6 mb-12 items-center justify-between bg-[#FFFFF0] p-4 md:p-6 rounded-3xl shadow-sm border border-[#AEC6CF]/30">
+        <div className="flex flex-col md:flex-row gap-4 mb-8 items-center justify-between bg-[#FFFFF0] p-3 md:p-4 rounded-[20px] shadow-sm border border-[#AEC6CF]/30">
           
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#AEC6CF]" />
+          <div className="relative w-full md:w-80 lg:w-96 flex-shrink-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#AEC6CF]" />
             <input 
               type="text" 
               placeholder="Search university or location..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-[#AEC6CF]/50 bg-[#F2F3F4] focus:outline-none focus:ring-2 focus:ring-[#6082B6]/50 transition-all font-medium text-[#22354a]"
+              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-[#AEC6CF]/50 bg-[#F2F3F4] focus:outline-none focus:ring-2 focus:ring-[#6082B6]/50 transition-all font-medium text-[#22354a]"
             />
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center md:justify-end gap-1.5 md:gap-2">
             {countries.map((country) => (
               <button
                 key={country}
                 onClick={() => setActiveFilter(country)}
-                className={`px-4 py-2 rounded-full text-xs md:text-sm font-bold transition-all duration-200 active:scale-95 ${
+                className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-bold transition-all duration-200 active:scale-95 ${
                   activeFilter === country 
                     ? "bg-[#3A5F8B] text-white" 
                     : "bg-[#F2F3F4] text-[#3A5F8B] border border-[#AEC6CF]/30 hover:bg-[#AEC6CF]/20"
@@ -124,11 +124,11 @@ export default function UniversitiesClient({ initialUniversities = [] }: Univers
               {filteredUniversities.map((uni, idx) => (
                 <motion.div
                   key={uni.id} 
-                  initial={{ opacity: 0, scale: 0.8, y: 50 }} 
-                  whileInView={{ opacity: 1, scale: 1, y: 0 }} 
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 30 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: 20 }}
                   viewport={{ once: true, margin: "-50px" }}
-                  transition={{ type: "spring", stiffness: 120, damping: 14, delay: (idx % 6) * 0.1 }}
+                  transition={{ duration: 0.5, ease: "easeOut", delay: (idx % 3) * 0.1 }}
                   style={{ willChange: "transform, opacity" }}
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-all group flex flex-col"
                 >

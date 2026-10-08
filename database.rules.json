@@ -5,19 +5,19 @@
         "$date": {
           "$pushId": {
             ".write": "!data.exists() && newData.exists()",
-            ".read": "auth != null && auth.token.email === 'superadmintcagroup786@gmail.com'"
+            ".read": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)"
           }
         },
-        ".read": "auth != null && auth.token.email === 'superadmintcagroup786@gmail.com'"
+        ".read": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)"
       }
     },
     "admin_sessions": {
-      ".read": "auth != null && auth.token.email === 'superadmintcagroup786@gmail.com'",
-      ".write": "auth != null && auth.token.email === 'superadmintcagroup786@gmail.com'"
+      ".read": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)",
+      ".write": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)"
     },
     "inquiry_meta": {
-      ".read": "auth != null && auth.token.email === 'superadmintcagroup786@gmail.com'",
-      ".write": "auth != null && auth.token.email === 'superadmintcagroup786@gmail.com'"
+      ".read": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)",
+      ".write": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)"
     },
     ".read": false,
     ".write": false

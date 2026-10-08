@@ -67,28 +67,28 @@ const faqs = [
 ];
 
 export default function FaqSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
 
   const initialCount = 7;
   const displayedFaqs = showAll ? faqs : faqs.slice(0, initialCount);
 
   return (
-    <section id="faq" className="py-20 bg-card/50">
-      <div className="container mx-auto px-4 md:px-8 max-w-4xl">
-        <h2 className="text-3xl md:text-4xl font-bold text-primary mb-10 text-center">
+    <section id="faq" className="py-10 lg:py-16 pb-24 lg:pb-32 bg-card/50 relative z-0">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1b2f45] mb-8 text-center tracking-tight">
           Frequently Asked Questions
         </h2>
         
-        <div className="space-y-4">
+        <div className="columns-1 md:columns-2 gap-4 md:gap-6">
           {displayedFaqs.map((faq, index) => (
-            <div key={index} className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm">
+            <div key={index} className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm break-inside-avoid mb-4">
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-secondary/50 transition-colors"
+                className="w-full flex items-center justify-between p-4 md:p-5 text-left hover:bg-secondary/50 transition-colors"
               >
-                <span className="font-semibold text-foreground">{faq.question}</span>
-                <ChevronDown className={`w-5 h-5 text-primary transition-transform duration-300 ${openIndex === index ? "rotate-180" : ""}`} />
+                <span className="font-semibold text-[#172539] pr-4">{faq.question}</span>
+                <ChevronDown className={`w-5 h-5 text-primary shrink-0 transition-transform duration-300 ${openIndex === index ? "rotate-180" : ""}`} />
               </button>
               
               <AnimatePresence>
@@ -99,7 +99,7 @@ export default function FaqSection() {
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-6 pt-0 text-foreground/70 border-t border-border/50 mt-2">
+                    <div className="p-5 md:p-6 pt-0 text-[#62748e] border-t border-border/50 mt-2 text-sm md:text-base leading-relaxed">
                       {faq.answer}
                     </div>
                   </motion.div>

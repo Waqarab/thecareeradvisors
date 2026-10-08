@@ -1,9 +1,13 @@
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700,900&display=swap');
 @import "tailwindcss";
 @import "flag-icons/css/flag-icons.min.css";
 
-
 @plugin "tailwindcss-animate";
+
+@layer base {
+  *, *::before, *::after, html, body {
+    font-family: var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif !important;
+  }
+}
 
 @theme {
   /* BRAND PALETTE */
@@ -136,5 +140,12 @@
   
   .glassmorphism-dark {
     @apply bg-slate-900/85 backdrop-blur-md border border-slate-700/50 shadow-lg;
+  }
+
+  /* Font Outfit */
+  .font-outfit {
+    font-family: "Outfit", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
   }
 }

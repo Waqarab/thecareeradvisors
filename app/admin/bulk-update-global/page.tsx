@@ -7,43 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Globe2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
-// TARGETED UPDATE FOR AD-DIN MUMIN MEDICAL COLLEGE
-const targetedUpdateData = [
-  {
-    matchName: "Ad-din Mumin", // Matches the exact spelling in your DB
-    data: {
-      established: "2014",
-      description: "Ad-din Momin Medical College (ADMMC) is a recognized medical institution in Bangladesh. The college aims to provide a highly favorable environment for students to learn and develop positive attributes essential for healthcare delivery, emphasizing discipline, dedication, moral, and ethical values in medical services.",
-      historicalBackground: "The academic activity of this college started in 2014, after achieving academic approval from the Ministry of Health & Family Welfare of Bangladesh.",
-      hospitalFacilities: "The college is attached to Ad-din Momin Medical College Hospital (ADMMCH), a 1000-bed hospital. It offers hi-tech practical laboratories and advanced simulation for practical understanding with proximity to hospitals with a vast range of patients.",
-      fees: "35,500 USD (Total)",
-      hostelFees: "Multiple well-secured hostels are available for students with integrated student advisors.",
-      recognition: [
-        "Recognized by the BMDC, NMC, and WHO",
-        "Affiliated with the University of Dhaka"
-      ],
-      whyChoose: [
-        "Distinguished faculty members",
-        "Advanced multimedia classrooms",
-        "Proximity to a 1000-bed hospital for vast clinical exposure",
-        "World-class library and ECA facilities",
-        "Competitive internship programs",
-        "Integrated student advisors and well-secured hostels"
-      ]
-    }
-  }
-];
-
 export default function BulkUpdateGlobalPage() {
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
 
   const runBulkUpdate = async () => {
     setLoading(true);
-    setLogs(["Starting Targeted Update Process..."]);
+    setLogs(["Starting Bulk Overwrite Process..."]);
     let updatedCount = 0;
-    
-    const matchedNames = new Set();
 
     try {
       const querySnapshot = await getDocs(collection(db, "universities"));
@@ -53,35 +24,31 @@ export default function BulkUpdateGlobalPage() {
         const uniData = docSnap.data();
         const firebaseName = uniData.name || "";
 
-        const match = targetedUpdateData.find(globalUni => 
-          firebaseName.toLowerCase().includes(globalUni.matchName.toLowerCase())
-        );
+        // FORCE overwrite the recognition array for EVERY university
+        const updateData = {
+          recognition: [
+            "WHO Recognized", 
+            "NMC / MCI Approved", 
+            "Ministry of Education Approved"
+          ]
+        };
 
-        if (match) {
-          matchedNames.add(match.matchName);
-          const docRef = doc(db, "universities", docSnap.id);
-          
-          const promise = updateDoc(docRef, match.data).then(() => {
-            setLogs(prev => [...prev, `✅ Updated: ${firebaseName} (ID: ${docSnap.id})`]);
-            updatedCount++;
-          });
-          
-          updatePromises.push(promise);
-        }
+        const docRef = doc(db, "universities", docSnap.id);
+        const promise = updateDoc(docRef, updateData).then(() => {
+          setLogs(prev => [...prev, `✅ Overwritten Approvals for: ${firebaseName}`]);
+          updatedCount++;
+        });
+        
+        updatePromises.push(promise);
       });
 
       await Promise.all(updatePromises);
       
-      setLogs(prev => [...prev, `\n🎉 Process Complete! Successfully updated ${updatedCount} university.`]);
-      toast.success(`Successfully updated ${updatedCount} university!`);
-
-      const missingInDb = targetedUpdateData.filter(g => !matchedNames.has(g.matchName));
-      if (missingInDb.length > 0) {
-        setLogs(prev => [...prev, `\n⚠️ ATTENTION: The target university was NOT FOUND in Firebase:`]);
-        missingInDb.forEach(m => {
-          setLogs(prev => [...prev, `❌ Missing: ${m.matchName}`]);
-        });
-      }
+      // Revalidate the cache so the frontend sees it immediately
+      await fetch(`/api/revalidate?tag=universities`, { method: "POST" });
+      
+      setLogs(prev => [...prev, `\n🎉 Process Complete! Successfully overwritten approvals for ${updatedCount} universities.`]);
+      toast.success(`Successfully updated ${updatedCount} universities!`);
 
     } catch (error) {
       console.error(error);
@@ -101,25 +68,25 @@ export default function BulkUpdateGlobalPage() {
               <Globe2 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Targeted University Uploader</h1>
-              <p className="text-gray-500 text-sm">Injects Ad-din Mumin Medical College data.</p>
+              <h1 className="text-2xl font-bold text-gray-900">Force Overwrite Approvals</h1>
+              <p className="text-gray-500 text-sm">Resets all approvals to the 3 defaults.</p>
             </div>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-8 flex gap-3 text-blue-800 text-sm">
             <ShieldAlert className="w-5 h-5 shrink-0" />
             <p>
-              This script targets <b>Ad-din Mumin Medical College</b> in your database and updates it with the exact history, 1000-bed hospital facilities, recognition, and the $35,500 total fee.
+              This script will scan <b>ALL UNIVERSITIES</b> in your Firebase database and <b>FORCE OVERWRITE</b> whatever is currently in the <b>Approvals / Recognition</b> list with the 3 standard defaults (WHO, NMC, Ministry). This removes all the garbage data and resets every university.
             </p>
           </div>
 
           <Button 
             onClick={runBulkUpdate} 
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 text-lg rounded-xl mb-8"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-6 text-lg rounded-xl mb-8"
           >
             {loading ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : null}
-            {loading ? "Injecting Data..." : "Execute Update Now"}
+            {loading ? "Overwriting Database..." : "Execute Force Overwrite Now"}
           </Button>
 
           <div className="bg-gray-900 rounded-xl p-4 h-64 overflow-y-auto font-mono text-sm whitespace-pre-wrap">

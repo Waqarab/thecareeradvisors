@@ -87,34 +87,11 @@ export default function CountriesSection() {
               {filteredUniversities.map((uni, idx) => (
                 <motion.div
                   key={uni.id} 
-                  custom={idx}
+                  initial={{ opacity: 0, y: 30 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
                   viewport={{ once: true, margin: "0px 0px -50px 0px" }}
-                  initial="hidden"
-                  whileInView="visible"
-                  // DYNAMIC ANIMATION: Center placed first, edges crash in fast with motion blur traces
-                  variants={{
-                    hidden: (i) => {
-                      const col = i % 3;
-                      if (col === 0) return { opacity: 0, x: -250, filter: "blur(12px)", scaleX: 1.15 }; // Left edge
-                      if (col === 2) return { opacity: 0, x: 250, filter: "blur(12px)", scaleX: 1.15 };  // Right edge
-                      return { opacity: 0, y: 30, filter: "blur(0px)", scaleX: 1 }; // Center (Already placed, just fades up)
-                    },
-                    visible: (i) => ({
-                      opacity: 1,
-                      x: 0,
-                      y: 0,
-                      scaleX: 1,
-                      filter: "blur(0px)",
-                      transition: {
-                        duration: 0.5,
-                        // Snappy physics-like curve: starts lightning fast, brakes hard at the end
-                        ease: [0.25, 1, 0.3, 1], 
-                        // Center card appears instantly (0s delay), edges slide in right after (0.1s delay)
-                        delay: (i % 3 === 1) ? 0 : 0.1 
-                      }
-                    })
-                  }}
-                  style={{ willChange: "transform, opacity, filter" }}
+                  transition={{ duration: 0.5, ease: "easeOut", delay: (idx % 3) * 0.1 }}
+                  style={{ willChange: "transform, opacity" }}
                   className="bg-[#FFFFF0] rounded-2xl overflow-hidden border border-[#AEC6CF]/30 shadow-sm hover:shadow-xl transition-shadow group flex flex-col"
                 >
                   <Link href={`/universities/${uni.id}`} className="relative h-56 overflow-hidden bg-[#e2e8f0] flex items-center justify-center block">

@@ -18,8 +18,10 @@ export async function GET() {
     }
 
     const decoded = await admin.auth().verifySessionCookie(sessionCookie, true);
-
-    if (!decoded.email || decoded.email.toLowerCase() !== (SUPER_ADMIN_EMAIL || "").toLowerCase()) {
+    
+    // Any user with a valid Firebase account is allowed to access the admin panel,
+    // ONLY IF they have the admin claim or are the super admin.
+    if (!decoded.email || (decoded.email !== SUPER_ADMIN_EMAIL && !decoded.admin)) {
       return NextResponse.json({ valid: false }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
     }
 

@@ -33,6 +33,11 @@ export async function GET(req: Request) {
     const { admin } = await import("@/lib/firebase-admin");
     const decoded = await admin.auth().verifySessionCookie(sessionCookie, true);
     const isSuper = decoded.email === SUPER_ADMIN_EMAIL;
+    
+    if (!isSuper && !decoded.admin) {
+      return NextResponse.json({ role: "anonymous" }, { status: 401 });
+    }
+
     return NextResponse.json({
       role: isSuper ? "super-admin" : "admin",
       // Do NOT return the email here — that would defeat the purpose

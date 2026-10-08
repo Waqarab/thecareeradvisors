@@ -133,20 +133,24 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="h-[60vh] w-full flex items-center justify-center">
-        <Activity className="w-10 h-10 text-blue-600 animate-bounce" />
+      <div className="h-[60vh] w-full flex flex-col items-center justify-center">
+        <div className="relative flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-indigo-50 rounded-full"></div>
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <p className="font-bold text-indigo-900/40 animate-pulse tracking-widest uppercase text-[10px] mt-5">Loading Analytics...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 p-6 max-w-7xl mx-auto">
+    <div className="space-y-5 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       
       {/* HEADER & TABS */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-300 shadow-sm">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Performance Analytics</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight font-outfit">Performance Analytics</h1>
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-md uppercase tracking-wider">
               <AlertCircle className="w-3 h-3" /> Data from June 1, 2026
             </span>
@@ -154,12 +158,12 @@ export default function AnalyticsPage() {
           <p className="text-gray-500 mt-1 font-medium">Track unique devices, lead sources, and overall conversion metrics.</p>
         </div>
 
-        <div className="bg-gray-100/50 p-1.5 rounded-xl border border-gray-200 shadow-inner inline-flex overflow-x-auto">
+        <div className="bg-gray-100/50 p-1 rounded-xl border border-gray-200 shadow-inner inline-flex overflow-x-auto">
           {(['daily', 'weekly', 'monthly', 'yearly', 'total'] as TimeRange[]).map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`px-6 py-2.5 rounded-lg text-sm font-bold capitalize transition-all whitespace-nowrap ${
+              className={`px-5 py-2 rounded-lg text-xs font-bold capitalize transition-all whitespace-nowrap ${
                 timeRange === range ? 'bg-blue-600 text-white shadow-md scale-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
               }`}
             >
@@ -170,35 +174,35 @@ export default function AnalyticsPage() {
       </div>
 
       {/* KPI CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative overflow-hidden group">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-white rounded-2xl p-5 border border-gray-300 shadow-sm relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 bg-indigo-50 w-24 h-24 rounded-full group-hover:scale-110 transition-transform duration-500" />
           <div className="flex justify-between items-start relative z-10">
             <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Unique Devices</p>
-              <h3 className="text-5xl font-black text-gray-900">{filteredData.views}</h3>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Unique Devices</p>
+              <h3 className="text-3xl font-black text-gray-900">{filteredData.views}</h3>
             </div>
             <div className="p-3 bg-indigo-100 rounded-xl text-indigo-600"><Globe className="w-6 h-6" /></div>
           </div>
         </div>
         
-        <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative overflow-hidden group">
+        <div className="bg-white rounded-2xl p-5 border border-gray-300 shadow-sm relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 bg-blue-50 w-24 h-24 rounded-full group-hover:scale-110 transition-transform duration-500" />
           <div className="flex justify-between items-start relative z-10">
             <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Total Leads</p>
-              <h3 className="text-5xl font-black text-gray-900">{filteredData.leads}</h3>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Leads</p>
+              <h3 className="text-3xl font-black text-gray-900">{filteredData.leads}</h3>
             </div>
             <div className="p-3 bg-blue-100 rounded-xl text-blue-600"><Users className="w-6 h-6" /></div>
           </div>
         </div>
         
-        <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative overflow-hidden group">
+        <div className="bg-white rounded-2xl p-5 border border-gray-300 shadow-sm relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 bg-emerald-50 w-24 h-24 rounded-full group-hover:scale-110 transition-transform duration-500" />
           <div className="flex justify-between items-start relative z-10">
             <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Visit to Lead Conv.</p>
-              <h3 className="text-5xl font-black text-gray-900">{conversionRate}%</h3>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Visit to Lead Conv.</p>
+              <h3 className="text-3xl font-black text-gray-900">{conversionRate}%</h3>
             </div>
             <div className="p-3 bg-emerald-100 rounded-xl text-emerald-600"><TrendingUp className="w-6 h-6" /></div>
           </div>
@@ -206,25 +210,25 @@ export default function AnalyticsPage() {
       </div>
 
       {/* CHARTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
         {/* TRAFFIC SOURCES */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:col-span-1">
-          <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-            <h3 className="text-lg font-bold text-gray-900">Where are views coming from?</h3>
+        <div className="bg-white rounded-2xl border border-gray-300 shadow-sm p-5 lg:col-span-1">
+          <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+            <h3 className="text-md font-bold text-gray-900">Where are views coming from?</h3>
             <Globe className="w-5 h-5 text-gray-400" />
           </div>
-          <div className="h-[220px] w-full relative">
+          <div className="h-[140px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={filteredData.viewSources} cx="50%" cy="50%" innerRadius={65} outerRadius={90} paddingAngle={3} dataKey="value" stroke="none">
+                <Pie data={filteredData.viewSources} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value" stroke="none">
                   {filteredData.viewSources.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
                 <RechartsTooltip formatter={(value) => `${value} views`} contentStyle={{ borderRadius: '12px', border: '1px solid #f3f4f6', fontWeight: 'bold' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="space-y-3 mt-6 max-h-48 overflow-y-auto pr-2">
+          <div className="space-y-2 mt-4 max-h-[140px] overflow-y-auto pr-2">
             {filteredData.viewSources.map((item) => (
               <div key={item.name} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -239,22 +243,22 @@ export default function AnalyticsPage() {
         </div>
 
         {/* LEAD SOURCES */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:col-span-1">
-          <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-            <h3 className="text-lg font-bold text-gray-900">Where do leads originate?</h3>
+        <div className="bg-white rounded-2xl border border-gray-300 shadow-sm p-5 lg:col-span-1">
+          <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+            <h3 className="text-md font-bold text-gray-900">Where do leads originate?</h3>
             <Users className="w-5 h-5 text-gray-400" />
           </div>
-          <div className="h-[220px] w-full relative">
+          <div className="h-[140px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={filteredData.leadSources} cx="50%" cy="50%" innerRadius={65} outerRadius={90} paddingAngle={3} dataKey="value" stroke="none">
+                <Pie data={filteredData.leadSources} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value" stroke="none">
                   {filteredData.leadSources.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
                 <RechartsTooltip formatter={(value) => `${value} leads`} contentStyle={{ borderRadius: '12px', border: '1px solid #f3f4f6', fontWeight: 'bold' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="space-y-3 mt-6 max-h-48 overflow-y-auto pr-2">
+          <div className="space-y-2 mt-4 max-h-[140px] overflow-y-auto pr-2">
             {filteredData.leadSources.map((item) => (
               <div key={item.name} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -269,12 +273,12 @@ export default function AnalyticsPage() {
         </div>
 
         {/* CRM FUNNEL */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:col-span-1">
-          <div className="mb-8 flex items-center justify-between border-b border-gray-100 pb-4">
-            <h3 className="text-lg font-bold text-gray-900">Lead Status Pipeline</h3>
+        <div className="bg-white rounded-2xl border border-gray-300 shadow-sm p-5 lg:col-span-1">
+          <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+            <h3 className="text-md font-bold text-gray-900">Lead Status Pipeline</h3>
             <BarChart3 className="w-5 h-5 text-gray-400" />
           </div>
-          <div className="h-[260px] w-full">
+          <div className="h-[180px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filteredData.funnel} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f3f4f6" />

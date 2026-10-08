@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, orderBy, query, doc, updateDoc as updateFirestoreDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, doc, updateDoc as updateFirestoreDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { getDatabase, ref, onValue, update as updateRealtimeDB, remove as removeRealtimeDB } from "firebase/database";
 import { db, app } from "@/firebase/config";
 import { Search, Loader2, Copy, Check, CheckSquare, ChevronDown, ChevronUp, Save, Trash2, MapPin, Download, X } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/use-confirm";
 
 interface Inquiry {
   id: string;
@@ -228,6 +229,7 @@ function ExportModal({
 }
 
 export default function InquiriesPage() {
+  const { ConfirmationDialog, confirmAction } = useConfirm();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [inquiryMeta, setInquiryMeta] = useState<Record<string, { responded?: boolean, seen?: boolean, note?: string }>>({});
   const [loading, setLoading] = useState(true);
@@ -334,16 +336,32 @@ export default function InquiriesPage() {
 
   const deleteInquiries = async (idsToDelete: string[]) => {
     const isBulk = idsToDelete.length > 1;
-    if (!window.confirm(`Are you sure you want to completely delete ${isBulk ? `${idsToDelete.length} inquiries` : 'this inquiry'}? This cannot be undone.`)) return;
+    if (!(await confirmAction("Move to Recycle Bin", `Are you sure you want to move ${isBulk ? `${idsToDelete.length} inquiries` : 'this inquiry'} to the Recycle Bin? (Kept for 14 days)`, { isDestructive: true, confirmText: "Move to Bin" }))) return;
     
     setLoading(true);
     const rtdb = getDatabase(app);
     
     try {
-      // Delete from both Firestore and RTDB for completely clean stats
       await Promise.all(idsToDelete.map(async (id) => {
-        await deleteDoc(doc(db, "inquiries", id));
-        await removeRealtimeDB(ref(rtdb, `inquiry_meta/${id}`));
+        // Fetch current document
+        const docRef = doc(db, "inquiries", id);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          // Move to recycled_inquiries
+          await setDoc(doc(db, "recycled_inquiries", id), {
+            ...data,
+            deletedAt: new Date().toISOString()
+          });
+          
+          // Delete from Firestore
+          await deleteDoc(docRef);
+          
+          // DO NOT delete from RTDB immediately if we want to restore later, 
+          // or we can just ignore RTDB for now (it's only meta info).
+          // Actually, let's keep RTDB meta so if restored, it still has reads/time info.
+        }
       }));
       
       // Update local state
@@ -368,12 +386,15 @@ export default function InquiriesPage() {
 
   return (
     <div className="space-y-6 pb-20">
+      <ConfirmationDialog />
       
       {/* Top Bar: Title & Global Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-2xl border border-border/50 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold font-heading">Lead Management CRM</h1>
-          <p className="text-sm text-foreground/60">Total Displayed: {filteredInquiries.length}</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-gray-300 shadow-sm">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-extrabold font-outfit text-gray-900 tracking-tight">Lead Management CRM</h1>
+          <span className="text-xs bg-gray-100 border border-gray-200 text-gray-600 px-2.5 py-0.5 rounded-full font-bold shadow-sm">
+            Total: {filteredInquiries.length}
+          </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -395,20 +416,20 @@ export default function InquiriesPage() {
           </button>
 
           <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
               placeholder="Search name, phone..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-border/50 bg-background text-sm focus:outline-none focus:border-primary"
+              className="w-full pl-9 pr-4 py-1.5 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow"
             />
           </div>
           
           <select 
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="py-2 px-3 rounded-lg border border-border/50 bg-background text-sm focus:outline-none font-bold text-foreground/80"
+            className="py-1.5 px-3 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow font-bold text-gray-700 cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="New">New</option>
@@ -419,24 +440,24 @@ export default function InquiriesPage() {
       </div>
 
       {/* Leads Table */}
-      <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse relative">
             <thead>
-              <tr className="bg-muted/30 border-b border-border/50 text-[11px] uppercase tracking-wider font-bold text-foreground/50">
-                <th className="p-4 w-12 text-center">
+              <tr className="bg-gray-100/95 border-b border-gray-300 text-[11px] uppercase tracking-widest font-extrabold text-gray-500 shadow-sm">
+                <th className="px-4 py-4 w-12 text-center">
                   <input 
                     type="checkbox" 
                     checked={filteredInquiries.length > 0 && selectedIds.size === filteredInquiries.length}
                     onChange={toggleSelectAll}
-                    className="w-4 h-4 cursor-pointer"
+                    className="w-4 h-4 cursor-pointer accent-indigo-600 rounded"
                   />
                 </th>
-                <th className="p-4 w-12 text-center" title="Responded">RSP</th>
-                <th className="p-4 w-48">Name & Date</th>
-                <th className="p-4 w-40">Phone</th>
-                <th className="p-4 w-32">Status</th>
-                <th className="p-4 w-16 text-center">Actions</th>
+                <th className="px-4 py-4 w-12 text-center" title="Responded">RSP</th>
+                <th className="px-4 py-4 w-48">Name & Date</th>
+                <th className="px-4 py-4 w-40">Phone</th>
+                <th className="px-4 py-4 w-32">Status</th>
+                <th className="px-4 py-4 w-16 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="text-sm">
@@ -453,48 +474,48 @@ export default function InquiriesPage() {
                   return (
                     <React.Fragment key={inq.id}>
                       {/* --- MAIN COMPACT ROW --- */}
-                      <tr className={`border-b border-border/50 transition-colors ${isSelected ? 'bg-primary/5' : meta.responded ? 'bg-green-500/5' : 'hover:bg-muted/10'} ${!meta.seen ? 'font-bold' : ''}`}>
+                      <tr className={`border-b border-gray-200 transition-colors hover:bg-gray-50/80 group ${isSelected ? 'bg-indigo-50/40' : meta.responded ? 'bg-emerald-50/30' : 'bg-white'} ${!meta.seen ? 'font-extrabold' : ''}`}>
                         
-                        <td className="p-4 text-center">
+                        <td className="px-4 py-3 text-center">
                           <input 
                             type="checkbox" 
                             checked={isSelected}
                             onChange={() => toggleSelect(inq.id)}
-                            className="w-4 h-4 cursor-pointer"
+                            className="w-4 h-4 cursor-pointer accent-indigo-600 rounded"
                           />
                         </td>
 
-                        <td className="p-4 text-center">
+                        <td className="px-4 py-3 text-center">
                           <button 
                             onClick={() => toggleResponded(inq.id, !!meta.responded)}
-                            className={`w-6 h-6 rounded flex items-center justify-center border transition-all ${meta.responded ? 'bg-green-500 border-green-500 text-white' : 'bg-background border-border/80 hover:border-primary text-transparent'}`}
+                            className={`w-6 h-6 rounded flex items-center justify-center border transition-all shadow-sm ${meta.responded ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-gray-300 hover:border-indigo-400 text-transparent hover:text-indigo-100'}`}
                           >
                             <CheckSquare className="w-4 h-4" />
                           </button>
                         </td>
 
-                        <td className="p-4">
-                          <p className="font-bold text-foreground leading-tight">{inq.name}</p>
-                          <p className="text-[10px] text-foreground/50 uppercase font-bold mt-1">
+                        <td className="px-4 py-3">
+                          <p className="font-bold text-gray-900 leading-tight group-hover:text-indigo-600 transition-colors">{inq.name}</p>
+                          <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">
                             {inq.createdAt?.toDate ? inq.createdAt.toDate().toLocaleDateString() : 'New'}
                           </p>
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-foreground/80">{inq.phone}</span>
+                            <span className="text-xs font-bold text-gray-700">{inq.phone}</span>
                             <CopyButton text={inq.phone} />
                           </div>
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           <select 
                             value={inq.status}
                             onChange={(e) => updateStatus(inq.id, e.target.value)}
-                            className={`text-xs rounded-full px-3 py-1 font-bold outline-none cursor-pointer border ${
-                              inq.status === 'New' ? 'bg-destructive/10 text-destructive border-destructive/20' : 
-                              inq.status === 'Contacted' ? 'bg-amber-500/10 text-amber-700 border-amber-500/20' : 
-                              'bg-green-500/10 text-green-700 border-green-500/20'
+                            className={`text-xs rounded-lg px-3 py-1.5 font-bold outline-none cursor-pointer border appearance-none text-center transition-colors shadow-sm ${
+                              inq.status === 'New' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' : 
+                              inq.status === 'Contacted' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 
+                              'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                             }`}
                           >
                             <option value="New">New</option>
@@ -503,13 +524,13 @@ export default function InquiriesPage() {
                           </select>
                         </td>
 
-                        <td className="p-4 text-center">
+                        <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={() => deleteInquiries([inq.id])} className="p-1.5 hover:bg-destructive/10 text-foreground/40 hover:text-destructive rounded-md transition-colors" title="Delete">
+                            <button onClick={() => deleteInquiries([inq.id])} className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-md transition-colors" title="Delete">
                               <Trash2 className="w-4 h-4" />
                             </button>
-                            <button onClick={() => toggleExpand(inq.id, meta.note || "")} className="p-1.5 hover:bg-muted rounded-full transition-colors" title="Expand Details">
-                              {isExpanded ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-foreground/50 hover:text-primary" />}
+                            <button onClick={() => toggleExpand(inq.id, meta.note || "")} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors" title="Expand Details">
+                              {isExpanded ? <ChevronUp className="w-5 h-5 text-indigo-600" /> : <ChevronDown className="w-5 h-5 text-gray-400 hover:text-indigo-600" />}
                             </button>
                           </div>
                         </td>
@@ -518,20 +539,20 @@ export default function InquiriesPage() {
 
                       {/* --- EXPANDED DETAILS ACCORDION --- */}
                       {isExpanded && (
-                        <tr className="bg-muted/20 border-b border-border/80">
-                          <td colSpan={6} className="p-6">
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <td colSpan={6} className="px-6 py-5 shadow-inner">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
                               
                               {/* Read Only Details */}
-                              <div className="space-y-3 bg-card p-5 rounded-2xl border border-border/50 shadow-sm relative">
+                              <div className="space-y-3 bg-white p-5 rounded-2xl border border-gray-300 shadow-sm relative">
                                 {/* Captured IP Location Tag */}
                                 {inq.ipLocation && (
-                                  <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-md uppercase tracking-wide">
+                                  <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-1 rounded-md uppercase tracking-wide">
                                     <MapPin className="w-3 h-3" /> {inq.ipLocation}
                                   </div>
                                 )}
 
-                                <h4 className="font-bold text-xs uppercase tracking-wider text-foreground/50 border-b border-border/50 pb-2 mb-4">Student Information</h4>
+                                <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4">Student Information</h4>
                                 
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
@@ -562,26 +583,26 @@ export default function InquiriesPage() {
                                 </div>
 
                                 {inq.message && (
-                                  <div className="mt-4 pt-4 border-t border-border/50">
-                                    <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-2">Message</span>
-                                    <p className="text-sm italic bg-muted/50 p-3 rounded-lg border border-border/50 text-foreground/80">"{inq.message}"</p>
+                                  <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Message</span>
+                                    <p className="text-sm italic bg-gray-50 p-3 rounded-lg border border-gray-200 text-gray-700">"{inq.message}"</p>
                                   </div>
                                 )}
                               </div>
 
-                              {/* Private RTDB Note */}
-                              <div className="flex flex-col bg-card p-5 rounded-2xl border border-border/50 shadow-sm">
-                                <h4 className="font-bold text-xs uppercase tracking-wider text-foreground/50 border-b border-border/50 pb-2 mb-4">Private Note (Saved in RTDB)</h4>
+                                {/* Private RTDB Note */}
+                              <div className="flex flex-col bg-white p-5 rounded-2xl border border-gray-300 shadow-sm">
+                                <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4">Private Note (Saved in RTDB)</h4>
                                 <textarea
                                   value={activeNoteText}
                                   onChange={(e) => setActiveNoteText(e.target.value)}
                                   placeholder="Add a quick internal note about this student..."
-                                  className="flex-1 w-full bg-muted/30 border border-border/50 rounded-xl p-4 text-sm focus:outline-none focus:border-primary resize-none mb-4"
+                                  className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none mb-4 transition-shadow"
                                 />
                                 <button 
                                   onClick={() => saveNote(inq.id)}
                                   disabled={savingNoteId === inq.id}
-                                  className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground font-bold py-3 rounded-xl shadow-sm hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50"
+                                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-sm hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50"
                                 >
                                   {savingNoteId === inq.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                                   Save Note

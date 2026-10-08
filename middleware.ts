@@ -10,11 +10,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const isApiRoute = pathname.startsWith("/api/");
   const sessionCookie = request.cookies.get(COOKIE_NAME)?.value;
   const redirectUrl = new URL("/admin/login", request.url);
   redirectUrl.searchParams.set("redirect", pathname);
 
   if (!sessionCookie) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -32,7 +36,13 @@ export async function middleware(request: NextRequest) {
     console.error("Middleware fetch error", error);
   }
 
-  const response = NextResponse.redirect(redirectUrl);
+  let response: NextResponse;
+  if (isApiRoute) {
+    response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } else {
+    response = NextResponse.redirect(redirectUrl);
+  }
+  
   response.cookies.set({
     name: COOKIE_NAME,
     value: "",
@@ -47,5 +57,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };

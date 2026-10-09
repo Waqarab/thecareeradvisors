@@ -16,6 +16,25 @@ import { useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
+function generateSecureId(): string {
+  // Preferred: crypto.randomUUID (available in all modern browsers over HTTPS and localhost)
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  // Fallback: crypto.getRandomValues — also cryptographically secure, works on older browsers
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  // Last resort: Math.random — not cryptographically secure, but the case is essentially unreachable
+  // in any real browser. Still, avoid Date.now() which is trivially predictable.
+  const random = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  return `fallback_${random}`;
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -55,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     let sessionId = localStorage.getItem("admin_session_id");
     
     if (!sessionId) {
-      sessionId = crypto.randomUUID ? crypto.randomUUID() : `sess_${Date.now()}`;
+      sessionId = generateSecureId();
       localStorage.setItem("admin_session_id", sessionId);
     }
 
@@ -64,7 +83,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     set(sessionRef, {
       email: user.email,
       device: navigator.userAgent,
-      loginTime: Date.now()
+      loginTime: Date.now(),
+      uid: user.uid
     }).catch(err => console.error("Session setup error:", err));
 
     onDisconnect(sessionRef).remove();

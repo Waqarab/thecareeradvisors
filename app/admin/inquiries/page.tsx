@@ -99,8 +99,13 @@ function ExportModal({
     // Helper to safely escape CSV cell data (handles commas and quotes)
     const escapeCsv = (val: any) => {
       if (val === null || val === undefined) return '""';
-      const str = String(val).replace(/"/g, '""'); // Escape double quotes
-      return `"${str}"`; // Wrap in double quotes
+      let str = String(val);
+      // Neutralize formula injection: Excel/Sheets treat these as formula starters
+      if (/^[=+\-@\t\r]/.test(str)) {
+        str = "'" + str;
+      }
+      str = str.replace(/"/g, '""');
+      return `"${str}"`;
     };
 
     const csvRows = [];

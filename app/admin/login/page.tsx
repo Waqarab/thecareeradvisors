@@ -24,7 +24,6 @@ export default function AdminLogin() {
   // 3. Repeat.
 
   const handleLogin = async (e: React.FormEvent) => {
-    console.log("A: handleLogin fired");
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -32,18 +31,15 @@ export default function AdminLogin() {
     try {
       const auth = getAuth(app);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("B: firebase login ok, uid:", userCredential.user.uid);
       
       const idToken = await userCredential.user.getIdToken(true);
       
-      console.log("C: calling /api/auth/session");
       const res = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken })
       });
 
-      console.log("D: response status:", res.status);
       if (!res.ok) {
         const rawBody = await res.text();
         console.error("[LOGIN] server raw response:", rawBody);
@@ -75,8 +71,6 @@ export default function AdminLogin() {
   };
 
   if (loading) return null; // Prevent flicker while checking auth
-
-  console.log("LOGIN PAGE RENDERED");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-gray-100 to-gray-200 p-4">

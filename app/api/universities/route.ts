@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { unstable_cache } from "next/cache";
 
 const getCachedUniversities = unstable_cache(
   async () => {
-    const querySnapshot = await getDocs(collection(db, "universities"));
+    const q = query(collection(db, "universities"), where("isHidden", "==", false));
+    const querySnapshot = await getDocs(q);
     const data: any[] = [];
     
     querySnapshot.forEach((doc) => {

@@ -148,11 +148,21 @@ export default function AdminSettings() {
     }
   };
 
-  const handleRevokeDevice = async (sessionId: string) => {
-    if (!(await confirmAction("Revoke Session", "Kick this device out of the admin panel?", { isDestructive: true, confirmText: "Kick out" }))) return;
+  const handleRevokeDevice = async (sessionId: string, sessionUid: string) => {
+    if (!(await confirmAction("Sign out", "Sign this user out of ALL their devices? They will need to log in again.", { isDestructive: true, confirmText: "Sign out" }))) return;
     try {
-      await remove(ref(getDatabase(app), `admin_sessions/${sessionId}`));
-      toast.success("Device revoked. They will be logged out instantly.");
+      const idToken = await user?.getIdToken();
+      const res = await fetch("/api/admin/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+        body: JSON.stringify({ uid: sessionUid })
+      });
+      if (res.ok) {
+        await remove(ref(getDatabase(app), `admin_sessions/${sessionId}`));
+        toast.success("User revoked. They will be signed out within ~60 seconds.");
+      } else {
+        toast.error("Failed to revoke session.");
+      }
     } catch (error) {
       toast.error("Failed to revoke device.");
     }
@@ -163,10 +173,20 @@ export default function AdminSettings() {
     try {
       const currentSessionId = localStorage.getItem("admin_session_id");
       const rtdb = getDatabase(app);
+      const idToken = await user?.getIdToken();
       
       const promises = activeSessions
         .filter(session => session.id !== currentSessionId)
-        .map(session => remove(ref(rtdb, `admin_sessions/${session.id}`)));
+        .map(async (session) => {
+          if (session.uid) {
+            await fetch("/api/admin/revoke", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+              body: JSON.stringify({ uid: session.uid })
+            });
+          }
+          return remove(ref(rtdb, `admin_sessions/${session.id}`));
+        });
         
       await Promise.all(promises);
       toast.success("All other devices have been revoked.");
@@ -368,10 +388,10 @@ export default function AdminSettings() {
                     
                     {!isCurrentSession && (
                       <button 
-                        onClick={() => handleRevokeDevice(session.id)}
+                        onClick={() => handleRevokeDevice(session.id, session.uid)}
                         className="text-xs font-bold text-destructive bg-destructive/10 hover:bg-destructive hover:text-white px-3 py-1.5 rounded-lg transition-all"
                       >
-                        Revoke
+                        Sign out all devices
                       </button>
                     )}
                   </div>

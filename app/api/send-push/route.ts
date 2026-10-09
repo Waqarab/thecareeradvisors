@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { admin } from "@/lib/firebase-admin";
 import { requireSuperAdmin, rateLimit, getOrCreateBrowserId } from "@/lib/api-auth";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   let finalSetCookie: string | null = null;
   try {

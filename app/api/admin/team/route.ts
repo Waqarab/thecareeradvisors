@@ -4,22 +4,25 @@ import { getAuth } from "firebase-admin/auth";
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 
 import { admin } from "@/lib/firebase-admin";
-import { requireSuperAdmin, rateLimit, getOrCreateBrowserId } from "@/lib/api-auth";
+import { requireSuperAdmin, getClientIp, rateLimitByIp } from "@/lib/api-auth";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  let finalSetCookie: string | null = null;
   try {
     const authSession = await requireSuperAdmin(req);
     if (authSession instanceof NextResponse) return authSession;
 
-    const { id: browserId, setCookie } = getOrCreateBrowserId(req);
-    finalSetCookie = setCookie;
-
-    const rl = await rateLimit.check(browserId, "admin_team_1min", 10, 60 * 1000);
+    const ip = getClientIp(req);
+    const rl = await rateLimitByIp.check(ip, "admin_team_write_1min", 10, 60 * 1000);
     if (!rl.success) {
-      return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a minute." }, 
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
     }
-    await rateLimit.commit(browserId, "admin_team_1min", 60 * 1000);
+    await rateLimitByIp.commit(ip, "admin_team_write_1min", 60 * 1000);
 
     const auth = getAuth();
 
@@ -27,11 +30,11 @@ export async function POST(req: NextRequest) {
     const { email, password } = await req.json();
 
     if (!email || !password || password.length < 8) {
-      return NextResponse.json({ error: "Invalid data. Password must be at least 8 characters." }, { status: 400, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      return NextResponse.json({ error: "Invalid data. Password must be at least 8 characters." }, { status: 400 });
     }
 
     if (email === SUPER_ADMIN_EMAIL) {
-      return NextResponse.json({ error: "Cannot modify super admin from this panel." }, { status: 403, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      return NextResponse.json({ error: "Cannot modify super admin from this panel." }, { status: 403 });
     }
     
     const listUsersResult = await auth.listUsers(10);
@@ -39,33 +42,39 @@ export async function POST(req: NextRequest) {
     const userExists = existingUsers.find(u => u.email === email);
 
     if (!userExists && existingUsers.length >= 4) {
-      return NextResponse.json({ error: "Maximum limit of 3 team members reached." }, { status: 403, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      return NextResponse.json({ error: "Maximum limit of 3 team members reached." }, { status: 403 });
     }
 
     if (userExists) {
       await auth.updateUser(userExists.uid, { password });
       await auth.setCustomUserClaims(userExists.uid, { admin: true });
-      return NextResponse.json({ message: "Password updated successfully!" }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      return NextResponse.json({ message: "Password updated successfully!" });
     } else {
       const newUser = await auth.createUser({ email, password, emailVerified: true });
       await auth.setCustomUserClaims(newUser.uid, { admin: true });
-      return NextResponse.json({ message: "New team member created successfully!" }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      return NextResponse.json({ message: "New team member created successfully!" });
     }
 
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ error: "Server Error or Invalid Token" }, { status: 500, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    return NextResponse.json({ error: "Server Error or Invalid Token" }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
-  let finalSetCookie: string | null = null;
   try {
     const authSession = await requireSuperAdmin(req);
     if (authSession instanceof NextResponse) return authSession;
 
-    const { id: browserId, setCookie } = getOrCreateBrowserId(req);
-    finalSetCookie = setCookie;
+    const ip = getClientIp(req);
+    const rl = await rateLimitByIp.check(ip, "admin_team_read_1min", 30, 60 * 1000);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a minute." }, 
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
+    await rateLimitByIp.commit(ip, "admin_team_read_1min", 60 * 1000);
 
     const auth = getAuth();
     const listUsersResult = await auth.listUsers(10);
@@ -74,33 +83,39 @@ export async function GET(req: NextRequest) {
       .filter(u => u.email !== SUPER_ADMIN_EMAIL)
       .map(u => ({ uid: u.uid, email: u.email, createdAt: u.metadata.creationTime }));
 
-    return NextResponse.json({ users }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    return NextResponse.json({ users });
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ error: "Server Error" }, { status: 500, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  let finalSetCookie: string | null = null;
   try {
     const authSession = await requireSuperAdmin(req);
     if (authSession instanceof NextResponse) return authSession;
 
-    const { id: browserId, setCookie } = getOrCreateBrowserId(req);
-    finalSetCookie = setCookie;
+    const ip = getClientIp(req);
+    const rl = await rateLimitByIp.check(ip, "admin_team_write_1min", 10, 60 * 1000);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a minute." }, 
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
+    await rateLimitByIp.commit(ip, "admin_team_write_1min", 60 * 1000);
 
     const { uid } = await req.json();
     if (!uid) {
-      return NextResponse.json({ error: "UID required." }, { status: 400, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+      return NextResponse.json({ error: "UID required." }, { status: 400 });
     }
 
     const auth = getAuth();
     await auth.deleteUser(uid);
 
-    return NextResponse.json({ message: "Team member removed." }, { headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    return NextResponse.json({ message: "Team member removed." });
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ error: "Server Error" }, { status: 500, headers: { ...(finalSetCookie ? { "Set-Cookie": finalSetCookie } : {}) } });
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }

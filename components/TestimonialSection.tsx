@@ -102,11 +102,11 @@ export default function TestimonialSection() {
   };
 
   return (
-    <section id="testimonials" className="py-12 md:py-20 lg:py-28 bg-background relative overflow-hidden border-t border-border/40">
+    <section id="testimonials" className="py-12 md:py-16 bg-slate-50 relative overflow-hidden">
       
       {/* Background Blobs */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/50 rounded-full blur-[100px] pointer-events-none -z-10" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-100/50 rounded-full blur-[100px] pointer-events-none -z-10" />
 
       <div className="container mx-auto px-4 md:px-8 max-w-7xl relative z-10">
         
@@ -118,25 +118,25 @@ export default function TestimonialSection() {
           <div className="lg:col-span-6 flex flex-col justify-center h-full pb-8 lg:pb-0">
             
             <div className="text-center lg:text-left mb-8">
-              <span className="text-primary font-bold tracking-wider uppercase text-xs md:text-sm mb-3 block">
+              <span className="text-orange-500 font-bold tracking-wider uppercase text-xs md:text-sm mb-3 block">
                 Verified Placements
               </span>
               
-              <h2 className="text-4xl md:text-5xl lg:text-[54px] font-black font-heading leading-[1.1] mb-4">
+              <h2 className="text-4xl md:text-5xl lg:text-[54px] font-black font-heading leading-[1.1] mb-4 text-gray-900">
                 Real Students.<br />
-                <span className="text-primary relative inline-block mt-1">
+                <span className="text-blue-600 relative inline-block mt-1">
                   Real Results.
                   <motion.span 
                     initial={{ width: 0 }} 
                     whileInView={{ width: "100%" }} 
                     viewport={{ once: true }}
                     transition={{ duration: 0.7, delay: 0.2 }}
-                    className="absolute left-0 bottom-1 h-2 bg-primary/20 -z-10 rounded-sm"
+                    className="absolute left-0 bottom-1 h-2 bg-blue-100 -z-10 rounded-sm"
                   />
                 </span>
               </h2>
               
-              <p className="text-foreground/70 text-base md:text-lg leading-relaxed max-w-md mx-auto lg:mx-0">
+              <p className="text-gray-600 text-base md:text-lg leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">
                 Don't just take our word for it. Join hundreds of students who trusted us with their medical careers.
               </p>
             </div>
@@ -153,22 +153,22 @@ export default function TestimonialSection() {
                     transition={{ duration: 0.3 }}
                     className="w-full"
                   >
-                    <div className="bg-card/80 backdrop-blur-sm rounded-3xl shadow-sm hover:shadow-md transition-shadow border border-border/50 flex flex-col p-6 md:p-8 relative overflow-hidden">
-                      <Quote className="absolute -top-2 -right-2 w-20 h-20 text-primary/5 -z-0 rotate-180" />
+                    <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col p-6 md:p-8 relative overflow-hidden">
+                      <Quote className="absolute -top-2 -right-2 w-20 h-20 text-blue-50 -z-0 rotate-180" />
                       
-                      <p className="text-base md:text-lg text-foreground/90 font-medium leading-relaxed relative z-10">
+                      <p className="text-base md:text-lg text-gray-800 font-medium leading-relaxed relative z-10 italic">
                         "{textTestimonials[textIndex].text}"
                       </p>
 
-                      <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/40 relative z-10">
-                        <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-muted border-2 border-background shadow-sm">
+                      <div className="flex items-center gap-4 mt-6 pt-4 border-t border-gray-100 relative z-10">
+                        <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-gray-100 border-2 border-white shadow-sm">
                           <img src={textTestimonials[textIndex].img} alt="Student" className="w-full h-full object-cover blur-[0.5px]" onError={(e) => e.currentTarget.style.display = 'none'} />
                         </div>
                         <div>
-                          <h4 className="font-bold font-heading flex items-center gap-1.5 text-base leading-none text-foreground">
+                          <h4 className="font-bold font-heading flex items-center gap-1.5 text-base leading-none text-gray-900">
                             {textTestimonials[textIndex].name} <BadgeCheck className="w-4 h-4 fill-blue-500 text-white" />
                           </h4>
-                          <p className="text-xs text-foreground/60 font-medium mt-1">@{textTestimonials[textIndex].handle}</p>
+                          <p className="text-xs text-gray-500 font-medium mt-1">@{textTestimonials[textIndex].handle}</p>
                         </div>
                       </div>
                     </div>
@@ -191,7 +191,7 @@ export default function TestimonialSection() {
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
                     </div>
-                    <p className="text-xs font-bold text-foreground/80 font-heading">
+                    <p className="text-xs font-bold text-gray-800 font-heading">
                       4.9/5 on Google
                     </p>
                   </div>
@@ -199,10 +199,10 @@ export default function TestimonialSection() {
 
                 {/* Arrows */}
                 <div className="flex items-center gap-2">
-                  <button onClick={prevText} className="w-9 h-9 rounded-full bg-background border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all active:scale-90">
+                  <button onClick={prevText} className="w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all active:scale-90">
                     <ChevronLeft className="w-4 h-4 -ml-0.5" />
                   </button>
-                  <button onClick={nextText} className="w-9 h-9 rounded-full bg-background border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all active:scale-90">
+                  <button onClick={nextText} className="w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all active:scale-90">
                     <ChevronRight className="w-4 h-4 -mr-0.5" />
                   </button>
                 </div>
@@ -224,7 +224,7 @@ export default function TestimonialSection() {
             <div className="flex items-center justify-center relative w-full max-w-[280px] md:max-w-[340px] mx-auto">
               
               {/* Left Video Arrow */}
-              <button onClick={prevVid} className="absolute -left-12 md:-left-16 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background/90 md:bg-background border border-border shadow-md flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 backdrop-blur-md md:backdrop-blur-none">
+              <button onClick={prevVid} className="absolute -left-12 md:-left-16 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all active:scale-90">
                 <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 -ml-0.5" />
               </button>
 
@@ -243,7 +243,7 @@ export default function TestimonialSection() {
                     {/* PLAY BUTTON OVERLAY */}
                     {!isPlaying && (
                       <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 pointer-events-none transition-all duration-300">
-                        <div className="w-14 h-14 md:w-16 md:h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-2xl scale-100 group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-14 h-14 md:w-16 md:h-16 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl scale-100 group-hover:scale-110 transition-transform duration-300">
                           <Play className="w-6 h-6 md:w-8 md:h-8 ml-1 fill-current" />
                         </div>
                       </div>
@@ -282,7 +282,7 @@ export default function TestimonialSection() {
               </div>
 
               {/* Right Video Arrow */}
-              <button onClick={nextVid} className="absolute -right-12 md:-right-16 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background/90 md:bg-background border border-border shadow-md flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-90 backdrop-blur-md md:backdrop-blur-none">
+              <button onClick={nextVid} className="absolute -right-12 md:-right-16 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all active:scale-90">
                 <ChevronRight className="w-5 h-5 md:w-6 md:h-6 -mr-0.5" />
               </button>
 
@@ -294,7 +294,7 @@ export default function TestimonialSection() {
                 <button
                   key={idx}
                   onClick={() => setVidIndex(idx)}
-                  className={`h-2 rounded-full transition-all duration-300 ${idx === vidIndex ? "w-6 bg-primary" : "w-2 bg-primary/20 hover:bg-primary/50"}`}
+                  className={`h-2 rounded-full transition-all duration-300 ${idx === vidIndex ? "w-6 bg-orange-500" : "w-2 bg-gray-300 hover:bg-gray-400"}`}
                 />
               ))}
             </div>

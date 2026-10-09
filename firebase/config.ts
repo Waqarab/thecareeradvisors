@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-/*import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";*/
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,14 +17,26 @@ const db = getFirestore(app);
 
 // 2. Initialize App Check (ONLY on client side AND ONLY in Production)
 if (typeof window !== "undefined") {
-  
-  // Hard kill-switch: If we are on localhost, DO NOT run App Check.
-  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const hasDebugToken = !!process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN;
+
+  if (!isLocalhost || hasDebugToken) {
     try {
-      /*initializeAppCheck(app, {
+      if (!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
+        console.warn("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not defined");
+      }
+      
+      if (isLocalhost && hasDebugToken) {
+        (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN =
+          process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN === "true"
+            ? true
+            : process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN;
+      }
+
+      initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string),
         isTokenAutoRefreshEnabled: true 
-      });*/
+      });
     } catch (e) {
       console.warn("App Check initialization error:", e);
     }

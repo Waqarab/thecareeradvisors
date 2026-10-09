@@ -19,6 +19,10 @@
       ".read": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)",
       ".write": "auth != null && (auth.token.email === 'superadmintcagroup786@gmail.com' || auth.token.admin === true)"
     },
+    "rate_limits": {
+      ".read": false,
+      ".write": false
+    },
     ".read": false,
     ".write": false
   }

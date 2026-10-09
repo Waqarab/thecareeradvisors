@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,16 +16,59 @@ import { db } from "@/firebase/config";
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
   email: z.string().email({ message: "Valid email is required" }),
-  phone: z.string().min(10, { message: "Valid phone number required" }),
+  phone: z.string().min(8).max(20).regex(/^\+\d{7,15}$/, { message: "Valid phone number required" }),
   neetScore: z.string().optional(),
   preferredCountry: z.string().min(2, { message: "Required" }),
   message: z.string().optional(),
   isUnder18: z.enum(["Yes", "No"], { required_error: "Please select an option", invalid_type_error: "Please select an option" } as any),
+  guardianName: z.string().optional(),
+  guardianPhone: z.string().optional(),
   agreeToTerms: z.boolean().refine(val => val === true, { message: "You must agree to the Terms & Privacy Policy" }),
   consentMarketing: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (data.isUnder18 === "Yes") {
+    if (!data.guardianName || data.guardianName.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["guardianName"],
+        message: "Guardian Name is required",
+      });
+    }
+    if (!data.guardianPhone || !/^\+\d{7,15}$/.test(data.guardianPhone)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["guardianPhone"],
+        message: "Valid Guardian Phone is required",
+      });
+    }
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const COUNTRY_CODES = [
+  { code: "+91", label: "🇮🇳 +91" },
+  { code: "+1", label: "🇺🇸 +1" },
+  { code: "+44", label: "🇬🇧 +44" },
+  { code: "+61", label: "🇦🇺 +61" },
+  { code: "+971", label: "🇦🇪 +971" },
+  { code: "+966", label: "🇸🇦 +966" },
+  { code: "+974", label: "🇶🇦 +974" },
+  { code: "+965", label: "🇰🇼 +965" },
+  { code: "+973", label: "🇧🇭 +973" },
+  { code: "+968", label: "🇴🇲 +968" },
+  { code: "+92", label: "🇵🇰 +92" },
+  { code: "+880", label: "🇧🇩 +880" },
+  { code: "+977", label: "🇳🇵 +977" },
+  { code: "+94", label: "🇱🇰 +94" },
+  { code: "+20", label: "🇪🇬 +20" },
+  { code: "+7", label: "🇷🇺 +7" },
+  { code: "+998", label: "🇺🇿 +998" },
+  { code: "+995", label: "🇬🇪 +995" },
+  { code: "+996", label: "🇰🇬 +996" },
+  { code: "+992", label: "🇹🇯 +992" },
+  { code: "+86", label: "🇨🇳 +86" },
+];
 
 const neetRanges = ["Below 200", "200 - 300", "300 - 400", "400 - 500", "500 - 600", "600+", "Yet to appear"];
 const countryOptions = ["Russia", "Kazakhstan", "Bangladesh", "Kyrgyzstan", "Georgia", "Uzbekistan", "Nepal", "Egypt"];
@@ -33,6 +76,10 @@ const countryOptions = ["Russia", "Kazakhstan", "Bangladesh", "Kyrgyzstan", "Geo
 export default function InquirySection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [phoneCode, setPhoneCode] = useState("+91");
+  const [phoneLocal, setPhoneLocal] = useState("");
+  const [guardianPhoneCode, setGuardianPhoneCode] = useState("+91");
+  const [guardianPhoneLocal, setGuardianPhoneLocal] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -44,10 +91,22 @@ export default function InquirySection() {
       neetScore: "",
       message: "",
       isUnder18: undefined as any,
+      guardianName: "",
+      guardianPhone: "",
       agreeToTerms: false,
       consentMarketing: false,
     },
   });
+
+  const isUnder18Value = form.watch("isUnder18");
+
+  useEffect(() => {
+    form.setValue("phone", phoneLocal ? `${phoneCode}${phoneLocal}` : "", { shouldValidate: true });
+  }, [phoneCode, phoneLocal, form]);
+
+  useEffect(() => {
+    form.setValue("guardianPhone", guardianPhoneLocal ? `${guardianPhoneCode}${guardianPhoneLocal}` : "", { shouldValidate: true });
+  }, [guardianPhoneCode, guardianPhoneLocal, form]);
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -71,6 +130,10 @@ export default function InquirySection() {
 
       setIsSuccess(true);
       form.reset();
+      setPhoneCode("+91");
+      setPhoneLocal("");
+      setGuardianPhoneCode("+91");
+      setGuardianPhoneLocal("");
       
       setTimeout(() => {
         setIsSuccess(false);
@@ -155,7 +218,31 @@ export default function InquirySection() {
                     </div>
                     <div className="space-y-1.5">
                       <label htmlFor="phone" className="text-xs font-bold text-[#0f7573]">Phone Number *</label>
-                      <Input id="phone" type="tel" placeholder="+91 XXXXX XXXXX" className="bg-white border-[#cad5e2] focus:border-[#0f7573] h-11 rounded-xl text-[#2a3b4c] font-medium placeholder:text-[#90a1b9] placeholder:font-normal shadow-sm" {...form.register("phone")} />
+                      <div className="flex gap-2">
+                        <select
+                          value={phoneCode}
+                          onChange={(e) => setPhoneCode(e.target.value)}
+                          className="bg-[#F4F7F8] rounded-xl border border-[#AEC6CF]/40 px-3 py-2 text-sm font-medium text-[#1A2E44] focus:border-[#6082B6] focus-visible:ring-1 focus-visible:ring-[#6082B6]/50 cursor-pointer"
+                        >
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={c.code} value={c.code}>{c.label}</option>
+                          ))}
+                        </select>
+
+                        <Input
+                          id="phone"
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder="9876543210"
+                          maxLength={15}
+                          className="bg-white border-[#cad5e2] focus:border-[#0f7573] h-11 rounded-xl text-[#2a3b4c] font-medium placeholder:text-[#90a1b9] placeholder:font-normal shadow-sm"
+                          value={phoneLocal}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "");
+                            setPhoneLocal(digits);
+                          }}
+                        />
+                      </div>
                       {form.formState.errors.phone && <p className="text-[10px] text-red-500 font-semibold leading-tight">{form.formState.errors.phone.message}</p>}
                     </div>
                   </div>
@@ -225,6 +312,45 @@ export default function InquirySection() {
                       />
                       {form.formState.errors.isUnder18 && <p className="text-[10px] text-red-500 font-semibold leading-tight">{form.formState.errors.isUnder18.message}</p>}
                     </div>
+                    
+                    {isUnder18Value === "Yes" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div className="space-y-1.5">
+                          <label htmlFor="guardianName" className="text-xs font-bold text-[#0f7573]">Guardian Name *</label>
+                          <Input id="guardianName" placeholder="Guardian Name" className="bg-white border-[#cad5e2] focus:border-[#0f7573] h-11 rounded-xl text-[#2a3b4c] font-medium placeholder:text-[#90a1b9] placeholder:font-normal shadow-sm" {...form.register("guardianName")} />
+                          {form.formState.errors.guardianName && <p className="text-[10px] text-red-500 font-semibold leading-tight">{form.formState.errors.guardianName.message}</p>}
+                        </div>
+                        <div className="space-y-1.5">
+                          <label htmlFor="guardianPhone" className="text-xs font-bold text-[#0f7573]">Guardian Phone *</label>
+                          <div className="flex gap-2">
+                            <select
+                              value={guardianPhoneCode}
+                              onChange={(e) => setGuardianPhoneCode(e.target.value)}
+                              className="bg-[#F4F7F8] rounded-xl border border-[#AEC6CF]/40 px-3 py-2 text-sm font-medium text-[#1A2E44] focus:border-[#6082B6] focus-visible:ring-1 focus-visible:ring-[#6082B6]/50 cursor-pointer"
+                            >
+                              {COUNTRY_CODES.map((c) => (
+                                <option key={c.code} value={c.code}>{c.label}</option>
+                              ))}
+                            </select>
+
+                            <Input
+                              id="guardianPhone"
+                              type="tel"
+                              inputMode="numeric"
+                              placeholder="9876543210"
+                              maxLength={15}
+                              className="bg-white border-[#cad5e2] focus:border-[#0f7573] h-11 rounded-xl text-[#2a3b4c] font-medium placeholder:text-[#90a1b9] placeholder:font-normal shadow-sm"
+                              value={guardianPhoneLocal}
+                              onChange={(e) => {
+                                const digits = e.target.value.replace(/\D/g, "");
+                                setGuardianPhoneLocal(digits);
+                              }}
+                            />
+                          </div>
+                          {form.formState.errors.guardianPhone && <p className="text-[10px] text-red-500 font-semibold leading-tight">{form.formState.errors.guardianPhone.message}</p>}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <Controller

@@ -1,48 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  verifySessionCookieEdge,
+  isAdminPayload,
+  type SessionPayload,
+} from "@/lib/verify-session-edge";
 
-const COOKIE_NAME = process.env.NODE_ENV === "production" ? "__Host-tca_session" : "tca_session";
+const COOKIE_NAME =
+  process.env.NODE_ENV === "production" ? "__Host-tca_session" : "tca_session";
+const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (pathname === "/admin/login") {
-    return NextResponse.next();
-  }
-
-  const isApiRoute = pathname.startsWith("/api/");
-  const sessionCookie = request.cookies.get(COOKIE_NAME)?.value;
+function redirectToLogin(request: NextRequest): NextResponse {
   const redirectUrl = new URL("/admin/login", request.url);
-  redirectUrl.searchParams.set("redirect", pathname);
+  redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
 
-  if (!sessionCookie) {
-    if (isApiRoute) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  try {
-    const verifyRes = await fetch(new URL("/api/auth/verify", request.url), {
-      headers: { cookie: request.headers.get("cookie") || "" },
-      cache: "no-store",
-    });
-
-    if (verifyRes.ok) {
-      const data = await verifyRes.json();
-      if (data.valid) return NextResponse.next();
-    }
-  } catch (error) {
-    console.error("Middleware fetch error", error);
-  }
-
-  let response: NextResponse;
-  if (isApiRoute) {
-    response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  } else {
-    response = NextResponse.redirect(redirectUrl);
-  }
-  
+  const response = NextResponse.redirect(redirectUrl);
   response.cookies.set({
     name: COOKIE_NAME,
     value: "",
@@ -52,10 +24,37 @@ export async function middleware(request: NextRequest) {
     path: "/",
     sameSite: "lax",
   });
-  
+
   return response;
 }
 
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
+  const sessionCookie = request.cookies.get(COOKIE_NAME)?.value;
+  if (!sessionCookie) {
+    return redirectToLogin(request);
+  }
+
+  let payload: SessionPayload;
+  try {
+    payload = await verifySessionCookieEdge(sessionCookie);
+  } catch {
+    // Invalid signature, expired, wrong issuer/audience, malformed, etc.
+    return redirectToLogin(request);
+  }
+
+  if (!isAdminPayload(payload, SUPER_ADMIN_EMAIL)) {
+    return redirectToLogin(request);
+  }
+
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*"],
 };

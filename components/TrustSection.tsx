@@ -52,13 +52,13 @@ export default function TrustSection() {
   };
 
   return (
-    <section className="pt-4 pb-20 md:pt-8 md:pb-24 bg-gray-50 overflow-hidden font-sans relative">
+    <section className="py-10 md:py-16 bg-gray-50 overflow-hidden font-sans relative">
       {/* Subtle Background Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[500px] bg-gradient-to-b from-blue-100/30 to-transparent pointer-events-none"></div>
       <div className="container mx-auto px-4 md:px-8 max-w-7xl">
         
         {/* --- TOP AREA: HEADINGS --- */}
-        <div className="flex flex-col items-center text-center mb-12 lg:mb-16 relative z-10">
+        <div className="flex flex-col items-center text-center mb-8 lg:mb-12 relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -97,16 +97,16 @@ export default function TrustSection() {
         </div>
 
         {/* --- MIDDLE AREA: 2-COLUMN LAYOUT --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mb-16 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-10 items-stretch">
           
           {/* LEFT SIDE: TRUST VISUAL CARD */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-5 relative flex flex-col h-full min-h-[500px] group cursor-default"
+            className="lg:col-span-4 relative flex flex-col group cursor-default"
           >
-            <div className="bg-blue-600 rounded-[40px] pt-12 px-6 pb-24 relative overflow-hidden flex-1 flex flex-col justify-end shadow-lg group-hover:shadow-blue-600/20 group-hover:shadow-2xl transition-all duration-500">
+            <div className="bg-blue-600 rounded-[32px] pt-8 px-6 pb-20 relative overflow-hidden flex-1 flex flex-col justify-end shadow-lg group-hover:shadow-blue-600/20 group-hover:shadow-2xl transition-all duration-500 min-h-[350px]">
               
               {/* Decorative Airplane Dashed Path */}
               <svg className="absolute top-8 left-0 w-full h-32 opacity-30 text-white" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -114,7 +114,7 @@ export default function TrustSection() {
               </svg>
               
               {/* Family Placeholder Image - Replace src with your actual image path */}
-              <div className="relative z-10 w-full h-full min-h-[300px] mt-8">
+              <div className="relative z-10 w-full h-full min-h-[220px] mt-4">
                 {/* 
                   NOTE: Ensure you have a cropped PNG with a transparent background of a family here 
                   For now, leaving a placeholder div that mimics the space.
@@ -130,7 +130,7 @@ export default function TrustSection() {
             </div>
 
             {/* Orange Overlay Card */}
-            <div className="absolute -bottom-6 left-4 lg:left-8 bg-orange-500 rounded-3xl p-6 md:p-8 text-white w-[90%] shadow-xl border-4 border-gray-50 z-20 overflow-hidden group-hover:-translate-y-2 group-hover:shadow-orange-500/30 transition-all duration-500">
+            <div className="absolute -bottom-4 left-4 lg:left-6 bg-orange-500 rounded-2xl p-5 md:p-6 text-white w-[90%] shadow-xl border-4 border-gray-50 z-20 overflow-hidden group-hover:-translate-y-2 group-hover:shadow-orange-500/30 transition-all duration-500">
               {/* Floating Star Badge */}
               <div className="absolute -top-4 -left-4 bg-gray-50 rounded-full p-1.5 shadow-sm">
                 <div className="bg-orange-500 rounded-full p-2">
@@ -145,8 +145,8 @@ export default function TrustSection() {
               </div>
               <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-white/40 rounded-br-xl"></div>
 
-              <h3 className="text-xl md:text-2xl font-bold mb-2 leading-tight">Your Success,<br/>Our Commitment</h3>
-              <p className="text-white/90 text-sm font-medium leading-relaxed max-w-[250px]">
+              <h3 className="text-lg md:text-xl font-bold mb-1.5 leading-tight">Your Success,<br/>Our Commitment</h3>
+              <p className="text-white/90 text-xs font-medium leading-relaxed max-w-[200px]">
                 We're with you at every step, from dream to destination.
               </p>
             </div>
@@ -158,16 +158,16 @@ export default function TrustSection() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 lg:gap-6 mt-12 lg:mt-0"
+            className="lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 mt-8 lg:mt-0"
           >
             {reasons.map((r, i) => (
               <motion.div 
                 key={i} 
                 variants={cardVariants}
-                className="bg-white rounded-2xl sm:rounded-[24px] p-4 sm:p-6 lg:p-7 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-gray-200 flex flex-col items-center text-center hover:border-blue-400 hover:shadow-[0_15px_40px_-10px_rgba(30,64,175,0.2)] hover:bg-gradient-to-b hover:from-white hover:to-blue-50/50 hover:-translate-y-2 transition-all duration-300 group"
+                className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center hover:border-blue-400 hover:shadow-lg hover:bg-gradient-to-b hover:from-white hover:to-blue-50/50 hover:-translate-y-1 transition-all duration-300 group"
               >
                 {/* Circular Icon Wrapper - Alternating Colors */}
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-3 sm:mb-5 transition-transform duration-300 group-hover:scale-110 ${
+                <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mb-3 sm:mb-4 transition-transform duration-300 group-hover:scale-110 ${
                   i % 2 === 0 ? 'bg-blue-600' : 'bg-orange-500'
                 }`}>
                   <div className="relative w-6 h-6 sm:w-8 sm:h-8">
@@ -181,11 +181,11 @@ export default function TrustSection() {
                   </div>
                 </div>
                 
-                <h3 className="text-gray-900 font-bold text-sm sm:text-base lg:text-lg mb-1.5 sm:mb-3">
+                <h3 className="text-gray-900 font-bold text-sm sm:text-base lg:text-md mb-1.5 sm:mb-2">
                   {r.title}
                 </h3>
                 
-                <p className="text-gray-500 text-[10.5px] sm:text-xs lg:text-sm font-medium leading-tight sm:leading-relaxed">
+                <p className="text-gray-500 text-[10.5px] sm:text-xs font-medium leading-tight sm:leading-relaxed">
                   {r.desc}
                 </p>
               </motion.div>
@@ -198,7 +198,7 @@ export default function TrustSection() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-blue-600 rounded-[24px] md:rounded-full py-8 px-6 md:px-12 flex flex-col md:flex-row flex-wrap items-center justify-between gap-8 shadow-xl relative overflow-hidden"
+          className="bg-blue-600 rounded-[24px] md:rounded-3xl py-6 px-6 md:px-10 flex flex-col md:flex-row flex-wrap items-center justify-between gap-6 shadow-lg relative overflow-hidden"
         >
           {/* Subtle Decorative Airplane on Right */}
           <svg className="absolute right-0 bottom-0 opacity-10 text-white w-48 h-full" viewBox="0 0 100 100" preserveAspectRatio="none">

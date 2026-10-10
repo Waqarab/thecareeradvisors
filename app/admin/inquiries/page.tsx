@@ -7,18 +7,23 @@ import { db, app } from "@/firebase/config";
 import { Search, Loader2, Copy, Check, CheckSquare, ChevronDown, ChevronUp, Save, Trash2, MapPin, Download, X } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/use-confirm";
+import { usePermissions } from "@/context/PermissionsContext";
+import { Lock } from "lucide-react";
 
 interface Inquiry {
   id: string;
   name: string;
   phone: string;
   email?: string;
-  address?: string;
   message?: string;
   countries: string[];
   neetScore: string;
   status: string;
-  ipLocation?: string;
+  isUnder18?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  consentMarketing?: boolean;
+  source?: string;
   createdAt: any;
 }
 
@@ -56,13 +61,16 @@ function ExportModal({
     name: true,
     phone: true,
     email: true,
-    address: true,
-    countries: true,
     neetScore: true,
-    status: true,
-    ipLocation: true,
-    date: true,
+    countries: true,
     message: true,
+    isUnder18: true,
+    guardianName: true,
+    guardianPhone: true,
+    consentMarketing: true,
+    source: true,
+    date: true,
+    status: true,
     privateNote: true
   });
 
@@ -115,13 +123,16 @@ function ExportModal({
     if (columns.name) headers.push('Name');
     if (columns.phone) headers.push('Phone');
     if (columns.email) headers.push('Email');
-    if (columns.address) headers.push('Address');
-    if (columns.countries) headers.push('Preferred Countries');
     if (columns.neetScore) headers.push('NEET Score');
-    if (columns.status) headers.push('Status');
-    if (columns.ipLocation) headers.push('IP Location');
-    if (columns.date) headers.push('Date Received');
+    if (columns.countries) headers.push('Preferred Countries');
     if (columns.message) headers.push('Message');
+    if (columns.isUnder18) headers.push('Under 18');
+    if (columns.guardianName) headers.push('Guardian Name');
+    if (columns.guardianPhone) headers.push('Guardian Phone');
+    if (columns.consentMarketing) headers.push('Marketing Consent');
+    if (columns.source) headers.push('Source');
+    if (columns.date) headers.push('Date Received');
+    if (columns.status) headers.push('Status');
     if (columns.privateNote) headers.push('Private Note');
     csvRows.push(headers.join(','));
 
@@ -134,13 +145,16 @@ function ExportModal({
       if (columns.name) row.push(escapeCsv(inquiry.name));
       if (columns.phone) row.push(escapeCsv(inquiry.phone));
       if (columns.email) row.push(escapeCsv(inquiry.email));
-      if (columns.address) row.push(escapeCsv(inquiry.address));
-      if (columns.countries) row.push(escapeCsv(inquiry.countries?.join(', ')));
       if (columns.neetScore) row.push(escapeCsv(inquiry.neetScore));
-      if (columns.status) row.push(escapeCsv(inquiry.status));
-      if (columns.ipLocation) row.push(escapeCsv(inquiry.ipLocation));
-      if (columns.date) row.push(escapeCsv(formattedDate));
+      if (columns.countries) row.push(escapeCsv(inquiry.countries?.join(', ')));
       if (columns.message) row.push(escapeCsv(inquiry.message));
+      if (columns.isUnder18) row.push(escapeCsv(inquiry.isUnder18));
+      if (columns.guardianName) row.push(escapeCsv(inquiry.guardianName));
+      if (columns.guardianPhone) row.push(escapeCsv(inquiry.guardianPhone));
+      if (columns.consentMarketing) row.push(escapeCsv(inquiry.consentMarketing ? "Yes" : "No"));
+      if (columns.source) row.push(escapeCsv(inquiry.source));
+      if (columns.date) row.push(escapeCsv(formattedDate));
+      if (columns.status) row.push(escapeCsv(inquiry.status));
       if (columns.privateNote) row.push(escapeCsv(meta.note || ''));
       
       csvRows.push(row.join(','));
@@ -235,6 +249,8 @@ function ExportModal({
 
 export default function InquiriesPage() {
   const { ConfirmationDialog, confirmAction } = useConfirm();
+  const { guard, ready, role, canWrite } = usePermissions();
+  const isRestricted = ready && role !== "super-admin" && !canWrite;
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [inquiryMeta, setInquiryMeta] = useState<Record<string, { responded?: boolean, seen?: boolean, note?: string }>>({});
   const [loading, setLoading] = useState(true);
@@ -251,6 +267,9 @@ export default function InquiriesPage() {
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [marketingFilter, setMarketingFilter] = useState("All");
+  const [ageFilter, setAgeFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState({ start: '', end: '' });
 
   useEffect(() => {
     const rtdb = getDatabase(app);
@@ -270,6 +289,7 @@ export default function InquiriesPage() {
 
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast.error("Couldn't load the inquiries. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -376,7 +396,7 @@ export default function InquiriesPage() {
       toast.success(`Successfully deleted ${idsToDelete.length} record(s).`);
     } catch (error) {
       console.error("Deletion error:", error);
-      toast.error("Failed to delete records.");
+      toast.error("Couldn't delete the inquiries. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -384,9 +404,34 @@ export default function InquiriesPage() {
 
   const filteredInquiries = inquiries.filter((inq) => {
     const matchesStatus = statusFilter === "All" || inq.status === statusFilter;
+    
+    let matchesMarketing = true;
+    if (marketingFilter === "Subscribed") matchesMarketing = inq.consentMarketing === true;
+    else if (marketingFilter === "Unsubscribed") matchesMarketing = !inq.consentMarketing;
+
+    let matchesAge = true;
+    if (ageFilter === "Minor") matchesAge = inq.isUnder18 === "Yes" || inq.isUnder18 === "yes";
+    else if (ageFilter === "Major") matchesAge = inq.isUnder18 === "No" || inq.isUnder18 === "no" || !inq.isUnder18;
+
+    let matchesDate = true;
+    if (dateFilter.start || dateFilter.end) {
+      const inquiryDate = inq.createdAt?.toDate ? inq.createdAt.toDate() : new Date(inq.createdAt);
+      if (dateFilter.start) {
+        const [sy, sm, sd] = dateFilter.start.split('-');
+        const startD = new Date(Number(sy), Number(sm) - 1, Number(sd), 0, 0, 0, 0);
+        if (inquiryDate < startD) matchesDate = false;
+      }
+      if (dateFilter.end) {
+        const [ey, em, ed] = dateFilter.end.split('-');
+        const endD = new Date(Number(ey), Number(em) - 1, Number(ed), 23, 59, 59, 999);
+        if (inquiryDate > endD) matchesDate = false;
+      }
+    }
+
     const searchString = `${inq.name} ${inq.phone} ${inq.email || ""} ${inq.countries?.join(" ") || ""}`.toLowerCase();
     const matchesSearch = searchTerm === "" || searchString.includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+    
+    return matchesStatus && matchesSearch && matchesMarketing && matchesAge && matchesDate;
   });
 
   return (
@@ -405,10 +450,11 @@ export default function InquiriesPage() {
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {selectedIds.size > 0 && (
             <button 
-              onClick={() => deleteInquiries(Array.from(selectedIds))}
-              className="px-4 py-2 bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive hover:text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors mr-2"
+              onClick={() => guard("delete", () => deleteInquiries(Array.from(selectedIds)))}
+              className={`px-4 py-2 bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive hover:text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors mr-2 ${isRestricted ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <Trash2 className="w-4 h-4" /> Delete ({selectedIds.size})
+              {isRestricted && <Lock className="w-3 h-3 ml-1 opacity-70 inline" />}
             </button>
           )}
 
@@ -430,17 +476,60 @@ export default function InquiriesPage() {
               className="w-full pl-9 pr-4 py-1.5 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow"
             />
           </div>
-          
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="py-1.5 px-3 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow font-bold text-gray-700 cursor-pointer"
-          >
-            <option value="All">All Statuses</option>
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Resolved">Resolved</option>
-          </select>
+        </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="flex flex-wrap items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-gray-300 shadow-sm">
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2 hidden md:block">Filters</span>
+        
+        <select 
+          value={statusFilter} 
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="py-1.5 px-3 rounded-lg border border-gray-300 bg-gray-50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow font-bold text-gray-700 cursor-pointer"
+        >
+          <option value="All">All Statuses</option>
+          <option value="New">New</option>
+          <option value="Contacted">Contacted</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+
+        <select 
+          value={marketingFilter} 
+          onChange={(e) => setMarketingFilter(e.target.value)}
+          className="py-1.5 px-3 rounded-lg border border-gray-300 bg-gray-50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow font-bold text-gray-700 cursor-pointer"
+        >
+          <option value="All">All Marketing</option>
+          <option value="Subscribed">Subscribed</option>
+          <option value="Unsubscribed">Unsubscribed</option>
+        </select>
+
+        <select 
+          value={ageFilter} 
+          onChange={(e) => setAgeFilter(e.target.value)}
+          className="py-1.5 px-3 rounded-lg border border-gray-300 bg-gray-50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow font-bold text-gray-700 cursor-pointer"
+        >
+          <option value="All">All Ages</option>
+          <option value="Minor">Minor (Under 18)</option>
+          <option value="Major">Major (18+)</option>
+        </select>
+
+        <div className="flex items-center gap-2 md:ml-auto w-full md:w-auto">
+          <input 
+            type="date"
+            value={dateFilter.start}
+            onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+            className="py-1.5 px-3 rounded-lg border border-gray-300 bg-gray-50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow font-bold text-gray-700 cursor-pointer flex-1 md:flex-none"
+            title="Start Date"
+          />
+          <span className="text-gray-400 font-bold text-xs">to</span>
+          <input 
+            type="date"
+            value={dateFilter.end}
+            onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+            className="py-1.5 px-3 rounded-lg border border-gray-300 bg-gray-50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow font-bold text-gray-700 cursor-pointer flex-1 md:flex-none"
+            title="End Date"
+          />
         </div>
       </div>
 
@@ -458,7 +547,6 @@ export default function InquiriesPage() {
                     className="w-4 h-4 cursor-pointer accent-indigo-600 rounded"
                   />
                 </th>
-                <th className="px-4 py-4 w-12 text-center" title="Responded">RSP</th>
                 <th className="px-4 py-4 w-48">Name & Date</th>
                 <th className="px-4 py-4 w-40">Phone</th>
                 <th className="px-4 py-4 w-32">Status</th>
@@ -467,9 +555,9 @@ export default function InquiriesPage() {
             </thead>
             <tbody className="text-sm">
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>
+                <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>
               ) : filteredInquiries.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-foreground/50 font-medium">No leads match your search.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-foreground/50 font-medium">No leads match your search.</td></tr>
               ) : (
                 filteredInquiries.map((inq) => {
                   const meta = inquiryMeta[inq.id] || {};
@@ -479,7 +567,7 @@ export default function InquiriesPage() {
                   return (
                     <React.Fragment key={inq.id}>
                       {/* --- MAIN COMPACT ROW --- */}
-                      <tr className={`border-b border-gray-200 transition-colors hover:bg-gray-50/80 group ${isSelected ? 'bg-indigo-50/40' : meta.responded ? 'bg-emerald-50/30' : 'bg-white'} ${!meta.seen ? 'font-extrabold' : ''}`}>
+                      <tr className={`transition-colors hover:bg-gray-50/80 group ${isSelected ? 'bg-indigo-50/40' : meta.responded ? 'bg-emerald-50/30' : 'bg-white'} ${!meta.seen ? 'font-extrabold' : ''} ${isExpanded ? 'bg-slate-50 shadow-[inset_4px_0_0_0_rgb(99,102,241)] border-t-2 border-indigo-200 border-b-0' : 'border-b border-gray-200'}`}>
                         
                         <td className="px-4 py-3 text-center">
                           <input 
@@ -488,15 +576,6 @@ export default function InquiriesPage() {
                             onChange={() => toggleSelect(inq.id)}
                             className="w-4 h-4 cursor-pointer accent-indigo-600 rounded"
                           />
-                        </td>
-
-                        <td className="px-4 py-3 text-center">
-                          <button 
-                            onClick={() => toggleResponded(inq.id, !!meta.responded)}
-                            className={`w-6 h-6 rounded flex items-center justify-center border transition-all shadow-sm ${meta.responded ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-gray-300 hover:border-indigo-400 text-transparent hover:text-indigo-100'}`}
-                          >
-                            <CheckSquare className="w-4 h-4" />
-                          </button>
                         </td>
 
                         <td className="px-4 py-3">
@@ -514,25 +593,33 @@ export default function InquiriesPage() {
                         </td>
 
                         <td className="px-4 py-3">
-                          <select 
-                            value={inq.status}
-                            onChange={(e) => updateStatus(inq.id, e.target.value)}
-                            className={`text-xs rounded-lg px-3 py-1.5 font-bold outline-none cursor-pointer border appearance-none text-center transition-colors shadow-sm ${
-                              inq.status === 'New' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' : 
-                              inq.status === 'Contacted' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 
-                              'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                            }`}
-                          >
-                            <option value="New">New</option>
-                            <option value="Contacted">Contacted</option>
-                            <option value="Resolved">Resolved</option>
-                          </select>
+                          <div className="relative inline-block" onClick={(e) => { if (isRestricted) guard("update", () => {}, e); }}>
+                            <select 
+                              value={inq.status}
+                              onChange={(e) => updateStatus(inq.id, e.target.value)}
+                              className={`text-xs rounded-lg px-3 py-1.5 font-bold outline-none cursor-pointer border appearance-none text-center transition-colors shadow-sm ${
+                                inq.status === 'New' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' : 
+                                inq.status === 'Contacted' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 
+                                'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              } ${isRestricted ? "opacity-60 pointer-events-none" : ""}`}
+                            >
+                              <option value="New">New</option>
+                              <option value="Contacted">Contacted</option>
+                              <option value="Resolved">Resolved</option>
+                            </select>
+                            {isRestricted && (
+                              <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <Lock className="w-3 h-3 text-gray-500 opacity-70" />
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={() => deleteInquiries([inq.id])} className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-md transition-colors" title="Delete">
+                            <button onClick={() => guard("delete", () => deleteInquiries([inq.id]))} className={`p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-md transition-colors ${isRestricted ? "opacity-60 cursor-not-allowed" : ""}`} title="Delete">
                               <Trash2 className="w-4 h-4" />
+                              {isRestricted && <Lock className="w-3 h-3 ml-1 opacity-70 inline" />}
                             </button>
                             <button onClick={() => toggleExpand(inq.id, meta.note || "")} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors" title="Expand Details">
                               {isExpanded ? <ChevronUp className="w-5 h-5 text-indigo-600" /> : <ChevronDown className="w-5 h-5 text-gray-400 hover:text-indigo-600" />}
@@ -544,74 +631,100 @@ export default function InquiriesPage() {
 
                       {/* --- EXPANDED DETAILS ACCORDION --- */}
                       {isExpanded && (
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                          <td colSpan={6} className="px-6 py-5 shadow-inner">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
+                        <tr className="bg-slate-50 shadow-[inset_4px_0_0_0_rgb(99,102,241)] border-b-2 border-indigo-200">
+                          <td colSpan={5} className="p-0">
+                            <div className="p-5 md:p-6 flex flex-col md:flex-row gap-6 items-stretch">
                               
-                              {/* Read Only Details */}
-                              <div className="space-y-3 bg-white p-5 rounded-2xl border border-gray-300 shadow-sm relative">
-                                {/* Captured IP Location Tag */}
-                                {inq.ipLocation && (
-                                  <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-1 rounded-md uppercase tracking-wide">
-                                    <MapPin className="w-3 h-3" /> {inq.ipLocation}
-                                  </div>
-                                )}
-
-                                <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4">Student Information</h4>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1">Email</span>
+                              {/* Left Column: Details */}
+                              <div className="flex-1">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6">
+                                  <div className="col-span-2 md:col-span-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Email</span>
                                     <div className="flex items-center gap-2">
-                                      <p className="text-sm font-medium truncate max-w-[150px]">{inq.email || "N/A"}</p>
+                                      <p className="text-sm font-semibold text-gray-900 truncate">{inq.email || "N/A"}</p>
                                       {inq.email && <CopyButton text={inq.email} />}
                                     </div>
                                   </div>
-                                  <div>
-                                    <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1">NEET Score</span>
-                                    <p className="text-sm font-bold text-primary">{inq.neetScore}</p>
+                                  
+                                  <div className="col-span-2 md:col-span-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">NEET Score</span>
+                                    <p className="text-sm font-semibold text-gray-900">{inq.neetScore || "N/A"}</p>
+                                  </div>
+
+                                  <div className="col-span-2 md:col-span-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Source</span>
+                                    <p className="text-sm font-semibold text-gray-900">{inq.source || "N/A"}</p>
+                                  </div>
+
+                                  <div className="col-span-2 md:col-span-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Consent</span>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${inq.consentMarketing ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                                      {inq.consentMarketing ? "Yes" : "No"}
+                                    </span>
                                   </div>
                                 </div>
-                                
-                                <div>
-                                  <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1 mt-2">Provided Address</span>
-                                  <p className="text-sm font-medium">{inq.address || "No address provided"}</p>
-                                </div>
 
-                                <div>
-                                  <span className="text-[10px] font-bold text-foreground/50 uppercase block mb-1 mt-2">Preferred Countries</span>
-                                  <div className="flex flex-wrap gap-2 mt-1">
+                                {/* Under 18 Block */}
+                                {inq.isUnder18 === "Yes" && (
+                                  <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold text-orange-600 uppercase">Guardian:</span>
+                                      <p className="text-sm font-semibold text-orange-900">{inq.guardianName || "N/A"}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold text-orange-600 uppercase">Phone:</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <p className="text-sm font-semibold text-orange-900">{inq.guardianPhone || "N/A"}</p>
+                                        {inq.guardianPhone && <CopyButton text={inq.guardianPhone} />}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="mt-4">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Preferred Countries</span>
+                                  <div className="flex flex-wrap gap-2">
                                     {inq.countries?.map(c => (
-                                      <span key={c} className="px-2.5 py-1 bg-secondary text-secondary-foreground rounded-md text-[10px] font-bold uppercase border border-border/50">{c}</span>
+                                      <span key={c} className="px-2.5 py-1 bg-white text-gray-700 rounded text-[11px] font-bold uppercase border border-gray-200 shadow-sm">{c}</span>
                                     ))}
                                   </div>
                                 </div>
 
                                 {inq.message && (
-                                  <div className="mt-4 pt-4 border-t border-gray-100">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Message</span>
-                                    <p className="text-sm italic bg-gray-50 p-3 rounded-lg border border-gray-200 text-gray-700">"{inq.message}"</p>
+                                  <div className="mt-4">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Message</span>
+                                    <p className="text-sm text-gray-700 bg-white p-3 rounded-lg border border-gray-200 leading-relaxed shadow-sm">
+                                      {inq.message}
+                                    </p>
                                   </div>
                                 )}
                               </div>
 
-                                {/* Private RTDB Note */}
-                              <div className="flex flex-col bg-white p-5 rounded-2xl border border-gray-300 shadow-sm">
-                                <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4">Private Note (Saved in RTDB)</h4>
-                                <textarea
-                                  value={activeNoteText}
-                                  onChange={(e) => setActiveNoteText(e.target.value)}
-                                  placeholder="Add a quick internal note about this student..."
-                                  className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none mb-4 transition-shadow"
-                                />
-                                <button 
-                                  onClick={() => saveNote(inq.id)}
-                                  disabled={savingNoteId === inq.id}
-                                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-sm hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50"
-                                >
-                                  {savingNoteId === inq.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                  Save Note
-                                </button>
+                              {/* Right Column: Private Note */}
+                              <div className="w-full md:w-[320px] shrink-0">
+                                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm h-full flex flex-col">
+                                  <div className="flex justify-between items-center mb-3">
+                                    <h4 className="font-bold text-[11px] uppercase tracking-wider text-gray-500">Private Note</h4>
+                                    <span className={`text-[10px] font-bold ${activeNoteText.length >= 50 ? 'text-red-500' : 'text-gray-400'}`}>
+                                      {activeNoteText.length}/50
+                                    </span>
+                                  </div>
+                                  <textarea
+                                    value={activeNoteText}
+                                    onChange={(e) => setActiveNoteText(e.target.value.slice(0, 50))}
+                                    maxLength={50}
+                                    placeholder="Brief note (50 chars)..."
+                                    className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none transition-shadow min-h-[80px]"
+                                  />
+                                  <button 
+                                    onClick={(e) => guard("update", () => saveNote(inq.id), e)}
+                                    disabled={savingNoteId === inq.id}
+                                    className={`mt-3 w-full flex items-center justify-center gap-2 font-bold py-2.5 rounded-lg shadow transition-all text-xs ${isRestricted ? "bg-gray-400 text-gray-700 opacity-60 cursor-not-allowed" : "bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98] disabled:opacity-50"}`}
+                                  >
+                                    {isRestricted ? <Lock className="w-4 h-4" /> : savingNoteId === inq.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Save Note
+                                  </button>
+                                </div>
                               </div>
 
                             </div>

@@ -9,12 +9,13 @@ import {
   CheckCircle2, Clock, Volume2, VolumeX, X, BarChart3, History
 } from "lucide-react";
 import { collection, query, where, onSnapshot, orderBy, limit, deleteDoc, doc, setDoc, getDoc } from "firebase/firestore";
-import { getDatabase, ref, set, onValue, onDisconnect, remove } from "firebase/database";
+import { getDatabase, ref, set, onValue, onDisconnect, remove, update, get } from "firebase/database";
 import { getAuth, signOut } from "firebase/auth";
 import { db, app } from "@/firebase/config";
 import { useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import { PermissionsProvider } from "@/context/PermissionsContext";
 
 function generateSecureId(): string {
   // Preferred: crypto.randomUUID (available in all modern browsers over HTTPS and localhost)
@@ -50,53 +51,142 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [user, loading, pathname, router]);
 
+  const handleLogout = async () => {
+    isLoggingOut.current = true;
+    try {
+      const sessionId = localStorage.getItem("admin_session_id");
+      if (sessionId) {
+        await remove(ref(getDatabase(app), `admin_sessions/${sessionId}`));
+        localStorage.removeItem("admin_session_id");
+      }
+      
+      await fetch("/api/auth/session", { method: "DELETE" });
+      await signOut(getAuth(app));
+    } catch (error) {
+      console.error("Error during logout:", error);
+    } finally {
+      window.location.href = "/admin/login";
+    }
+  };
+
   // Super admin role is determined server-side via /api/auth/me.
   // The real email is never sent to the client.
   // Set SUPER_ADMIN_EMAIL (not NEXT_PUBLIC_) in Vercel.
   useEffect(() => {
     if (!user || pathname === "/admin/login") return;
+
     let cancelled = false;
-    fetch("/api/auth/me", { cache: "no-store", headers: { 'Cache-Control': 'no-cache' } })
-      .then(r => r.ok ? r.json() : { role: "admin" })
-      .then(data => {
-        if (!cancelled) setRole(data.role === "super-admin" ? "super-admin" : "admin");
-      })
-      .catch(() => {
-        if (!cancelled) setRole("admin");
-      });
-    return () => { cancelled = true; };
-  }, [user, pathname]);
+    let unsubscribeSession = () => {};
+    let unsubscribeRevocation = () => {};
+    let heartbeat: ReturnType<typeof setInterval>;
 
-  useEffect(() => {
-    if (!user || pathname === "/admin/login") return;
-
-    const rtdb = getDatabase(app);
-    let sessionId = localStorage.getItem("admin_session_id");
-    
-    if (!sessionId) {
-      sessionId = generateSecureId();
-      localStorage.setItem("admin_session_id", sessionId);
-    }
-
-    const sessionRef = ref(rtdb, `admin_sessions/${sessionId}`);
-    
-    set(sessionRef, {
-      email: user.email,
-      device: navigator.userAgent,
-      loginTime: Date.now(),
-      uid: user.uid
-    }).catch(err => console.error("Session setup error:", err));
-
-    onDisconnect(sessionRef).remove();
-
-    const unsubscribeSession = onValue(sessionRef, (snapshot) => {
-      if (!snapshot.exists() && !isInitialLoad.current && !isLoggingOut.current) {
-        alert("Your session was revoked by the Super Admin.");
-        handleLogout();
+    const setupSession = async () => {
+      const rtdb = getDatabase(app);
+      let sessionId = localStorage.getItem("admin_session_id");
+      
+      if (!sessionId) {
+        sessionId = generateSecureId();
+        localStorage.setItem("admin_session_id", sessionId);
       }
-    });
 
-    return () => unsubscribeSession();
+      let currentRole = "admin";
+      try {
+        const r = await fetch("/api/auth/me", { cache: "no-store", headers: { 'Cache-Control': 'no-cache' } });
+        if (r.status === 401) {
+          handleLogout();
+          if (!cancelled) setRole("unknown");
+          return;
+        }
+        if (r.ok) {
+          const data = await r.json();
+          currentRole = data.role === "super-admin" ? "super-admin" : "admin";
+        }
+      } catch (err) {
+        console.warn("Failed to fetch role", err);
+      }
+
+      if (!cancelled) setRole(currentRole as "super-admin" | "admin");
+      if (cancelled) return;
+
+      if (currentRole === "super-admin") {
+        try {
+          const snap = await get(ref(rtdb, 'admin_sessions'));
+          const sessions = snap.val() || {};
+          
+          for (const [sid, s] of Object.entries(sessions)) {
+            if ((s as Record<string, unknown>).uid === user.uid && sid !== sessionId) {
+              await remove(ref(rtdb, `admin_sessions/${sid}`));
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to cleanup old super admin sessions:", err);
+        }
+      }
+
+      if (cancelled) return;
+
+      const sessionRef = ref(rtdb, `admin_sessions/${sessionId}`);
+      
+      set(sessionRef, {
+        email: user.email,
+        device: navigator.userAgent,
+        loginTime: Date.now(),
+        lastSeen: Date.now(),
+        connected: true,
+        uid: user.uid
+      }).catch(err => console.error("Session setup error:", err));
+
+      onDisconnect(sessionRef).update({
+        connected: false,
+        lastSeen: Date.now()
+      });
+
+      unsubscribeSession = onValue(sessionRef, (snapshot) => {
+        if (!snapshot.exists() && !isInitialLoad.current && !isLoggingOut.current) {
+          toast.error("You've been signed out — your account was used on another device.");
+          handleLogout();
+        }
+      });
+
+      const revocationRef = ref(rtdb, `admin_revocations/${user.uid}`);
+      unsubscribeRevocation = onValue(revocationRef, async (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.val() as { revokedAt?: number; reason?: string };
+        if (!data?.revokedAt) return;
+
+        const lastSignInMs = user.metadata.lastSignInTime
+          ? new Date(user.metadata.lastSignInTime).getTime()
+          : 0;
+        const sessionStartedAt = lastSignInMs;
+        if (data.revokedAt <= sessionStartedAt) return;
+
+        try {
+          await user.getIdToken(true); // force refresh — will fail if truly revoked
+        } catch {
+          // expected — token refresh fails because refresh tokens were revoked
+        }
+
+        toast.error(
+          data.reason === "account_deleted"
+            ? "Your admin account has been removed. You will be signed out."
+            : "Your permissions were updated. Please sign in again to continue."
+        );
+        handleLogout();
+      });
+
+      heartbeat = setInterval(() => {
+        update(sessionRef, { lastSeen: Date.now(), connected: true }).catch(() => {});
+      }, 60000);
+    };
+
+    setupSession();
+
+    return () => {
+      cancelled = true;
+      unsubscribeSession();
+      unsubscribeRevocation();
+      if (heartbeat) clearInterval(heartbeat);
+    };
   }, [user, pathname]);
 
   useEffect(() => {
@@ -130,24 +220,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => unsubscribe();
   }, [user]);
 
-  const handleLogout = async () => {
-    isLoggingOut.current = true;
-    try {
-      const sessionId = localStorage.getItem("admin_session_id");
-      if (sessionId) {
-        await remove(ref(getDatabase(app), `admin_sessions/${sessionId}`));
-        localStorage.removeItem("admin_session_id");
-      }
-      
-      await fetch("/api/auth/session", { method: "DELETE" });
-      await signOut(getAuth(app));
-    } catch (error) {
-      console.error("Error during logout:", error);
-    } finally {
-      window.location.href = "/admin/login";
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -176,7 +248,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+    <PermissionsProvider>
+      <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       
       {/* PREMIUM SIDEBAR */}
       <aside className="w-72 bg-white text-gray-900 hidden md:flex flex-col border-r border-gray-200/60 z-20 shadow-[2px_0_12px_rgba(0,0,0,0.02)] relative">
@@ -298,6 +371,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </div>
       </main>
+      <Toaster position="bottom-left" richColors theme="light" />
     </div>
+    </PermissionsProvider>
   );
 }

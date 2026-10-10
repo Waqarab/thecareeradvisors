@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaV3Provider, getToken, type AppCheck } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,6 +14,8 @@ const firebaseConfig = {
 // 1. Initialize core Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+
+let appCheckInstance: AppCheck | null = null;
 
 // 2. Initialize App Check (ONLY on client side AND ONLY in Production)
 if (typeof window !== "undefined") {
@@ -33,7 +35,7 @@ if (typeof window !== "undefined") {
             : process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN;
       }
 
-      initializeAppCheck(app, {
+      appCheckInstance = initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string),
         isTokenAutoRefreshEnabled: true 
       });
@@ -45,4 +47,15 @@ if (typeof window !== "undefined") {
   }
 }
 
-export { app, db };
+export async function getAppCheckToken(): Promise<string | null> {
+  try {
+    if (!appCheckInstance) return null;
+    const result = await getToken(appCheckInstance, false); // false = use cached if available
+    return result.token;
+  } catch (err) {
+    console.warn("[AppCheck] Token fetch failed:", err);
+    return null;
+  }
+}
+
+export { app, db, appCheckInstance };

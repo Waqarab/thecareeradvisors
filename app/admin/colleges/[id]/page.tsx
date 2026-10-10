@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, addDoc, collection } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Loader2, ArrowLeft, Save, Building2, Trophy, Stethoscope, GraduationCap, History, MapPin, Star, Info, ListChecks, Heart, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WriteGuardButton } from "@/components/ui/write-guard-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -64,7 +65,7 @@ export default function UniversityDetailsPage() {
         }
       } catch (error) {
         console.error(error);
-        toast.error("Error loading university data");
+        toast.error("Couldn't load the university. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -126,7 +127,7 @@ export default function UniversityDetailsPage() {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update details");
+      toast.error("Couldn't save the university details. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -156,15 +157,15 @@ export default function UniversityDetailsPage() {
             Cancel
           </Button>
           {id === "new" && (
-            <Button type="button" onClick={() => handleSave("draft")} disabled={isSaving} variant="outline" className="text-slate-700 bg-slate-50 border-slate-300 shadow-sm">
+            <WriteGuardButton action="update" type="button" onClick={() => handleSave("draft")} disabled={isSaving} variant="outline" className="text-slate-700 bg-slate-50 border-slate-300 shadow-sm">
               {isSaving && formData.isHidden ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Save as Draft
-            </Button>
+            </WriteGuardButton>
           )}
-          <Button type="button" onClick={() => handleSave("publish")} disabled={isSaving} className="bg-[#3A5F8B] text-white hover:bg-[#22354a] shadow-md px-6">
+          <WriteGuardButton action="update" type="button" onClick={() => handleSave("publish")} disabled={isSaving} className="bg-[#3A5F8B] text-white hover:bg-[#22354a] shadow-md px-6">
             {isSaving && (!formData.isHidden || id !== "new") ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : (id === "new" ? <Building2 className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />)}
             {id === "new" ? "Publish" : "Save All Details"}
-          </Button>
+          </WriteGuardButton>
         </div>
       </div>
 

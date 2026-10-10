@@ -4,15 +4,23 @@ import React, { useEffect, useState } from "react";
 import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { db, app } from "@/firebase/config";
-import { Users, Eye, TrendingUp, ArrowRight, Activity, AlertCircle } from "lucide-react";
+import { Users, Eye, TrendingUp, ArrowRight, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 // CLEAN SLATE: Only count data from this date onward
-const TRACKING_START_DATE = new Date("2026-06-01T00:00:00Z").getTime();
+const TRACKING_START_DATE = new Date("2026-05-21T00:00:00Z").getTime();
+
+interface Lead {
+  id: string;
+  name?: string;
+  phone?: string;
+  status?: string;
+  createdAt?: { toDate: () => Date };
+}
 
 export default function AdminOverview() {
   const [stats, setStats] = useState({ totalLeads: 0, newLeads: 0, totalViews: 0 });
-  const [recentLeads, setRecentLeads] = useState<any[]>([]);
+  const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNotice, setShowNotice] = useState(true);
 
@@ -23,7 +31,7 @@ export default function AdminOverview() {
     // Fetch Leads from Firestore
     const q = query(collection(db, "inquiries"), orderBy("createdAt", "desc"));
     const unsubInquiries = onSnapshot(q, (snapshot) => {
-      const leads: any[] = [];
+      const leads: Lead[] = [];
       let newCount = 0;
       let totalValidLeads = 0;
 
@@ -53,8 +61,9 @@ export default function AdminOverview() {
         snapshot.forEach((dateNode) => {
           // Compare the folder date (e.g., "2026-06-01") against our start date
           const folderDate = new Date(dateNode.key as string).getTime();
-          if (folderDate >= new Date("2026-06-01").getTime()) {
-            viewCount += dateNode.size;
+          if (folderDate >= new Date("2026-05-21").getTime()) {
+            const dateVal = dateNode.val();
+            viewCount += (typeof dateVal?.total === 'number' ? dateVal.total : 0);
           }
         });
       }
@@ -95,7 +104,7 @@ export default function AdminOverview() {
             <div className={`transition-all duration-3000 ease-in-out ${showNotice ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
               <div className="flex items-center gap-2 text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
                 <AlertCircle className="w-4 h-4" />
-                Real-time stats based from June 1, 2026
+                Real-time stats based from May 21, 2026
               </div>
             </div>
           </div>
@@ -142,7 +151,7 @@ export default function AdminOverview() {
             </div>
             <div className="relative z-10">
               <h3 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">{stats.totalViews}</h3>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Unique Devices</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Visits</p>
             </div>
           </div>
 
@@ -204,7 +213,7 @@ export default function AdminOverview() {
                 ))}
                 {recentLeads.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-gray-400 font-medium text-sm">No recent leads found since June 1, 2026.</td>
+                    <td colSpan={4} className="p-8 text-center text-gray-400 font-medium text-sm">No recent leads found since May 21, 2026.</td>
                   </tr>
                 )}
               </tbody>

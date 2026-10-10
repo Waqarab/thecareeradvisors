@@ -40,6 +40,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       role: isSuper ? "super-admin" : "admin",
+      canWrite: isSuper ? true : !!decoded.canWrite,
       // Do NOT return the email here — that would defeat the purpose
     });
   } catch (err) {

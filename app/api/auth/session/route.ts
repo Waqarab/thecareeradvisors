@@ -88,6 +88,12 @@ export async function POST(req: Request) {
 
     await emailLockout.reset(email);
 
+    try {
+      await admin.database().ref(`admin_revocations/${decoded.uid}`).remove();
+    } catch (err) {
+      console.error("[REVOCATION CLEAR ERROR]", err);
+    }
+
     return NextResponse.json({ status: "ok" });
   } catch (error: any) {
     console.error("[SESSION ERROR]", error);

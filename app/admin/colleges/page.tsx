@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useConfirm } from "@/components/ui/use-confirm";
+import { WriteGuardButton } from "@/components/ui/write-guard-button";
 
 interface College {
   id: string;
@@ -72,7 +73,7 @@ export default function CollegesPage() {
       setColleges(data);
     } catch (error) {
       console.error("Error fetching colleges:", error);
-      toast.error("Failed to load universities");
+      toast.error("Couldn't load the universities. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -151,7 +152,7 @@ export default function CollegesPage() {
       setIsFeaturedModalOpen(false);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save Top 6");
+      toast.error("Couldn't save the Top 6. Please try again.");
     } finally {
       setIsSavingFeatured(false);
     }
@@ -188,7 +189,7 @@ export default function CollegesPage() {
       }
     } catch (error) {
       console.error("Delete Error: ", error);
-      toast.error("Failed to delete university");
+      toast.error("Couldn't delete the university. Please try again.");
     }
   };
 
@@ -305,9 +306,9 @@ export default function CollegesPage() {
           </Dialog>
 
           {/* ADD UNIVERSITY BUTTON */}
-          <Button onClick={handleAddUniversity} className="bg-slate-900 text-white hover:bg-slate-800 shadow-md">
+          <WriteGuardButton action="create" onClick={handleAddUniversity} className="bg-slate-900 text-white hover:bg-slate-800 shadow-md">
             <Plus className="w-4 h-4 mr-2" /> Add University
-          </Button>
+          </WriteGuardButton>
         </div>
       </div>
 
@@ -436,9 +437,9 @@ export default function CollegesPage() {
                       <div className="flex items-center justify-end gap-2">
                         
                         {/* 1. Toggle Visibility */}
-                        <Button variant="outline" size="icon" title={college.isHidden ? "Publish" : "Move to Draft"} onClick={() => handleToggleHidden(college.id, college.isHidden)}>
+                        <WriteGuardButton action="update" variant="outline" size="icon" title={college.isHidden ? "Publish" : "Move to Draft"} onClick={() => handleToggleHidden(college.id, college.isHidden)}>
                           {college.isHidden ? <EyeOff className="w-4 h-4 text-amber-500" /> : <Eye className="w-4 h-4 text-emerald-500" />}
-                        </Button>
+                        </WriteGuardButton>
                         
                         {/* 2. Quick Edit removed - Use Deep Details Page instead */}
                         {/* 3. Deep Details Page */}
@@ -449,9 +450,9 @@ export default function CollegesPage() {
                         </Link>
 
                         {/* 4. Delete */}
-                        <Button variant="outline" size="icon" title="Delete Permanently" className="hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => handleDelete(college.id)}>
+                        <WriteGuardButton action="delete" variant="outline" size="icon" title="Delete Permanently" className="hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => handleDelete(college.id)}>
                           <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
+                        </WriteGuardButton>
                       </div>
                     </td>
                   </tr>

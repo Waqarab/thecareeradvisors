@@ -13,14 +13,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 
-// FIREBASE IMPORTS
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { isValidName, isValidPhone } from "@/lib/inquiry-client-validation";
+import { getAppCheckToken } from "@/firebase/config";
+
+const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE || "+91 60051 52350";
+
+function getErrorMessage(status: number, apiError?: string): string {
+  if (status === 429) {
+    return `We can't accept new inquiries right now. Please contact us at ${SUPPORT_PHONE}.`;
+  }
+  if (status === 400 && apiError) return apiError;
+  if (status === 403) return "Security check failed. Please refresh the page and try again.";
+  return `Something went wrong. Please try again or contact us at ${SUPPORT_PHONE}.`;
+}
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name is required" }),
+  name: z.string().refine(isValidName, { message: "Please enter a valid name (letters, spaces, and '. - ' only)." }),
   email: z.string().email({ message: "Valid email is required" }),
-  phone: z.string().min(8).max(20).regex(/^\+\d{7,15}$/, { message: "Valid phone number required" }),
+  phone: z.string().refine(isValidPhone, { message: "Valid phone number required" }),
   neetScore: z.string().nonempty({ message: "Please select your NEET score" }),
   countries: z.array(z.string()).refine((value) => value.length > 0, {
     message: "You have to select at least one preferred country.",
@@ -33,14 +43,14 @@ const formSchema = z.object({
   consentMarketing: z.boolean().optional(),
 }).superRefine((data, ctx) => {
   if (data.isUnder18 === "Yes") {
-    if (!data.guardianName || data.guardianName.trim().length < 2) {
+    if (!data.guardianName || !isValidName(data.guardianName)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["guardianName"],
-        message: "Guardian Name is required",
+        message: "Please enter a valid name (letters, spaces, and '. - ' only).",
       });
     }
-    if (!data.guardianPhone || !/^\+\d{7,15}$/.test(data.guardianPhone)) {
+    if (!data.guardianPhone || !isValidPhone(data.guardianPhone)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["guardianPhone"],
@@ -87,6 +97,7 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
   const [phoneLocal, setPhoneLocal] = useState("");
   const [guardianPhoneCode, setGuardianPhoneCode] = useState("+91");
   const [guardianPhoneLocal, setGuardianPhoneLocal] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -116,7 +127,8 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
-    
+    setError(null);
+
     try {
       // Pull the real traffic source saved by the TrafficTracker component
       let userSource = "Direct / Other";
@@ -124,13 +136,27 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
         userSource = localStorage.getItem("tca_user_source") || "Direct / Other";
       }
 
-      await addDoc(collection(db, "inquiries"), {
-        ...values,
-        status: "New",
-        source: userSource, // REAL TRACKING: "Meta Ads", "Instagram", etc.
-        formLocation: source, // Tells you which button/page they used to open the form
-        createdAt: serverTimestamp(),
+      const token = await getAppCheckToken();
+
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "X-Firebase-AppCheck": token } : {})
+        },
+        body: JSON.stringify({
+          ...values,
+          source: userSource,
+          formLocation: source,
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const err: any = new Error(errorData.error || "Failed to submit inquiry");
+        err.status = response.status;
+        throw err;
+      }
 
       setIsSuccess(true);
       form.reset();
@@ -138,15 +164,15 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
       setPhoneLocal("");
       setGuardianPhoneCode("+91");
       setGuardianPhoneLocal("");
-      
+
       setTimeout(() => {
         setIsOpen(false);
         setIsSuccess(false);
       }, 3000);
 
-    } catch (error) {
-      console.error("Error saving inquiry: ", error);
-      alert("Something went wrong. Please try again.");
+    } catch (err: any) {
+      console.error("Error saving inquiry: ", err);
+      setError(getErrorMessage(err.status || 500, err.message));
     } finally {
       setIsSubmitting(false);
     }
@@ -161,9 +187,9 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
         <DialogTrigger asChild>
           {children}
         </DialogTrigger>
-        
+
         <DialogContent className="sm:max-w-[550px] w-[95vw] max-h-[90vh] overflow-y-auto rounded-3xl p-6 md:p-8 bg-white border-none shadow-premium sm:rounded-[32px]">
-          
+
           {isSuccess ? (
             <div className="flex flex-col items-center justify-center py-12 text-center animate-in zoom-in-95 duration-300">
               <div className="w-20 h-20 bg-[#6082B6]/10 rounded-full flex items-center justify-center text-[#6082B6] mb-6">
@@ -177,11 +203,11 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
           ) : (
             <>
               <DialogHeader className="flex flex-col items-center text-center sm:text-center mb-4">
-                <Image 
-                  src="/logo.png" 
-                  alt="The Career Advisors" 
-                  width={160} 
-                  height={60} 
+                <Image
+                  src="/logo.png"
+                  alt="The Career Advisors"
+                  width={160}
+                  height={60}
                   className="h-12 w-auto object-contain mb-3"
                   priority
                 />
@@ -194,7 +220,7 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
               </DialogHeader>
 
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-2">
-                
+
                 <div className="space-y-1.5">
                   <label htmlFor="name" className="text-[11px] font-bold uppercase tracking-wider text-[#3A5F8B]">Student Name*</label>
                   <Input id="name" placeholder="e.g. Ayaan Bhat" className="bg-[#F4F7F8] py-5 px-4 rounded-xl border-[#AEC6CF]/40 focus:border-[#6082B6] font-medium text-[#1A2E44] shadow-inner shadow-[#AEC6CF]/10 placeholder:text-[#3A5F8B]/40 focus-visible:ring-1 focus-visible:ring-[#6082B6]/50" {...form.register("name")} />
@@ -317,7 +343,7 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
                     />
                     {form.formState.errors.isUnder18 && <p className="text-xs text-destructive font-semibold">{form.formState.errors.isUnder18.message}</p>}
                   </div>
-                  
+
                   {isUnder18Value === "Yes" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                       <div className="space-y-1.5">
@@ -395,8 +421,14 @@ export default function InquiryModal({ children, source = "General Inquiry" }: {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                {error && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
                   disabled={isSubmitting}
                   className="w-full bg-[#12A150] hover:bg-[#0e8541] text-white font-bold py-6 rounded-xl shadow-[0_4px_14px_0_rgba(18,161,80,0.39)] hover:shadow-[0_6px_20px_rgba(18,161,80,0.23)] hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-wide flex items-center justify-center gap-2 group mt-4"
                 >

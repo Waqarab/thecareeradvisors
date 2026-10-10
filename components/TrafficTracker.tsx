@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
-import { getDatabase, ref, push, set } from "firebase/database";
+import { getDatabase, ref, update, increment } from "firebase/database";
 import { app } from "@/firebase/config";
 
 export default function TrafficTracker() {
@@ -38,14 +38,22 @@ export default function TrafficTracker() {
       const rtdb = getDatabase(app);
       const today = new Date().toISOString().split("T")[0];
       
-      const newVisitRef = push(ref(rtdb, `stats/page_views/${today}`));
-      
-      set(newVisitRef, {
-        source: source,
-        timestamp: new Date().toISOString(),
-        userAgent: window.navigator.userAgent,
-        landingPage: pathname
-      }).then(() => {
+      // Sanitize source
+      const sanitizedSource = source.toLowerCase().replace(/[^a-z0-9_-]/g, "_").slice(0, 40);
+
+      // Sanitize pageKey
+      let sanitizedPageKey = "home";
+      if (pathname && pathname !== "/") {
+        sanitizedPageKey = pathname.replace(/^\//, "").replace(/\//g, "_").replace(/[^a-z0-9_-]/g, "_").slice(0, 60);
+      }
+
+      const updates = {
+        [`stats/page_views/${today}/total`]: increment(1),
+        [`stats/page_views/${today}/sources/${sanitizedSource}`]: increment(1),
+        [`stats/page_views/${today}/pages/${sanitizedPageKey}`]: increment(1)
+      };
+
+      update(ref(rtdb), updates).then(() => {
         // 3. ONLY mark as tracked after successfully writing to the database
         localStorage.setItem("tca_device_tracked", "true");
       });

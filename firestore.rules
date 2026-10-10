@@ -3,10 +3,16 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // Helper function: Admin is super admin OR someone with the 'admin' custom claim
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.email == 'superadmintcagroup786@gmail.com';
+    }
+
     function isAdmin() {
-      return request.auth != null && 
-             (request.auth.token.email == 'superadmintcagroup786@gmail.com' || 
-              request.auth.token.admin == true);
+      return isSuperAdmin() || (request.auth != null && request.auth.token.admin == true);
+    }
+
+    function hasWriteAccess() {
+      return isSuperAdmin() || (request.auth != null && request.auth.token.admin == true && request.auth.token.canWrite == true);
     }
 
     // 1. Universities, Colleges & Testimonials
@@ -15,92 +21,39 @@ service cloud.firestore {
     // Admin reads bypass this via isAdmin() and can access drafts.
     match /universities/{uniId} {
       allow read: if isAdmin() || (resource != null && resource.data.isHidden == false);
-      allow write: if isAdmin();
+      allow write: if hasWriteAccess();
     }
     match /recycled_universities/{uniId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if hasWriteAccess();
     }
     match /colleges/{collegeId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if hasWriteAccess();
     }
     match /testimonials/{testimonialId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if hasWriteAccess();
     }
 
     // 2. Notifications
     // Strict match: isActive must explicitly equal true
     match /notifications/{notificationId} {
       allow read: if isAdmin() || resource.data.isActive == true;
-      allow write: if isAdmin();
+      allow write: if hasWriteAccess();
     }
 
     // 3. CRM Inquiries
     match /inquiries/{inquiryId} {
-      allow create: if request.resource.data.keys().hasOnly([
-        'name', 'email', 'phone', 'neetScore', 'countries', 'message',
-        'isUnder18', 'guardianName', 'guardianPhone', 'agreeToTerms',
-        'consentMarketing', 'status', 'source', 'formLocation', 'createdAt'
-      ])
-      // Force status to "New" on public create
-      && request.resource.data.status == 'New'
-      // name: non-empty, reasonable length
-      && request.resource.data.name is string
-      && request.resource.data.name.size() >= 2
-      && request.resource.data.name.size() <= 100
-      // email: non-empty, contains @, reasonable length
-      && request.resource.data.email is string
-      && request.resource.data.email.size() >= 5
-      && request.resource.data.email.size() <= 100
-      && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
-      // phone: allows local (10-digit) or international (+ prefix) format
-      && request.resource.data.phone is string
-      && request.resource.data.phone.matches('^\\+?[0-9]{7,15}$')
-      // neetScore: string, length bound
-      && request.resource.data.neetScore is string
-      && request.resource.data.neetScore.size() <= 50
-      // message: string, length bound (allowed to be empty)
-      && request.resource.data.message is string
-      && request.resource.data.message.size() <= 2000
-      // countries: list, 1-20 items
-      && request.resource.data.countries is list
-      && request.resource.data.countries.size() >= 1
-      && request.resource.data.countries.size() <= 20
-      // isUnder18: strict enum
-      && request.resource.data.isUnder18 in ['Yes', 'No']
-      // Conditional: if under 18, guardian fields required and valid
-      && (
-        request.resource.data.isUnder18 == 'No'
-        || (
-          request.resource.data.isUnder18 == 'Yes'
-          && request.resource.data.guardianName is string
-          && request.resource.data.guardianName.size() >= 2
-          && request.resource.data.guardianName.size() <= 100
-          && request.resource.data.guardianPhone is string
-          && request.resource.data.guardianPhone.matches('^\\+?[0-9]{7,15}$')
-        )
-      )
-      // agreeToTerms: must be strictly true
-      && request.resource.data.agreeToTerms == true
-      // consentMarketing: bool
-      && request.resource.data.consentMarketing is bool
-      // source: non-empty string
-      && request.resource.data.source is string
-      && request.resource.data.source.size() >= 1
-      && request.resource.data.source.size() <= 100
-      // formLocation: non-empty string
-      && request.resource.data.formLocation is string
-      && request.resource.data.formLocation.size() >= 1
-      && request.resource.data.formLocation.size() <= 100
-      // createdAt: timestamp (serverTimestamp resolves to this)
-      && request.resource.data.createdAt is timestamp;
+      allow create: if false;
 
-      allow read, update, delete: if isAdmin();
+      allow read: if isAdmin();
+      allow update, delete: if hasWriteAccess();
     }
     
     match /recycled_inquiries/{inquiryId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if hasWriteAccess();
     }
 
     // 4. FCM Tokens
@@ -108,7 +61,8 @@ service cloud.firestore {
       // Closed because no client currently writes to it. 
       // Must be reopened with validation when push notification registration is implemented.
       allow create, update: if false; 
-      allow read, delete: if isAdmin();
+      allow read: if isAdmin();
+      allow delete: if hasWriteAccess();
     }
 
     // 5. Global Catch-All

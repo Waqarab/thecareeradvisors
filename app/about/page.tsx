@@ -112,7 +112,7 @@ export default function AboutPage() {
     <div className="w-full font-sans selection:bg-[#6082B6] selection:text-white bg-[#F2F3F4] relative flex flex-col">
       
       {/* Inject SEO Schema invisibly into the head */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema).replace(/</g, '\\u003c') }} />
 
       <motion.div 
         style={{ x: springX, y: springY, translateX: "-50%", translateY: "-50%" }} 

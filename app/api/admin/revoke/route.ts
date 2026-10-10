@@ -6,6 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  let requestUid = "unknown";
   try {
     const authResult = await requireSuperAdmin(req);
     if (authResult instanceof NextResponse) return authResult;
@@ -20,7 +21,10 @@ export async function POST(req: Request) {
     }
     await rateLimitByIp.commit(ip, "admin_revoke_1min", 60 * 1000);
 
-    const { uid } = await req.json();
+    const body = await req.json();
+    const uid = body.uid;
+    requestUid = uid || "unknown";
+    
     if (!uid || typeof uid !== "string") {
       return NextResponse.json({ error: "Missing uid" }, { status: 400 });
     }
@@ -39,6 +43,7 @@ export async function POST(req: Request) {
       }
     } catch (err: any) {
       if (err?.code === "auth/user-not-found") {
+        console.warn('[REVOKE] Target user not found in Firebase Auth', { uid, callerUid: (authResult as any).uid });
         return NextResponse.json(
           { error: "User not found" },
           { status: 404 }
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[REVOKE ERROR]", error);
+    console.error('[REVOKE] Error while revoking', { uid: requestUid, error });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

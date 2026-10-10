@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, doc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Button } from "@/components/ui/button";
+import { WriteGuardButton } from "@/components/ui/write-guard-button";
 import { Loader2, Trash2, RefreshCcw, ShieldAlert, History, School, Users } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -83,7 +84,7 @@ export default function RecycleBinPage() {
       setItems(allItems.sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()));
     } catch (error) {
       console.error("Error fetching recycled:", error);
-      toast.error("Failed to load recycle bin");
+      toast.error("Couldn't load the recycle bin. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -119,7 +120,7 @@ export default function RecycleBinPage() {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to restore");
+      toast.error("Couldn't restore the item. Please try again.");
     } finally {
       setActionLoading(null);
     }
@@ -168,7 +169,7 @@ export default function RecycleBinPage() {
       }
     } catch (error) {
       console.error(error);
-      toast.error("An error occurred during bulk restore");
+      toast.error("Couldn't restore the items. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -190,7 +191,7 @@ export default function RecycleBinPage() {
       fetchAndCleanRecycled();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete permanently");
+      toast.error("Couldn't delete the item permanently. Please try again.");
     } finally {
       setActionLoading(null);
     }
@@ -245,7 +246,8 @@ export default function RecycleBinPage() {
         </div>
         
         {displayedItems.length > 0 && (
-          <Button
+          <WriteGuardButton
+            action="restore"
             variant="outline"
             onClick={handleRestoreAll}
             disabled={loading}
@@ -253,7 +255,7 @@ export default function RecycleBinPage() {
           >
             <RefreshCcw className="w-4 h-4 mr-2" />
             Restore All {activeTab === "university" ? "Universities" : "Inquiries"}
-          </Button>
+          </WriteGuardButton>
         )}
       </div>
 
@@ -312,7 +314,8 @@ export default function RecycleBinPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        <Button 
+                        <WriteGuardButton 
+                          action="restore"
                           variant="outline" 
                           size="sm"
                           className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
@@ -321,8 +324,9 @@ export default function RecycleBinPage() {
                         >
                           {actionLoading === item.id + "-restore" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />}
                           Restore
-                        </Button>
-                        <Button 
+                        </WriteGuardButton>
+                        <WriteGuardButton 
+                          action="delete"
                           variant="outline" 
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
@@ -331,7 +335,7 @@ export default function RecycleBinPage() {
                         >
                           {actionLoading === item.id + "-delete" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
                           Delete
-                        </Button>
+                        </WriteGuardButton>
                       </div>
                     </td>
                   </tr>

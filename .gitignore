@@ -44,3 +44,15 @@ next-env.d.ts
 AuditReport.md
 FilesReport.md
 universities.json
+
+# Hygiene
+*-export.json
+*.log
+.eslintcache
+.stylelintcache
+Thumbs.db
+.cache/
+dist/
+coverage/
+.idea/
+.vscode/

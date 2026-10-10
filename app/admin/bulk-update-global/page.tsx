@@ -53,7 +53,7 @@ export default function BulkUpdateGlobalPage() {
     } catch (error) {
       console.error(error);
       setLogs(prev => [...prev, `❌ ERROR: Something went wrong. Check console.`]);
-      toast.error("Bulk update failed.");
+      toast.error("Couldn't run bulk update. Please try again.");
     } finally {
       setLoading(false);
     }

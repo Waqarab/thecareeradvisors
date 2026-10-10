@@ -10,13 +10,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, CheckCircle2, MapPin, Phone, Mail, Send } from "lucide-react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { isValidName, isValidPhone } from "@/lib/inquiry-client-validation";
+import { getAppCheckToken } from "@/firebase/config";
+
+const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE || "+91 60051 52350";
+
+function getErrorMessage(status: number, apiError?: string): string {
+  if (status === 429) {
+    return `We can't accept new inquiries right now. Please contact us at ${SUPPORT_PHONE}.`;
+  }
+  if (status === 400 && apiError) return apiError;
+  if (status === 403) return "Security check failed. Please refresh the page and try again.";
+  return `Something went wrong. Please try again or contact us at ${SUPPORT_PHONE}.`;
+}
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name is required" }),
+  name: z.string().refine(isValidName, { message: "Please enter a valid name (letters, spaces, and '. - ' only)." }),
   email: z.string().email({ message: "Valid email is required" }),
-  phone: z.string().min(8).max(20).regex(/^\+\d{7,15}$/, { message: "Valid phone number required" }),
+  phone: z.string().refine(isValidPhone, { message: "Valid phone number required" }),
   neetScore: z.string().optional(),
   preferredCountry: z.string().min(2, { message: "Required" }),
   message: z.string().optional(),
@@ -27,14 +38,14 @@ const formSchema = z.object({
   consentMarketing: z.boolean().optional(),
 }).superRefine((data, ctx) => {
   if (data.isUnder18 === "Yes") {
-    if (!data.guardianName || data.guardianName.trim().length < 2) {
+    if (!data.guardianName || !isValidName(data.guardianName)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["guardianName"],
-        message: "Guardian Name is required",
+        message: "Please enter a valid name (letters, spaces, and '. - ' only).",
       });
     }
-    if (!data.guardianPhone || !/^\+\d{7,15}$/.test(data.guardianPhone)) {
+    if (!data.guardianPhone || !isValidPhone(data.guardianPhone)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["guardianPhone"],
@@ -80,6 +91,7 @@ export default function InquirySection() {
   const [phoneLocal, setPhoneLocal] = useState("");
   const [guardianPhoneCode, setGuardianPhoneCode] = useState("+91");
   const [guardianPhoneLocal, setGuardianPhoneLocal] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -110,6 +122,7 @@ export default function InquirySection() {
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
+    setError(null);
     try {
       let userSource = "Direct / Other";
       if (typeof window !== "undefined") {
@@ -120,13 +133,27 @@ export default function InquirySection() {
       submitData.countries = values.preferredCountry ? [values.preferredCountry] : [];
       delete submitData.preferredCountry;
 
-      await addDoc(collection(db, "inquiries"), {
-        ...submitData,
-        status: "New",
-        source: userSource,
-        formLocation: "Home Page Section",
-        createdAt: serverTimestamp(),
+      const token = await getAppCheckToken();
+
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "X-Firebase-AppCheck": token } : {})
+        },
+        body: JSON.stringify({
+          ...submitData,
+          source: userSource,
+          formLocation: "Home Page Section",
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const err: any = new Error(errorData.error || "Failed to submit inquiry");
+        err.status = response.status;
+        throw err;
+      }
 
       setIsSuccess(true);
       form.reset();
@@ -134,40 +161,40 @@ export default function InquirySection() {
       setPhoneLocal("");
       setGuardianPhoneCode("+91");
       setGuardianPhoneLocal("");
-      
+
       setTimeout(() => {
         setIsSuccess(false);
       }, 5000);
-    } catch (error) {
-      console.error("Error saving inquiry: ", error);
-      alert("Something went wrong. Please try again.");
+    } catch (err: any) {
+      console.error("Error saving inquiry: ", err);
+      setError(getErrorMessage(err.status || 500, err.message));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <section 
+    <section
       className="relative py-8 md:py-12 overflow-hidden border-y border-[#1b2f45]/20 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('https://res.cloudinary.com/drytpdpx3/image/upload/v1791484843/Background_Popup_hr56uo.jpg')" }}
     >
       {/* Dark Vignette overlay for text readability on the left side */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#172539] via-[#172539]/80 md:via-[#172539]/60 to-transparent pointer-events-none z-0"></div>
-      
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
         <div className="flex flex-col lg:flex-row gap-8 items-center">
-          
+
           {/* Left Side Content */}
           <div className="w-full lg:w-5/12">
             <div className="inline-flex px-3 py-1.5 rounded-full bg-[#0f7573]/20 border border-[#0f7573]/40 text-xs font-bold mb-4 items-center w-max gap-1.5 text-white">
               <CheckCircle2 className="w-4 h-4 text-[#fac800]" />
               100% Honest & Unbiased Counselling
             </div>
-            
+
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-4 leading-tight text-white tracking-tight">
               Take the First Step Toward Your Global Career
             </h2>
-            
+
             <p className="text-base text-white/90 font-medium max-w-lg mb-8">
               Fill out the form to request a <strong>Free Profile Evaluation</strong>. Our expert counselors in Srinagar will review your details and contact you within 24 hours.
             </p>
@@ -253,7 +280,7 @@ export default function InquirySection() {
                       <Input id="email" type="email" placeholder="john@example.com" className="bg-white border-[#cad5e2] focus:border-[#0f7573] h-11 rounded-xl text-[#2a3b4c] font-medium placeholder:text-[#90a1b9] placeholder:font-normal shadow-sm" {...form.register("email")} />
                       {form.formState.errors.email && <p className="text-[10px] text-red-500 font-semibold leading-tight">{form.formState.errors.email.message}</p>}
                     </div>
-                    
+
                     <div className="space-y-1.5 relative">
                       <div className="flex justify-between items-center">
                         <label htmlFor="preferredCountry" className="text-xs font-bold text-[#0f7573]">Preferred Country *</label>
@@ -312,7 +339,7 @@ export default function InquirySection() {
                       />
                       {form.formState.errors.isUnder18 && <p className="text-[10px] text-red-500 font-semibold leading-tight">{form.formState.errors.isUnder18.message}</p>}
                     </div>
-                    
+
                     {isUnder18Value === "Yes" && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                         <div className="space-y-1.5">
@@ -390,6 +417,12 @@ export default function InquirySection() {
                     </div>
                   </div>
 
+                  {error && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                      {error}
+                    </div>
+                  )}
+
                   <Button type="submit" disabled={isSubmitting} className="w-full bg-[#00c758] text-white hover:bg-[#00a544] py-6 text-[15px] font-bold rounded-xl shadow-[0_4px_14px_0_rgba(0,199,88,0.39)] active:scale-95 transition-all mt-6">
                     {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <span className="flex items-center">Submit Inquiry <Send className="ml-2 w-4 h-4" /></span>}
                   </Button>
@@ -397,7 +430,7 @@ export default function InquirySection() {
               )}
             </div>
           </div>
-          
+
         </div>
       </div>
     </section>

@@ -10,7 +10,7 @@ import { Activity, Globe, Users, MousePointerClick, BarChart3, TrendingUp, Alert
 type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'total';
 
 // CLEAN SLATE DATE
-const TRACKING_START_DATE = new Date("2026-06-01T00:00:00Z").getTime();
+const TRACKING_START_DATE = new Date("2026-05-21T00:00:00Z").getTime();
 
 const parseDate = (val: any) => {
   if (!val) return new Date();
@@ -42,22 +42,25 @@ export default function AnalyticsPage() {
       if (viewsLoaded) setLoading(false);
     });
 
-    // Fetch Views (Filtered by June 1)
+    // Fetch Views (Filtered by May 21)
     const unsubVisits = onValue(ref(getDatabase(app), 'stats/page_views'), (snapshot) => {
       const rawViews: any[] = [];
       if (snapshot.exists()) {
         snapshot.forEach((dateNode) => {
           const dateKey = dateNode.key as string;
-          // Only pull from folders created on or after June 1, 2026
-          if (new Date(dateKey).getTime() >= new Date("2026-06-01").getTime()) {
-            dateNode.forEach((viewNode) => {
-              const val = viewNode.val();
-              rawViews.push({ 
-                id: viewNode.key, 
-                date: dateKey,
-                source: val.source || "Direct / Other",
-                timestamp: val.timestamp || dateKey 
-              });
+          // Only pull from folders created on or after May 21, 2026
+          if (new Date(dateKey).getTime() >= new Date("2026-05-21").getTime()) {
+            const val = dateNode.val();
+            // Handle both migrated counter format and fallback
+            const total = typeof val.total === 'number' ? val.total : 0;
+            const sources = val.sources || {};
+            const pages = val.pages || {};
+            rawViews.push({
+              date: dateKey,
+              total,
+              sources,
+              pages,
+              timestamp: dateKey
             });
           }
         });
@@ -99,14 +102,24 @@ export default function AnalyticsPage() {
       return 'Direct / Other';
     };
 
-    const groupSources = (arr: any[]) => {
-      const counts = arr.reduce((acc, item) => {
-        const s = categorizeSource(item.source);
-        acc[s] = (acc[s] || 0) + 1;
-        return acc;
-      }, {});
+    const groupSources = (viewsArr: any[]) => {
+      const counts: Record<string, number> = {};
+      viewsArr.forEach(v => {
+        let sourceTotal = 0;
+        if (v.sources) {
+          for (const [src, count] of Object.entries(v.sources)) {
+            const cat = categorizeSource(src);
+            counts[cat] = (counts[cat] || 0) + (count as number);
+            sourceTotal += (count as number);
+          }
+        }
+        // If May dates have no sources but have a total, attribute difference to 'Direct / Other'
+        if (v.total > sourceTotal) {
+          counts['Direct / Other'] = (counts['Direct / Other'] || 0) + (v.total - sourceTotal);
+        }
+      });
       return Object.keys(counts).map(key => ({
-        name: key, value: counts[key as keyof typeof counts], color: COLORS[key as keyof typeof COLORS] || COLORS['Direct / Other']
+        name: key, value: counts[key], color: COLORS[key as keyof typeof COLORS] || COLORS['Direct / Other']
       })).sort((a, b) => b.value - a.value);
     };
 
@@ -118,8 +131,8 @@ export default function AnalyticsPage() {
 
     return {
       leads: filteredInquiries.length,
-      views: filteredViews.length,
-      leadSources: groupSources(filteredInquiries),
+      views: filteredViews.reduce((acc, v) => acc + v.total, 0),
+      leadSources: groupSources(filteredInquiries.map(i => ({ sources: { [i.source || 'Direct / Other']: 1 }, total: 1 }))),
       viewSources: groupSources(filteredViews),
       funnel: [
         { name: 'New', value: statusCounts["New"] || 0, color: '#ef4444' },
@@ -152,7 +165,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight font-outfit">Performance Analytics</h1>
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-md uppercase tracking-wider">
-              <AlertCircle className="w-3 h-3" /> Data from June 1, 2026
+              <AlertCircle className="w-3 h-3" /> Data from May 21, 2026
             </span>
           </div>
           <p className="text-gray-500 mt-1 font-medium">Track unique devices, lead sources, and overall conversion metrics.</p>

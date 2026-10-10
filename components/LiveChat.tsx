@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, X, Send, Loader2, Bot, Paperclip, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
+import { toast } from "sonner";
 
 interface Message {
   role: "user" | "ai";
@@ -61,7 +62,7 @@ export default function LiveChat() {
     if (!file) return;
 
     if (file.size > 4 * 1024 * 1024) {
-      alert("Please upload an image smaller than 4MB.");
+      toast.error("Please upload an image smaller than 4MB.");
       return;
     }
 
